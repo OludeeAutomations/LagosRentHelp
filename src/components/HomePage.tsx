@@ -1,33 +1,21 @@
 import React, { useState } from 'react';
 import { Search, Filter, Star, TrendingUp } from 'lucide-react';
 import PropertyCard from './PropertyCard';
-import { Property, Agent } from '../types';
+import { Property, Agent, ClientViewCount } from '../types';
 
 interface HomePageProps {
   properties: Property[];
   agents: Agent[];
+  clientViewCounts: ClientViewCount[];
+  onUpdateViewCounts: (viewCounts: ClientViewCount[]) => void;
+  onNavigate?: (page: string) => void;
 }
 
-const HomePage: React.FC<HomePageProps> = ({ properties, agents }) => {
+const HomePage: React.FC<HomePageProps> = ({ properties, agents, clientViewCounts, onUpdateViewCounts, onNavigate }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [priceRange, setPriceRange] = useState('');
   const [showSearchBar, setShowSearchBar] = useState(false);
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  const heroImages = [
-    '/gettyimages-642239446-612x612.jpg',
-    '/gettyimages-691802402-612x612.jpg'
-  ];
-
-  // Auto-advance slideshow
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroImages.length);
-    }, 5000); // Change slide every 5 seconds
-
-    return () => clearInterval(interval);
-  }, [heroImages.length]);
 
   const filteredProperties = properties.filter(property => {
     const matchesSearch = property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -54,26 +42,62 @@ const HomePage: React.FC<HomePageProps> = ({ properties, agents }) => {
 
   const featuredProperties = properties.filter(p => p.featured);
 
+  // Handle atomic hero loading
+  React.useEffect(() => {
+    // Atomic loading sequence
+    let videoLoadTimer: NodeJS.Timeout;
+    let fallbackTimer: NodeJS.Timeout;
+
+    const initializeHero = () => {
+      // Wait for video to be ready
+      videoLoadTimer = setTimeout(() => {
+        document.body.classList.add('hero-loaded');
+      }, 800); // Optimized timing for video initialization
+
+      // Fallback safety net
+      fallbackTimer = setTimeout(() => {
+        document.body.classList.add('hero-loaded');
+      }, 2500);
+    };
+
+    // Start initialization immediately
+    initializeHero();
+    
+    return () => {
+      clearTimeout(videoLoadTimer);
+      clearTimeout(fallbackTimer);
+      document.body.classList.remove('hero-loaded');
+    };
+  }, []);
+
+  const handleVideoReady = () => {
+    // Video is ready, trigger immediate load
+    document.body.classList.add('hero-loaded');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section with Animated Background */}
-      <section className="hero-section relative overflow-hidden">
-        {/* Background Images Slideshow */}
-        {heroImages.map((image, index) => (
-          <div
-            key={index}
-            className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ${
-              index === currentSlide ? 'opacity-100' : 'opacity-0'
-            }`}
+      <section className="hero-section">
+        {/* Crossfade Background Images */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div 
+            className="hero-image hero-image-1"
             style={{
-              backgroundImage: `url(${image})`
+              backgroundImage: 'url(/gettyimages-691802402-612x612.jpg)'
             }}
           />
-        ))}
-        
-        {/* Dark Overlay for Better Contrast */}
-        <div className="absolute inset-0 bg-black bg-opacity-70"></div>
-        
+          <div 
+            className="hero-image hero-image-2"
+            style={{
+              backgroundImage: 'url(/gettyimages-923379128-612x612.jpg)'
+            }}
+          />
+        </div>
+
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-black bg-opacity-60"></div>
+
         {/* Hero Content */}
         <div className="relative z-10 flex items-center justify-center min-h-[90vh] px-4 pt-32 pb-20 sm:py-24 md:py-32">
           <div className="max-w-4xl mx-auto text-center text-white">
@@ -161,7 +185,7 @@ const HomePage: React.FC<HomePageProps> = ({ properties, agents }) => {
         </div>
         
         {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+        <div className="relative z-10 absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
           <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center">
             <div className="w-1 h-3 bg-white rounded-full mt-2 animate-pulse"></div>
           </div>
@@ -169,42 +193,110 @@ const HomePage: React.FC<HomePageProps> = ({ properties, agents }) => {
       </section>
 
       {/* Quick Stats Bar */}
-      <section className="bg-white py-8 px-4 shadow-lg stats-container">
+      <section className="bg-white py-8 px-4 stats-container">
         <div className="max-w-6xl mx-auto">
           <div className="flex animate-very-slow-infinite-slide-spaced">
             {/* First set of stats */}
-            <div className="flex-shrink-0 w-1/4 text-center px-8">
-              <div className="text-2xl md:text-3xl font-bold font-heading text-blue-600 mb-1">{properties.length}+</div>
-              <div className="text-gray-600 text-sm md:text-base">Properties</div>
+            <div className="flex-shrink-0 w-1/4 text-center px-4">
+              <div className="bg-white rounded-xl p-4 border border-gray-100 hover:border-gray-200 transition-colors duration-300">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
+                  </svg>
+                </div>
+                <div className="text-2xl font-bold font-heading text-gray-900 mb-1">{properties.length}+</div>
+                <div className="text-sm text-gray-600 font-medium">Active Properties</div>
+                <div className="text-xs text-gray-500">Verified listings</div>
+              </div>
             </div>
-            <div className="flex-shrink-0 w-1/4 text-center px-8">
-              <div className="text-2xl md:text-3xl font-bold font-heading text-green-600 mb-1">{agents.length}+</div>
-              <div className="text-gray-600 text-sm md:text-base">Agents</div>
+            <div className="flex-shrink-0 w-1/4 text-center px-4">
+              <div className="bg-white rounded-xl p-4 border border-gray-100 hover:border-gray-200 transition-colors duration-300">
+                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div className="text-2xl font-bold font-heading text-gray-900 mb-1">{agents.length}+</div>
+                <div className="text-sm text-gray-600 font-medium">Verified Agents</div>
+                <div className="text-xs text-gray-500">Professional partners</div>
+              </div>
             </div>
-            <div className="flex-shrink-0 w-1/4 text-center px-8">
-              <div className="text-2xl md:text-3xl font-bold font-heading text-purple-600 mb-1">20+</div>
-              <div className="text-gray-600 text-sm md:text-base">Lagos Areas</div>
+            <div className="flex-shrink-0 w-1/4 text-center px-4">
+              <div className="bg-white rounded-xl p-4 border border-gray-100 hover:border-gray-200 transition-colors duration-300">
+                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div className="text-2xl font-bold font-heading text-gray-900 mb-1">20+</div>
+                <div className="text-sm text-gray-600 font-medium">Lagos Areas</div>
+                <div className="text-xs text-gray-500">Complete coverage</div>
+              </div>
             </div>
-            <div className="flex-shrink-0 w-1/4 text-center px-8">
-              <div className="text-2xl md:text-3xl font-bold font-heading text-orange-600 mb-1">100%</div>
-              <div className="text-gray-600 text-sm md:text-base">Verified</div>
+            <div className="flex-shrink-0 w-1/4 text-center px-4">
+              <div className="bg-white rounded-xl p-4 border border-gray-100 hover:border-gray-200 transition-colors duration-300">
+                <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <div className="text-2xl font-bold font-heading text-gray-900 mb-1">100%</div>
+                <div className="text-sm text-gray-600 font-medium">Trust & Safety</div>
+                <div className="text-xs text-gray-500">Fully verified</div>
+              </div>
             </div>
             {/* Second set for seamless loop */}
-            <div className="flex-shrink-0 w-1/4 text-center px-8">
-              <div className="text-2xl md:text-3xl font-bold font-heading text-blue-600 mb-1">{properties.length}+</div>
-              <div className="text-gray-600 text-sm md:text-base">Properties</div>
+            <div className="flex-shrink-0 w-1/4 text-center px-4">
+              <div className="bg-white rounded-xl p-4 border border-gray-100 hover:border-gray-200 transition-colors duration-300">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
+                  </svg>
+                </div>
+                <div className="text-2xl font-bold font-heading text-gray-900 mb-1">{properties.length}+</div>
+                <div className="text-sm text-gray-600 font-medium">Active Properties</div>
+                <div className="text-xs text-gray-500">Verified listings</div>
+              </div>
             </div>
-            <div className="flex-shrink-0 w-1/4 text-center px-8">
-              <div className="text-2xl md:text-3xl font-bold font-heading text-green-600 mb-1">{agents.length}+</div>
-              <div className="text-gray-600 text-sm md:text-base">Agents</div>
+            <div className="flex-shrink-0 w-1/4 text-center px-4">
+              <div className="bg-white rounded-xl p-4 border border-gray-100 hover:border-gray-200 transition-colors duration-300">
+                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div className="text-2xl font-bold font-heading text-gray-900 mb-1">{agents.length}+</div>
+                <div className="text-sm text-gray-600 font-medium">Verified Agents</div>
+                <div className="text-xs text-gray-500">Professional partners</div>
+              </div>
             </div>
-            <div className="flex-shrink-0 w-1/4 text-center px-8">
-              <div className="text-2xl md:text-3xl font-bold font-heading text-purple-600 mb-1">20+</div>
-              <div className="text-gray-600 text-sm md:text-base">Lagos Areas</div>
+            <div className="flex-shrink-0 w-1/4 text-center px-4">
+              <div className="bg-white rounded-xl p-4 border border-gray-100 hover:border-gray-200 transition-colors duration-300">
+                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div className="text-2xl font-bold font-heading text-gray-900 mb-1">20+</div>
+                <div className="text-sm text-gray-600 font-medium">Lagos Areas</div>
+                <div className="text-xs text-gray-500">Complete coverage</div>
+              </div>
             </div>
-            <div className="flex-shrink-0 w-1/4 text-center px-8">
-              <div className="text-2xl md:text-3xl font-bold font-heading text-orange-600 mb-1">100%</div>
-              <div className="text-gray-600 text-sm md:text-base">Verified</div>
+            <div className="flex-shrink-0 w-1/4 text-center px-4">
+              <div className="bg-white rounded-xl p-4 border border-gray-100 hover:border-gray-200 transition-colors duration-300">
+                <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <div className="text-2xl font-bold font-heading text-gray-900 mb-1">100%</div>
+                <div className="text-sm text-gray-600 font-medium">Trust & Safety</div>
+                <div className="text-xs text-gray-500">Fully verified</div>
+              </div>
             </div>
           </div>
         </div>
@@ -222,7 +314,7 @@ const HomePage: React.FC<HomePageProps> = ({ properties, agents }) => {
             {featuredProperties.map(property => {
               const agent = getAgentForProperty(property.agentId);
               return agent ? (
-                <PropertyCard key={property.id} property={property} agent={agent} />
+                <PropertyCard key={property.id} property={property} agent={agent} clientViewCounts={clientViewCounts} onUpdateViewCounts={onUpdateViewCounts} />
               ) : null;
             })}
           </div>
@@ -250,7 +342,7 @@ const HomePage: React.FC<HomePageProps> = ({ properties, agents }) => {
               {filteredProperties.map(property => {
                 const agent = getAgentForProperty(property.agentId);
                 return agent ? (
-                  <PropertyCard key={property.id} property={property} agent={agent} />
+                  <PropertyCard key={property.id} property={property} agent={agent} clientViewCounts={clientViewCounts} onUpdateViewCounts={onUpdateViewCounts} />
                 ) : null;
               })}
             </div>
@@ -259,30 +351,155 @@ const HomePage: React.FC<HomePageProps> = ({ properties, agents }) => {
       </section>
 
       {/* Trust & Safety Section */}
-      <section className="py-16 px-4 bg-gradient-to-r from-blue-50 to-sky-50">
+      <section className="py-20 px-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <svg className="w-full h-full" viewBox="0 0 100 100" fill="currentColor">
+            <defs>
+              <pattern id="safety-pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                <circle cx="10" cy="10" r="1" className="text-blue-400" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#safety-pattern)" />
+          </svg>
+        </div>
+        
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">Your Safety is Our Priority</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-2xl shadow-soft">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🛡️</span>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Verified Agents</h3>
-              <p className="text-sm text-gray-600">All agents undergo thorough verification before listing</p>
+          {/* Header */}
+          <div className="mb-16">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-6 shadow-lg">
+              <span className="text-3xl">🛡️</span>
             </div>
-            <div className="bg-white p-6 rounded-2xl shadow-soft">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">👁️</span>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 font-heading">
+              Your Safety is Our Priority
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+              We've built comprehensive safety measures to protect you throughout your rental journey
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            {/* Card 1 - Verified Agents */}
+            <div className="group bg-white p-8 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100 relative overflow-hidden">
+              {/* Background Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              <div className="relative z-10">
+                <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-3xl">🛡️</span>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-green-700 transition-colors">
+                  Verified Agents
+                </h3>
+                <p className="text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors">
+                  Every agent undergoes rigorous verification including ID checks, phone verification, and background screening before listing
+                </p>
+                
+                {/* Verification Steps */}
+                <div className="mt-6 space-y-2">
+                  <div className="flex items-center text-sm text-green-600">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                    <span>Identity Verification</span>
+                  </div>
+                  <div className="flex items-center text-sm text-green-600">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                    <span>Phone Number Confirmed</span>
+                  </div>
+                  <div className="flex items-center text-sm text-green-600">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                    <span>Background Screening</span>
+                  </div>
+                </div>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Always Inspect</h3>
-              <p className="text-sm text-gray-600">Visit properties in person before making any payments</p>
             </div>
-            <div className="bg-white p-6 rounded-2xl shadow-soft">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">📞</span>
+            
+            {/* Card 2 - Always Inspect */}
+            <div className="group bg-white p-8 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100 relative overflow-hidden">
+              {/* Background Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-sky-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              <div className="relative z-10">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-sky-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-3xl">👁️</span>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-blue-700 transition-colors">
+                  Always Inspect First
+                </h3>
+                <p className="text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors">
+                  Never make payments without physically visiting the property. We provide safety tips and inspection checklists
+                </p>
+                
+                {/* Safety Tips */}
+                <div className="mt-6 space-y-2">
+                  <div className="flex items-center text-sm text-blue-600">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                    <span>Physical Inspection Required</span>
+                  </div>
+                  <div className="flex items-center text-sm text-blue-600">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                    <span>Bring a Friend/Family</span>
+                  </div>
+                  <div className="flex items-center text-sm text-blue-600">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                    <span>Check All Facilities</span>
+                  </div>
+                </div>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Direct Contact</h3>
-              <p className="text-sm text-gray-600">Communicate directly with agents via WhatsApp</p>
+            </div>
+            
+            {/* Card 3 - Direct Contact */}
+            <div className="group bg-white p-8 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100 relative overflow-hidden">
+              {/* Background Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-pink-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              <div className="relative z-10">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-3xl">📞</span>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-purple-700 transition-colors">
+                  Secure Communication
+                </h3>
+                <p className="text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors">
+                  Direct WhatsApp communication with verified agents. No middlemen, no hidden fees, transparent conversations
+                </p>
+                
+                {/* Communication Features */}
+                <div className="mt-6 space-y-2">
+                  <div className="flex items-center text-sm text-purple-600">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
+                    <span>Direct WhatsApp Contact</span>
+                  </div>
+                  <div className="flex items-center text-sm text-purple-600">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
+                    <span>No Hidden Middlemen</span>
+                  </div>
+                  <div className="flex items-center text-sm text-purple-600">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
+                    <span>Transparent Pricing</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Bottom CTA */}
+          <div className="mt-16 p-8 bg-white/80 backdrop-blur-sm rounded-3xl border border-gray-200 shadow-lg">
+            <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
+              <div className="text-left">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Need Help or Have Concerns?</h3>
+                <p className="text-gray-600">Our support team is here to ensure your safety throughout the rental process</p>
+              </div>
+              <div className="flex space-x-4">
+                <button 
+                  onClick={() => onNavigate?.('contact')}
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                >
+                  Report Issue
+                </button>
+                <button className="bg-white text-gray-700 border border-gray-300 px-6 py-3 rounded-xl font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                  Safety Tips
+                </button>
+              </div>
             </div>
           </div>
         </div>

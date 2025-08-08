@@ -7,28 +7,38 @@ import ContactPage from './components/ContactPage';
 import AgentProfile from './components/AgentProfile';
 import Footer from './components/Footer';
 import { mockProperties, mockAgents } from './data/mockData';
-import { Property, Agent } from './types';
+import { Property, Agent, ClientViewCount } from './types';
+import { updateAgentStatus } from './utils/trialLogic';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
   const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
   const [properties, setProperties] = useState<Property[]>(mockProperties);
   const [agents, setAgents] = useState<Agent[]>(mockAgents);
+  const [clientViewCounts, setClientViewCounts] = useState<ClientViewCount[]>([]);
 
   // Load data from localStorage on component mount
   useEffect(() => {
     const savedProperties = localStorage.getItem('lagosrentals_properties');
     const savedAgents = localStorage.getItem('lagosrentals_agents');
     const savedCurrentAgent = localStorage.getItem('lagosrentals_currentAgent');
+    const savedViewCounts = localStorage.getItem('lagosrentals_viewCounts');
     
     if (savedProperties) {
       setProperties(JSON.parse(savedProperties));
     }
     if (savedAgents) {
-      setAgents(JSON.parse(savedAgents));
+      const loadedAgents = JSON.parse(savedAgents);
+      // Update agent statuses based on trial expiry
+      const updatedAgents = loadedAgents.map(updateAgentStatus);
+      setAgents(updatedAgents);
     }
     if (savedCurrentAgent) {
-      setCurrentAgent(JSON.parse(savedCurrentAgent));
+      const loadedAgent = JSON.parse(savedCurrentAgent);
+      setCurrentAgent(updateAgentStatus(loadedAgent));
+    }
+    if (savedViewCounts) {
+      setClientViewCounts(JSON.parse(savedViewCounts));
     }
   }, []);
 
@@ -43,21 +53,34 @@ function App() {
 
   useEffect(() => {
     if (currentAgent) {
-      localStorage.setItem('lagosrentals_currentAgent', JSON.stringify(currentAgent));
+      const updatedAgent = updateAgentStatus(currentAgent);
+      localStorage.setItem('lagosrentals_currentAgent', JSON.stringify(updatedAgent));
+      if (updatedAgent.status !== currentAgent.status) {
+        setCurrentAgent(updatedAgent);
+      }
     } else {
       localStorage.removeItem('lagosrentals_currentAgent');
     }
   }, [currentAgent]);
+
+  useEffect(() => {
+    localStorage.setItem('lagosrentals_viewCounts', JSON.stringify(clientViewCounts));
+  }, [clientViewCounts]);
 
   const handleNavigate = (page: string) => {
     setCurrentPage(page);
   };
 
   const handleAgentRegister = (agentData: Omit<Agent, 'id' | 'registeredAt'>) => {
+    const now = new Date();
+    const trialExpiry = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
+    
     const newAgent: Agent = {
       ...agentData,
       id: 'agent_' + Date.now(),
-      registeredAt: new Date().toISOString()
+      registeredAt: now.toISOString(),
+      status: 'trial',
+      trialExpiresAt: trialExpiry.toISOString()
     };
     
     setAgents(prev => [...prev, newAgent]);
@@ -83,10 +106,14 @@ function App() {
     }
   };
 
+  const handleClearCurrentAgent = () => {
+    setCurrentAgent(null);
+  };
+
   const renderPage = () => {
     switch (currentPage) {
       case 'home':
-        return <HomePage properties={properties} agents={agents} />;
+        return <HomePage properties={properties} agents={agents} clientViewCounts={clientViewCounts} onUpdateViewCounts={setClientViewCounts} onNavigate={handleNavigate} />;
       case 'add-listing':
         return (
           <AddListingPage
@@ -94,6 +121,7 @@ function App() {
             onAgentRegister={handleAgentRegister}
             onAddListing={handleAddListing}
             onUpdateAgent={handleUpdateAgent}
+            onClearCurrentAgent={handleClearCurrentAgent}
           />
         );
       case 'about':

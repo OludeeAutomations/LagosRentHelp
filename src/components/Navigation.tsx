@@ -23,16 +23,15 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, onNavigate, curren
 
   const menuItems = [
     { id: 'home', label: 'Home' },
-    { id: 'add-listing', label: 'Add Listing' },
     { id: 'about', label: 'About' },
     { id: 'contact', label: 'Contact' }
   ];
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-black/60 backdrop-blur-xl ${
       isScrolled 
-        ? 'bg-black/60 backdrop-blur-xl border-b border-white/20' 
-        : 'bg-transparent'
+        ? 'border-b border-white/20' 
+        : ''
     }`}>
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
@@ -63,6 +62,16 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, onNavigate, curren
                 )}
               </button>
             ))}
+            
+            {/* Agent Listing Button */}
+            <button
+              onClick={() => onNavigate('add-listing')}
+              className={`px-4 py-2 bg-emerald-500 text-white rounded-lg font-medium hover:bg-emerald-600 transition-all duration-300 transform hover:scale-105 ${
+                currentPage === 'add-listing' ? 'bg-emerald-600' : ''
+              }`}
+            >
+              Agent Listing
+            </button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -92,6 +101,19 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, onNavigate, curren
                   {item.label}
                 </button>
               ))}
+              
+              {/* Mobile Agent Listing Button */}
+              <button
+                onClick={() => {
+                  onNavigate('add-listing');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`block w-full text-left px-3 py-2 rounded-md bg-emerald-500 text-white hover:bg-emerald-600 transition-colors font-medium ${
+                  currentPage === 'add-listing' ? 'bg-emerald-600' : ''
+                }`}
+              >
+                Agent Listing
+              </button>
             </div>
           </div>
         )}

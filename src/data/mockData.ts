@@ -1,4 +1,4 @@
-import { Property, Agent } from '../types';
+import { Property, Agent, ClientViewCount } from '../types';
 
 export const mockProperties: Property[] = [
   {
@@ -56,17 +56,35 @@ export const mockAgents: Agent[] = [
     name: 'Adebayo Johnson',
     whatsappNumber: '+2348123456789',
     email: 'adebayo@email.com',
+    password: 'password123',
+    isEmailVerified: true,
     listings: ['1', '3'],
     freeListingsUsed: 2,
-    registeredAt: '2024-01-01'
+    referralCode: 'ADEBAYOADEB1234',
+    referralCount: 0,
+    freeListingsFromReferrals: 0,
+    totalLeads: 0,
+    totalReferralClicks: 0,
+    registeredAt: '2024-01-01',
+    status: 'trial',
+    trialExpiresAt: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString() // 25 days from now
   },
   {
     id: 'agent2',
     name: 'Kemi Okafor',
     whatsappNumber: '+2348987654321',
     email: 'kemi@email.com',
+    password: 'password123',
+    isEmailVerified: true,
     listings: ['2'],
     freeListingsUsed: 1,
-    registeredAt: '2024-01-05'
+    referralCode: 'KEMIOKAFOR5678',
+    referralCount: 0,
+    freeListingsFromReferrals: 0,
+    totalLeads: 0,
+    totalReferralClicks: 0,
+    registeredAt: '2024-01-05',
+    status: 'trial',
+    trialExpiresAt: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString() // 20 days from now
   }
 ];

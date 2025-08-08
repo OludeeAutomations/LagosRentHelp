@@ -1,15 +1,24 @@
 import React from 'react';
-import { User, Phone, Mail, Calendar, Award, MapPin } from 'lucide-react';
+import { User, Phone, Mail, Calendar, Award, MapPin, Clock, AlertTriangle } from 'lucide-react';
 import PropertyCard from './PropertyCard';
-import { Agent, Property } from '../types';
+import { Agent, Property, ClientViewCount } from '../types';
+import { isInTrial, getDaysRemainingInTrial, isTrialExpired } from '../utils/trialLogic';
 
 interface AgentProfileProps {
   agent: Agent;
   properties: Property[];
   allAgents: Agent[];
+  clientViewCounts?: ClientViewCount[];
+  onUpdateViewCounts?: (viewCounts: ClientViewCount[]) => void;
 }
 
-const AgentProfile: React.FC<AgentProfileProps> = ({ agent, properties, allAgents }) => {
+const AgentProfile: React.FC<AgentProfileProps> = ({ 
+  agent, 
+  properties, 
+  allAgents, 
+  clientViewCounts = [], 
+  onUpdateViewCounts = () => {} 
+}) => {
   const agentProperties = properties.filter(property => property.agentId === agent.id);
   
   const formatDate = (dateString: string) => {
@@ -23,6 +32,15 @@ const AgentProfile: React.FC<AgentProfileProps> = ({ agent, properties, allAgent
   const getAgentForProperty = (agentId: string) => {
     return allAgents.find(a => a.id === agentId);
   };
+  
+  const getStatusDisplay = () => {
+    if (agent.status === 'active') return { text: 'Active', color: 'text-green-600', bg: 'bg-green-100' };
+    if (isInTrial(agent)) return { text: `Trial (${getDaysRemainingInTrial(agent)} days left)`, color: 'text-blue-600', bg: 'bg-blue-100' };
+    if (agent.status === 'trial_expired') return { text: 'Trial Expired', color: 'text-orange-600', bg: 'bg-orange-100' };
+    return { text: 'Unknown', color: 'text-gray-600', bg: 'bg-gray-100' };
+  };
+  
+  const statusDisplay = getStatusDisplay();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -37,8 +55,10 @@ const AgentProfile: React.FC<AgentProfileProps> = ({ agent, properties, allAgent
             <div className="text-center md:text-left flex-1">
               <div className="flex items-center justify-center md:justify-start space-x-2 mb-2">
                 <h1 className="text-3xl md:text-4xl font-bold">{agent.name}</h1>
-                <div className="bg-green-500 p-1 rounded-full">
-                  <Award className="h-5 w-5 text-white" />
+                <div className={`px-3 py-1 rounded-full ${statusDisplay.bg}`}>
+                  <span className={`text-sm font-medium ${statusDisplay.color}`}>
+                    {statusDisplay.text}
+                  </span>
                 </div>
               </div>
               
@@ -79,6 +99,39 @@ const AgentProfile: React.FC<AgentProfileProps> = ({ agent, properties, allAgent
       {/* Agent Stats */}
       <section className="py-12 px-4">
         <div className="max-w-6xl mx-auto">
+          {/* Trial Status Alert */}
+          {agent.status === 'trial_expired' && (
+            <div className="bg-orange-50 border border-orange-200 rounded-xl p-6 mb-8">
+              <div className="flex items-center space-x-3">
+                <AlertTriangle className="h-6 w-6 text-orange-600" />
+                <div>
+                  <h3 className="text-lg font-bold text-orange-900">Trial Period Expired</h3>
+                  <p className="text-orange-800">
+                    Your free trial has ended. Upgrade to continue receiving client inquiries and maintain full visibility.
+                  </p>
+                  <button className="mt-3 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors">
+                    Upgrade Now
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {isInTrial(agent) && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8">
+              <div className="flex items-center space-x-3">
+                <Clock className="h-6 w-6 text-blue-600" />
+                <div>
+                  <h3 className="text-lg font-bold text-blue-900">Free Trial Active</h3>
+                  <p className="text-blue-800">
+                    You have {getDaysRemainingInTrial(agent)} days remaining in your free trial. 
+                    Enjoy unlimited listings and full platform access!
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
             <div className="bg-white rounded-xl shadow-soft p-6 text-center">
               <div className="text-3xl font-bold text-blue-600 mb-2">{agentProperties.length}</div>
@@ -87,10 +140,10 @@ const AgentProfile: React.FC<AgentProfileProps> = ({ agent, properties, allAgent
             
             <div className="bg-white rounded-xl shadow-soft p-6 text-center">
               <div className="text-3xl font-bold text-green-600 mb-2">
-                {agent.subscriptionPlan ? '✓' : agent.freeListingsUsed + '/2'}
+                {agent.status === 'active' ? '✓' : isInTrial(agent) ? '∞' : '⚠️'}
               </div>
               <div className="text-gray-600">
-                {agent.subscriptionPlan ? 'Subscribed' : 'Free Listings'}
+                {agent.status === 'active' ? 'Active Plan' : isInTrial(agent) ? 'Trial Active' : 'Needs Upgrade'}
               </div>
             </div>
             
@@ -155,7 +208,13 @@ const AgentProfile: React.FC<AgentProfileProps> = ({ agent, properties, allAgent
               {agentProperties.map(property => {
                 const propertyAgent = getAgentForProperty(property.agentId);
                 return propertyAgent ? (
-                  <PropertyCard key={property.id} property={property} agent={propertyAgent} />
+                  <PropertyCard 
+                    key={property.id} 
+                    property={property} 
+                    agent={propertyAgent} 
+                    clientViewCounts={clientViewCounts}
+                    onUpdateViewCounts={onUpdateViewCounts}
+                  />
                 ) : null;
               })}
             </div>

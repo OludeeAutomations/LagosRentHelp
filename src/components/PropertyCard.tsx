@@ -1,13 +1,29 @@
 import React from 'react';
-import { MapPin, Phone, AlertTriangle } from 'lucide-react';
-import { Property, Agent } from '../types';
+import { MapPin, Phone, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
+import { Property, Agent, ClientViewCount } from '../types';
+import { 
+  getClientId, 
+  canViewAgentContact, 
+  recordClientView, 
+  sendWhatsAppNotification,
+  shouldSendUpgradeNotification,
+  isInTrial,
+  isTrialExpired 
+} from '../utils/trialLogic';
 
 interface PropertyCardProps {
   property: Property;
   agent: Agent;
+  clientViewCounts: ClientViewCount[];
+  onUpdateViewCounts: (viewCounts: ClientViewCount[]) => void;
 }
 
-const PropertyCard: React.FC<PropertyCardProps> = ({ property, agent }) => {
+const PropertyCard: React.FC<PropertyCardProps> = ({ 
+  property, 
+  agent, 
+  clientViewCounts, 
+  onUpdateViewCounts 
+}) => {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
@@ -17,11 +33,48 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, agent }) => {
   };
 
   const handleWhatsAppClick = () => {
+    const clientId = getClientId();
+    
+    // Check if agent's trial has expired
+    if (isTrialExpired(agent) && agent.status === 'trial_expired') {
+      alert('This agent is currently under review. Please check back later.');
+      return;
+    }
+    
+    // Check if client can view this agent's contact (max 2 views for trial agents)
+    if (isInTrial(agent) && !canViewAgentContact(clientId, agent.id, clientViewCounts)) {
+      alert('This agent is currently under review. Please check back later.');
+      return;
+    }
+    
+    // Record the view if agent is in trial
+    if (isInTrial(agent)) {
+      const updatedViewCounts = recordClientView(clientId, agent.id, clientViewCounts);
+      onUpdateViewCounts(updatedViewCounts);
+      
+      // Check if we should send upgrade notification to agent
+      const clientViews = updatedViewCounts.find(
+        vc => vc.clientId === clientId && vc.agentId === agent.id
+      );
+      
+      if (clientViews && clientViews.count === 2) {
+        // This client just hit the limit, send notification to agent
+        sendWhatsAppNotification(agent);
+      }
+    }
+    
+    // Proceed with WhatsApp contact
     const message = encodeURIComponent(
       `Hi ${agent.name}, I'm interested in your property: ${property.title} located in ${property.location}. Can we discuss?`
     );
     const whatsappUrl = `https://wa.me/${agent.whatsappNumber.replace('+', '')}?text=${message}`;
     window.open(whatsappUrl, '_blank');
+  };
+  
+  const getAgentStatusBadge = () => {
+    if (agent.status === 'active') return <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Verified</span>;
+    if (agent.status === 'trial') return <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">New Agent</span>;
+    return <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">Under Review</span>;
   };
 
   return (
@@ -60,8 +113,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, agent }) => {
         
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-sm text-gray-600">Agent:</p>
-            <p className="font-medium text-gray-900">{agent.name}</p>
+            <div className="flex items-center space-x-1">
+              <span className="text-sm text-gray-600">Agent:</span>
+              <p className="font-medium text-gray-900">{agent.name}</p>
+              <CheckCircle className="h-4 w-4 text-green-500" />
+            </div>
           </div>
         </div>
         
