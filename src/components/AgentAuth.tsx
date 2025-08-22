@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Mail, Lock, User, Phone, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 import { Agent } from '../types';
-import { EmailService, generateVerificationCode } from '../utils/emailService';
+import { GmailService, generateVerificationCode } from '../utils/gmailService';
+import EmailVerification from './EmailVerification';
 
 interface AgentAuthProps {
   onLogin: (agent: Agent) => void;
@@ -15,6 +16,8 @@ const AgentAuth: React.FC<AgentAuthProps> = ({ onLogin, onRegister }) => {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
   const [showVerificationSent, setShowVerificationSent] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
+  const [pendingAgent, setPendingAgent] = useState<Agent | null>(null);
   
   const [loginForm, setLoginForm] = useState({
     email: '',
@@ -122,9 +125,9 @@ const AgentAuth: React.FC<AgentAuthProps> = ({ onLogin, onRegister }) => {
         trialExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       };
       
-      onRegister(newAgent);
-      setMessage('Registration successful! Redirecting to dashboard...');
-      setMessageType('success');
+      // Store pending agent and show verification
+      setPendingAgent(newAgent);
+      setShowVerification(true);
       
       // Reset form
       setRegisterForm({
@@ -141,6 +144,37 @@ const AgentAuth: React.FC<AgentAuthProps> = ({ onLogin, onRegister }) => {
     
     setIsSubmitting(false);
   };
+
+  const handleVerificationComplete = (verifiedAgent: Agent) => {
+    onRegister(verifiedAgent);
+  };
+
+  const handleResendCode = (agent: Agent, newCode: string) => {
+    // Update the stored verification code
+    const timestamp = new Date().toISOString();
+    localStorage.setItem(`verification_${agent.email}`, JSON.stringify({
+      code: newCode,
+      timestamp
+    }));
+  };
+
+  const handleBackToSignup = () => {
+    setShowVerification(false);
+    setPendingAgent(null);
+    setMessage('');
+  };
+
+  // Show verification page if needed
+  if (showVerification && pendingAgent) {
+    return (
+      <EmailVerification
+        agent={pendingAgent}
+        onVerificationComplete={handleVerificationComplete}
+        onResendCode={handleResendCode}
+        onBackToSignup={handleBackToSignup}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-20 bg-blue-50">

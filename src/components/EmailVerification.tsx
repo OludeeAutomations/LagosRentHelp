@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, ArrowRight, RefreshCw, CheckCircle, AlertCircle, Clock, ArrowLeft } from 'lucide-react';
 import { Agent } from '../types';
-import { EmailService, generateVerificationCode, isCodeExpired } from '../utils/emailService';
+import { GmailService, generateVerificationCode, isCodeExpired } from '../utils/gmailService';
 
 interface EmailVerificationProps {
   agent: Agent;
@@ -124,19 +124,19 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
       }));
 
       // Send email via Resend
-      const emailSent = await EmailService.sendVerificationEmail({
+      const emailSent = await GmailService.sendVerificationEmail({
         email: agent.email,
         code: newCode,
         name: agent.name
       });
 
       if (emailSent) {
-        setMessage('New verification code sent to your email!');
+        setMessage('New verification code sent to your email via Gmail SMTP!');
         setMessageType('success');
         setTimeLeft(180); // Reset timer to 3 minutes
         onResendCode(agent, newCode);
       } else {
-        setMessage('Failed to send verification email. Please try again.');
+        setMessage('Failed to send verification email via Gmail SMTP. Please try again.');
         setMessageType('error');
       }
 
