@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User, Phone, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User, Phone, Eye, EyeOff, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 import { Agent } from '../types';
 import { GmailService, generateVerificationCode } from '../utils/gmailService';
 import EmailVerification from './EmailVerification';
@@ -7,9 +7,10 @@ import EmailVerification from './EmailVerification';
 interface AgentAuthProps {
   onLogin: (agent: Agent) => void;
   onRegister: (agentData: Omit<Agent, 'id' | 'registeredAt' | 'referralCode'>) => void;
+  onBack?: () => void;
 }
 
-const AgentAuth: React.FC<AgentAuthProps> = ({ onLogin, onRegister }) => {
+const AgentAuth: React.FC<AgentAuthProps> = ({ onLogin, onRegister, onBack }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -18,6 +19,20 @@ const AgentAuth: React.FC<AgentAuthProps> = ({ onLogin, onRegister }) => {
   const [showVerificationSent, setShowVerificationSent] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const [pendingAgent, setPendingAgent] = useState<Agent | null>(null);
+  
+  // Load saved agents from localStorage
+  const [savedAgents, setSavedAgents] = useState<Agent[]>(() => {
+    try {
+      const saved = localStorage.getItem('lagosrentals_saved_agents');
+      const agents = saved ? JSON.parse(saved) : [];
+      console.log('=== INITIAL LOAD DEBUG ===');
+      console.log('Loaded saved agents:', agents);
+      return agents;
+    } catch (error) {
+      console.error('Error loading saved agents:', error);
+      return [];
+    }
+  });
   
   const [loginForm, setLoginForm] = useState({
     email: '',
@@ -48,26 +63,35 @@ const AgentAuth: React.FC<AgentAuthProps> = ({ onLogin, onRegister }) => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // For demo purposes, create a mock agent
-      const mockAgent: Agent = {
-        id: 'agent_' + Date.now(),
-        name: 'Demo Agent',
-        email: loginForm.email,
-        whatsappNumber: '+2348123456789',
-        isEmailVerified: true,
-        listings: [],
-        freeListingsUsed: 0,
-        referralCode: generateReferralCode('Demo Agent', loginForm.email),
-        referralCount: 0,
-        freeListingsFromReferrals: 0,
-        totalLeads: 0,
-        totalReferralClicks: 0,
-        registeredAt: new Date().toISOString(),
-        status: 'trial',
-        trialExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-      };
+      // Debug: Check what's in localStorage
+      console.log('=== LOGIN DEBUG ===');
+      console.log('Attempting login with:', { email: loginForm.email, password: loginForm.password });
+      console.log('Saved agents in localStorage:', savedAgents);
+      console.log('Raw localStorage data:', localStorage.getItem('lagosrentals_saved_agents'));
       
-      onLogin(mockAgent);
+      // Find agent in saved agents
+      const existingAgent = savedAgents.find(agent => 
+        agent.email === loginForm.email && agent.password === loginForm.password
+      );
+      
+      console.log('Found agent:', existingAgent);
+      
+      if (existingAgent) {
+        setMessage('Login successful! Redirecting to dashboard...');
+        setMessageType('success');
+        
+        // Reset form
+        setLoginForm({ email: '', password: '' });
+        
+        // Redirect to dashboard after short delay
+        setTimeout(() => {
+          onLogin(existingAgent);
+        }, 1000);
+        onLogin(existingAgent);
+      } else {
+        setMessage(`Invalid email or password. Found ${savedAgents.length} saved agents. Please check your credentials or sign up if you don't have an account.`);
+        setMessageType('error');
+      }
     } catch (error) {
       setMessage('Login failed. Please check your credentials.');
       setMessageType('error');
@@ -80,6 +104,23 @@ const AgentAuth: React.FC<AgentAuthProps> = ({ onLogin, onRegister }) => {
     e.preventDefault();
     setIsSubmitting(true);
     setMessage('');
+
+    // Check if email already exists
+    const existingAgent = savedAgents.find(agent => agent.email === registerForm.email);
+    if (existingAgent) {
+      setMessage('This email already has an account. Please login instead or use a different email address.');
+      setMessageType('error');
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Validate email is not empty
+    if (!registerForm.email || registerForm.email.trim() === '') {
+      setMessage('Email address is required');
+      setMessageType('error');
+      setIsSubmitting(false);
+      return;
+    }
 
     if (registerForm.password !== registerForm.confirmPassword) {
       setMessage('Passwords do not match');
@@ -109,12 +150,26 @@ const AgentAuth: React.FC<AgentAuthProps> = ({ onLogin, onRegister }) => {
         timestamp
       }));
       
+      // Send verification email automatically via Gmail SMTP
+      const emailSent = await GmailService.sendVerificationEmail({
+        email: registerForm.email,
+        code: verificationCode,
+        name: registerForm.name
+      });
+      
+      if (!emailSent) {
+        setMessage('Failed to send verification email. Please check your internet connection and try again.');
+        setMessageType('error');
+        setIsSubmitting(false);
+        return;
+      }
+      
       const newAgent = {
         name: registerForm.name,
         email: registerForm.email,
         password: registerForm.password,
         whatsappNumber: registerForm.whatsappNumber,
-        isEmailVerified: true,
+        isEmailVerified: false,
         listings: [],
         freeListingsUsed: 0,
         referralCount: 0,
@@ -138,7 +193,7 @@ const AgentAuth: React.FC<AgentAuthProps> = ({ onLogin, onRegister }) => {
         whatsappNumber: ''
       });
     } catch (error) {
-      setMessage('Registration failed. Please try again.');
+      setMessage('Registration failed. Please check your details and try again.');
       setMessageType('error');
     }
     
@@ -146,7 +201,18 @@ const AgentAuth: React.FC<AgentAuthProps> = ({ onLogin, onRegister }) => {
   };
 
   const handleVerificationComplete = (verifiedAgent: Agent) => {
+    console.log('=== VERIFICATION COMPLETE DEBUG ===');
+    console.log('Verified agent:', verifiedAgent);
+    
+    // Update the saved agents state to reflect the new agent
+    const currentSavedAgents = JSON.parse(localStorage.getItem('lagosrentals_saved_agents') || '[]');
+    setSavedAgents(currentSavedAgents);
+    
+    // Also call onRegister to update the main app state
     onRegister(verifiedAgent);
+    
+    // Set as current agent for immediate login
+    onLogin(verifiedAgent);
   };
 
   const handleResendCode = (agent: Agent, newCode: string) => {
@@ -180,6 +246,19 @@ const AgentAuth: React.FC<AgentAuthProps> = ({ onLogin, onRegister }) => {
     <div className="min-h-screen flex items-center justify-center px-4 py-20 bg-blue-50">
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-lg p-8">
+          {/* Back Button */}
+          {onBack && (
+            <div className="mb-6">
+              <button
+                onClick={onBack}
+                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span className="text-sm">Back to Home</span>
+              </button>
+            </div>
+          )}
+          
           {/* Header */}
           <div className="text-center mb-8">
             <div className="bg-emerald-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">

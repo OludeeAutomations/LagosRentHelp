@@ -26,12 +26,20 @@ function App() {
     
     if (savedProperties) {
       setProperties(JSON.parse(savedProperties));
+    } else {
+      // Initialize with mock data if no saved data exists
+      setProperties(mockProperties);
+      localStorage.setItem('lagosrentals_properties', JSON.stringify(mockProperties));
     }
     if (savedAgents) {
       const loadedAgents = JSON.parse(savedAgents);
       // Update agent statuses based on trial expiry
       const updatedAgents = loadedAgents.map(updateAgentStatus);
       setAgents(updatedAgents);
+    } else {
+      // Initialize with mock data if no saved data exists
+      setAgents(mockAgents);
+      localStorage.setItem('lagosrentals_agents', JSON.stringify(mockAgents));
     }
     if (savedCurrentAgent) {
       const loadedAgent = JSON.parse(savedCurrentAgent);
@@ -67,6 +75,18 @@ function App() {
     localStorage.setItem('lagosrentals_viewCounts', JSON.stringify(clientViewCounts));
   }, [clientViewCounts]);
 
+  // Listen for navigation events from footer
+  useEffect(() => {
+    const handleNavigateEvent = (event: CustomEvent) => {
+      setCurrentPage(event.detail);
+    };
+
+    window.addEventListener('navigate', handleNavigateEvent as EventListener);
+    return () => {
+      window.removeEventListener('navigate', handleNavigateEvent as EventListener);
+    };
+  }, []);
+
   const handleNavigate = (page: string) => {
     setCurrentPage(page);
   };
@@ -83,7 +103,10 @@ function App() {
       trialExpiresAt: trialExpiry.toISOString()
     };
     
+    // Add to agents list in main app state
     setAgents(prev => [...prev, newAgent]);
+    
+    // Set as current agent
     setCurrentAgent(newAgent);
   };
 
@@ -108,6 +131,8 @@ function App() {
 
   const handleClearCurrentAgent = () => {
     setCurrentAgent(null);
+    // Also remove from localStorage when logging out
+    localStorage.removeItem('lagosrentals_currentAgent');
   };
 
   const renderPage = () => {
@@ -145,13 +170,15 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation
-        currentPage={currentPage}
-        onNavigate={handleNavigate}
-        currentAgent={currentAgent}
-      />
+      {currentPage !== 'add-listing' && (
+        <Navigation
+          currentPage={currentPage}
+          onNavigate={handleNavigate}
+          currentAgent={currentAgent}
+        />
+      )}
       {renderPage()}
-      <Footer />
+      {currentPage !== 'add-listing' && <Footer />}
     </div>
   );
 }

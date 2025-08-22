@@ -34,6 +34,7 @@ interface AgentDashboardProps {
   notifications: Notification[];
   onAddListing: (listing: Omit<Property, 'id' | 'createdAt'>) => void;
   onUpdateAgent: (agent: Agent) => void;
+  onLogout: () => void;
 }
 
 const AgentDashboard: React.FC<AgentDashboardProps> = ({
@@ -42,7 +43,8 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({
   leads,
   notifications,
   onAddListing,
-  onUpdateAgent
+  onUpdateAgent,
+  onLogout
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddListing, setShowAddListing] = useState(false);
@@ -238,6 +240,17 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({
               <Plus className="h-5 w-5" />
               <span className="font-medium">Add Property</span>
             </button>
+          
+          <button
+            onClick={() => {
+             setActiveTab('listings');
+              setIsMobileMenuOpen(false);
+            }}
+            className="w-full flex items-center space-x-3 p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium mt-3"
+          >
+            <LogOut className="h-5 w-5" />
+            <span className="font-medium">Logout</span>
+          </button>
           </div>
         </div>
       </div>
@@ -284,13 +297,24 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({
         
         <div className="pt-4">
           <button
-            onClick={() => setShowAddListing(true)}
+            onClick={() => setActiveTab('listings')}
             className="w-full flex items-center space-x-3 p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Plus className="h-5 w-5" />
             <span className="font-medium">Add Property</span>
           </button>
         </div>
+      </div>
+      
+      {/* Desktop Logout Button */}
+      <div className="p-4 border-t border-gray-100">
+        <button
+          onClick={onLogout}
+          className="w-full flex items-center space-x-3 p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium"
+        >
+          <LogOut className="h-5 w-5" />
+          <span className="font-medium">Logout</span>
+        </button>
       </div>
       
       {unreadNotifications.length > 0 && (
@@ -400,7 +424,7 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({
           <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
           <div className="space-y-3">
             <button
-              onClick={() => setShowAddListing(true)}
+              onClick={() => setActiveTab('listings')}
               className="w-full flex items-center space-x-3 p-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
             >
               <Plus className="h-5 w-5" />
@@ -408,7 +432,7 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('referrals')}
-              className="w-full flex items-center space-x-3 p-3 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors"
+              className="w-full flex items-center space-x-3 p-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors"
             >
               <Link className="h-5 w-5" />
               <span className="font-medium">Share Referral Link</span>

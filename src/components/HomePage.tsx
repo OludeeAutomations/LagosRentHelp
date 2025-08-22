@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Filter, Star, TrendingUp } from 'lucide-react';
-import PropertyCard from './PropertyCard';
+import PropertyCarousel from './PropertyCarousel';
 import { Property, Agent, ClientViewCount } from '../types';
 
 interface HomePageProps {
@@ -18,13 +18,34 @@ const HomePage: React.FC<HomePageProps> = ({ properties, agents, clientViewCount
   const [showSearchBar, setShowSearchBar] = useState(false);
 
   const filteredProperties = properties.filter(property => {
-    const matchesSearch = property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         property.location.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = !searchTerm || 
+                         property.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         property.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = !selectedType || property.propertyType === selectedType;
     const matchesPrice = !priceRange || checkPriceRange(property.price, priceRange);
     
     return matchesSearch && matchesType && matchesPrice;
   });
+
+  // Separate mock properties from agent-added properties
+  const mockPropertyIds = ['1', '2', '3']; // IDs of the original mock properties
+  const agentAddedProperties = properties.filter(p => !mockPropertyIds.includes(p.id));
+  const hasMockProperties = properties.some(p => mockPropertyIds.includes(p.id));
+  
+  // Show mock properties only if no agent properties exist
+  const displayProperties = agentAddedProperties.length > 0 ? agentAddedProperties : properties;
+  
+  // Featured properties logic: randomly select 30% of agent properties as featured
+  const featuredProperties = React.useMemo(() => {
+    if (agentAddedProperties.length === 0) {
+      return properties.filter(p => p.featured); // Use original featured logic for mock data
+    }
+    
+    // For agent properties, randomly select 30% as featured
+    const shuffled = [...agentAddedProperties].sort(() => 0.5 - Math.random());
+    const featuredCount = Math.max(1, Math.ceil(agentAddedProperties.length * 0.3));
+    return shuffled.slice(0, featuredCount);
+  }, [agentAddedProperties, properties]);
 
   const checkPriceRange = (price: number, range: string) => {
     switch (range) {
@@ -36,66 +57,144 @@ const HomePage: React.FC<HomePageProps> = ({ properties, agents, clientViewCount
     }
   };
 
-  const getAgentForProperty = (agentId: string) => {
-    return agents.find(agent => agent.id === agentId);
-  };
-
-  const featuredProperties = properties.filter(p => p.featured);
-
   // Handle atomic hero loading
   React.useEffect(() => {
-    // Atomic loading sequence
-    let videoLoadTimer: NodeJS.Timeout;
-    let fallbackTimer: NodeJS.Timeout;
-
-    const initializeHero = () => {
-      // Wait for video to be ready
-      videoLoadTimer = setTimeout(() => {
-        document.body.classList.add('hero-loaded');
-      }, 800); // Optimized timing for video initialization
-
-      // Fallback safety net
-      fallbackTimer = setTimeout(() => {
-        document.body.classList.add('hero-loaded');
-      }, 2500);
-    };
-
-    // Start initialization immediately
-    initializeHero();
+    // Aggressive video preloading with immediate playback
+    const video = document.querySelector('video');
+    if (video) {
+      // Force immediate loading with aggressive settings
+      video.preload = 'auto';
+      video.load();
+      
+      // Multiple aggressive play attempts
+      const tryPlay = () => {
+        if (video.readyState >= 2) { // HAVE_CURRENT_DATA
+          video.play().catch(() => {
+            const fallbackElement = document.getElementById('fallback-bg');
+            if (fallbackElement) {
+              fallbackElement.style.opacity = '1';
+            }
+          });
+        }
+      };
+      
+      // Immediate play attempts on multiple events
+      video.addEventListener('loadstart', tryPlay);
+      video.addEventListener('canplay', tryPlay);
+      video.addEventListener('loadeddata', tryPlay);
+      video.addEventListener('progress', tryPlay);
+      
+      // Force play attempt immediately
+      setTimeout(tryPlay, 100);
+      
+      // Cleanup
+      return () => {
+        video.removeEventListener('loadstart', tryPlay);
+        video.removeEventListener('canplay', tryPlay);
+        video.removeEventListener('loadeddata', tryPlay);
+        video.removeEventListener('progress', tryPlay);
+      };
+    }
+    
+    // Very fast fallback timer
+    const fallbackTimer = setTimeout(() => {
+      const fallbackElement = document.getElementById('fallback-bg');
+      if (fallbackElement) {
+        fallbackElement.style.opacity = '1';
+      }
+    }, 500); // Reduced to 500ms
     
     return () => {
-      clearTimeout(videoLoadTimer);
       clearTimeout(fallbackTimer);
-      document.body.classList.remove('hero-loaded');
     };
   }, []);
 
   const handleVideoReady = () => {
-    // Video is ready, trigger immediate load
-    document.body.classList.add('hero-loaded');
+    // Video loaded successfully, keep fallback hidden
+    const fallbackElement = document.getElementById('fallback-bg');
+    if (fallbackElement) {
+      fallbackElement.style.opacity = '0';
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section with Animated Background */}
       <section className="hero-section">
-        {/* Crossfade Background Images */}
+        {/* Fullscreen Cloudinary Video Background */}
         <div className="absolute inset-0 overflow-hidden">
-          <div 
-            className="hero-image hero-image-1"
-            style={{
-              backgroundImage: 'url(/gettyimages-691802402-612x612.jpg)'
+          <video
+            className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto transform -translate-x-1/2 -translate-y-1/2 object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster="https://images.pexels.com/photos/1643389/pexels-photo-1643389.jpeg?auto=compress&cs=tinysrgb&w=1920"
+            onLoadedData={handleVideoReady}
+            onLoadStart={() => {
+              const video = document.querySelector('video');
+              if (video) {
+                video.play().catch(() => {
+                  const fallbackElement = document.getElementById('fallback-bg');
+                  if (fallbackElement) {
+                    fallbackElement.style.opacity = '1';
+                  }
+                });
+              }
             }}
-          />
-          <div 
-            className="hero-image hero-image-2"
-            style={{
-              backgroundImage: 'url(/gettyimages-923379128-612x612.jpg)'
+            onLoadedMetadata={() => {
+              const video = document.querySelector('video');
+              if (video) {
+                video.currentTime = 0; // Start from beginning
+                video.play().catch(() => {
+                  const fallbackElement = document.getElementById('fallback-bg');
+                  if (fallbackElement) {
+                    fallbackElement.style.opacity = '1';
+                  }
+                });
+              }
             }}
-          />
+            onCanPlayThrough={() => {
+              const video = document.querySelector('video');
+              if (video) {
+                video.play().catch(() => {
+                  const fallbackElement = document.getElementById('fallback-bg');
+                  if (fallbackElement) {
+                    fallbackElement.style.opacity = '1';
+                  }
+                });
+              }
+            }}
+            onError={() => {
+              const fallbackElement = document.getElementById('fallback-bg');
+              if (fallbackElement) {
+                fallbackElement.style.opacity = '1';
+              }
+            }}
+          >
+            <source 
+              src="https://res.cloudinary.com/dsv4iggkz/video/upload/q_auto:low,w_1280,h_720,c_fill,f_mp4/v1755875417/Newly_Renovated_Room_Parlour_Self_Contain_TO_LET_In_Igbogbo_Baiyeku_Ikorodu_-_200k_Per_Annum._1_wxrz1s.mp4" 
+              type="video/mp4" 
+            />
+            <source 
+              src="https://res.cloudinary.com/dsv4iggkz/video/upload/q_auto:low,w_1280,h_720,c_fill,f_webm/v1755875417/Newly_Renovated_Room_Parlour_Self_Contain_TO_LET_In_Igbogbo_Baiyeku_Ikorodu_-_200k_Per_Annum._1_wxrz1s.webm" 
+              type="video/webm" 
+            />
+            Your browser does not support the video tag.
+          </video>
         </div>
 
-        {/* Dark Overlay */}
+        {/* Fallback Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-0 transition-opacity duration-1000"
+          style={{
+            backgroundImage: 'url(https://res.cloudinary.com/dsv4iggkz/image/upload/v1755879607/istockphoto-1145244310-612x612_yedbps.jpg)'
+          }}
+          id="fallback-bg"
+        />
+
+        {/* Dark Semi-transparent Overlay */}
         <div className="absolute inset-0 bg-black bg-opacity-60"></div>
 
         {/* Hero Content */}
@@ -198,52 +297,52 @@ const HomePage: React.FC<HomePageProps> = ({ properties, agents, clientViewCount
           <div className="hidden md:flex animate-very-slow-infinite-slide-spaced">
             {/* First set of stats */}
             <div className="flex-shrink-0 w-1/4 text-center px-4 md:block">
-              <div className="bg-white rounded-xl p-4 border border-gray-100 hover:border-gray-200 transition-colors duration-300">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white rounded-lg p-3 border border-gray-100 hover:border-gray-200 transition-colors duration-300">
+                <div className="w-6 h-6 bg-blue-100 rounded-md flex items-center justify-center mx-auto mb-2">
+                  <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
                   </svg>
                 </div>
-                <div className="text-2xl font-bold font-heading text-gray-900 mb-1">{properties.length}+</div>
-                <div className="text-sm text-gray-600 font-medium">Active Properties</div>
+                <div className="text-lg font-bold font-heading text-gray-900 mb-1">{properties.length}+</div>
+                <div className="text-xs text-gray-600 font-medium">Active Properties</div>
                 <div className="text-xs text-gray-500">Verified listings</div>
               </div>
             </div>
             <div className="flex-shrink-0 w-1/4 text-center px-4">
-              <div className="bg-white rounded-xl p-4 border border-gray-100 hover:border-gray-200 transition-colors duration-300">
-                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white rounded-lg p-3 border border-gray-100 hover:border-gray-200 transition-colors duration-300">
+                <div className="w-6 h-6 bg-green-100 rounded-md flex items-center justify-center mx-auto mb-2">
+                  <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
-                <div className="text-2xl font-bold font-heading text-gray-900 mb-1">{agents.length}+</div>
-                <div className="text-sm text-gray-600 font-medium">Verified Agents</div>
+                <div className="text-lg font-bold font-heading text-gray-900 mb-1">{agents.length}+</div>
+                <div className="text-xs text-gray-600 font-medium">Verified Agents</div>
                 <div className="text-xs text-gray-500">Professional partners</div>
               </div>
             </div>
             <div className="flex-shrink-0 w-1/4 text-center px-4">
-              <div className="bg-white rounded-xl p-4 border border-gray-100 hover:border-gray-200 transition-colors duration-300">
-                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                  <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white rounded-lg p-3 border border-gray-100 hover:border-gray-200 transition-colors duration-300">
+                <div className="w-6 h-6 bg-purple-100 rounded-md flex items-center justify-center mx-auto mb-2">
+                  <svg className="w-3 h-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <div className="text-2xl font-bold font-heading text-gray-900 mb-1">20+</div>
-                <div className="text-sm text-gray-600 font-medium">Lagos Areas</div>
+                <div className="text-lg font-bold font-heading text-gray-900 mb-1">20+</div>
+                <div className="text-xs text-gray-600 font-medium">Lagos Areas</div>
                 <div className="text-xs text-gray-500">Complete coverage</div>
               </div>
             </div>
             <div className="flex-shrink-0 w-1/4 text-center px-4">
-              <div className="bg-white rounded-xl p-4 border border-gray-100 hover:border-gray-200 transition-colors duration-300">
-                <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                  <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white rounded-lg p-3 border border-gray-100 hover:border-gray-200 transition-colors duration-300">
+                <div className="w-6 h-6 bg-emerald-100 rounded-md flex items-center justify-center mx-auto mb-2">
+                  <svg className="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
-                <div className="text-2xl font-bold font-heading text-gray-900 mb-1">100%</div>
-                <div className="text-sm text-gray-600 font-medium">Trust & Safety</div>
+                <div className="text-lg font-bold font-heading text-gray-900 mb-1">100%</div>
+                <div className="text-xs text-gray-600 font-medium">Trust & Safety</div>
                 <div className="text-xs text-gray-500">Fully verified</div>
               </div>
             </div>
@@ -302,117 +401,117 @@ const HomePage: React.FC<HomePageProps> = ({ properties, agents, clientViewCount
           
           {/* Mobile Stats Grid - 2 cards visible at a time */}
           <div className="md:hidden overflow-hidden">
-            <div className="flex space-x-6 pb-4 animate-very-slow-infinite-slide-spaced" style={{ width: 'max-content' }}>
+            <div className="flex space-x-4 pb-3 animate-very-slow-infinite-slide-spaced" style={{ width: 'max-content' }}>
               {/* Card 1 - Active Properties */}
-              <div className="flex-shrink-0 w-64 text-center">
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:border-gray-200 transition-colors duration-300 shadow-sm">
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex-shrink-0 w-40 text-center">
+                <div className="bg-white rounded-lg p-3 border border-gray-100 hover:border-gray-200 transition-colors duration-300 shadow-sm">
+                  <div className="w-6 h-6 bg-blue-100 rounded-md flex items-center justify-center mx-auto mb-2">
+                    <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
                     </svg>
                   </div>
-                  <div className="text-3xl font-bold font-heading text-gray-900 mb-2">{properties.length}+</div>
-                  <div className="text-base text-gray-600 font-medium mb-1">Active Properties</div>
-                  <div className="text-sm text-gray-500">Verified listings</div>
+                  <div className="text-lg font-bold font-heading text-gray-900 mb-1">{properties.length}+</div>
+                  <div className="text-xs text-gray-600 font-medium mb-1">Active Properties</div>
+                  <div className="text-xs text-gray-500">Verified listings</div>
                 </div>
               </div>
               
               {/* Card 2 - Verified Agents */}
-              <div className="flex-shrink-0 w-64 text-center">
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:border-gray-200 transition-colors duration-300 shadow-sm">
-                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex-shrink-0 w-40 text-center">
+                <div className="bg-white rounded-lg p-3 border border-gray-100 hover:border-gray-200 transition-colors duration-300 shadow-sm">
+                  <div className="w-6 h-6 bg-green-100 rounded-md flex items-center justify-center mx-auto mb-2">
+                    <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
-                  <div className="text-3xl font-bold font-heading text-gray-900 mb-2">{agents.length}+</div>
-                  <div className="text-base text-gray-600 font-medium mb-1">Verified Agents</div>
-                  <div className="text-sm text-gray-500">Professional partners</div>
+                  <div className="text-lg font-bold font-heading text-gray-900 mb-1">{agents.length}+</div>
+                  <div className="text-xs text-gray-600 font-medium mb-1">Verified Agents</div>
+                  <div className="text-xs text-gray-500">Professional partners</div>
                 </div>
               </div>
               
               {/* Card 3 - Lagos Areas */}
-              <div className="flex-shrink-0 w-64 text-center">
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:border-gray-200 transition-colors duration-300 shadow-sm">
-                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex-shrink-0 w-40 text-center">
+                <div className="bg-white rounded-lg p-3 border border-gray-100 hover:border-gray-200 transition-colors duration-300 shadow-sm">
+                  <div className="w-6 h-6 bg-purple-100 rounded-md flex items-center justify-center mx-auto mb-2">
+                    <svg className="w-3 h-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
-                  <div className="text-3xl font-bold font-heading text-gray-900 mb-2">20+</div>
-                  <div className="text-base text-gray-600 font-medium mb-1">Lagos Areas</div>
-                  <div className="text-sm text-gray-500">Complete coverage</div>
+                  <div className="text-lg font-bold font-heading text-gray-900 mb-1">20+</div>
+                  <div className="text-xs text-gray-600 font-medium mb-1">Lagos Areas</div>
+                  <div className="text-xs text-gray-500">Complete coverage</div>
                 </div>
               </div>
               
               {/* Card 4 - Trust & Safety */}
-              <div className="flex-shrink-0 w-64 text-center">
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:border-gray-200 transition-colors duration-300 shadow-sm">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex-shrink-0 w-40 text-center">
+                <div className="bg-white rounded-lg p-3 border border-gray-100 hover:border-gray-200 transition-colors duration-300 shadow-sm">
+                  <div className="w-6 h-6 bg-emerald-100 rounded-md flex items-center justify-center mx-auto mb-2">
+                    <svg className="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                   </div>
-                  <div className="text-3xl font-bold font-heading text-gray-900 mb-2">100%</div>
-                  <div className="text-base text-gray-600 font-medium mb-1">Trust & Safety</div>
-                  <div className="text-sm text-gray-500">Fully verified</div>
+                  <div className="text-lg font-bold font-heading text-gray-900 mb-1">100%</div>
+                  <div className="text-xs text-gray-600 font-medium mb-1">Trust & Safety</div>
+                  <div className="text-xs text-gray-500">Fully verified</div>
                 </div>
               </div>
               
               {/* Duplicate set for seamless loop */}
-              <div className="flex-shrink-0 w-64 text-center">
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:border-gray-200 transition-colors duration-300 shadow-sm">
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex-shrink-0 w-40 text-center">
+                <div className="bg-white rounded-lg p-3 border border-gray-100 hover:border-gray-200 transition-colors duration-300 shadow-sm">
+                  <div className="w-6 h-6 bg-blue-100 rounded-md flex items-center justify-center mx-auto mb-2">
+                    <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
                     </svg>
                   </div>
-                  <div className="text-3xl font-bold font-heading text-gray-900 mb-2">{properties.length}+</div>
-                  <div className="text-base text-gray-600 font-medium mb-1">Active Properties</div>
-                  <div className="text-sm text-gray-500">Verified listings</div>
+                  <div className="text-lg font-bold font-heading text-gray-900 mb-1">{properties.length}+</div>
+                  <div className="text-xs text-gray-600 font-medium mb-1">Active Properties</div>
+                  <div className="text-xs text-gray-500">Verified listings</div>
                 </div>
               </div>
               
-              <div className="flex-shrink-0 w-64 text-center">
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:border-gray-200 transition-colors duration-300 shadow-sm">
-                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex-shrink-0 w-40 text-center">
+                <div className="bg-white rounded-lg p-3 border border-gray-100 hover:border-gray-200 transition-colors duration-300 shadow-sm">
+                  <div className="w-6 h-6 bg-green-100 rounded-md flex items-center justify-center mx-auto mb-2">
+                    <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
-                  <div className="text-3xl font-bold font-heading text-gray-900 mb-2">{agents.length}+</div>
-                  <div className="text-base text-gray-600 font-medium mb-1">Verified Agents</div>
-                  <div className="text-sm text-gray-500">Professional partners</div>
+                  <div className="text-lg font-bold font-heading text-gray-900 mb-1">{agents.length}+</div>
+                  <div className="text-xs text-gray-600 font-medium mb-1">Verified Agents</div>
+                  <div className="text-xs text-gray-500">Professional partners</div>
                 </div>
               </div>
               
-              <div className="flex-shrink-0 w-64 text-center">
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:border-gray-200 transition-colors duration-300 shadow-sm">
-                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex-shrink-0 w-40 text-center">
+                <div className="bg-white rounded-lg p-3 border border-gray-100 hover:border-gray-200 transition-colors duration-300 shadow-sm">
+                  <div className="w-6 h-6 bg-purple-100 rounded-md flex items-center justify-center mx-auto mb-2">
+                    <svg className="w-3 h-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
-                  <div className="text-3xl font-bold font-heading text-gray-900 mb-2">20+</div>
-                  <div className="text-base text-gray-600 font-medium mb-1">Lagos Areas</div>
-                  <div className="text-sm text-gray-500">Complete coverage</div>
+                  <div className="text-lg font-bold font-heading text-gray-900 mb-1">20+</div>
+                  <div className="text-xs text-gray-600 font-medium mb-1">Lagos Areas</div>
+                  <div className="text-xs text-gray-500">Complete coverage</div>
                 </div>
               </div>
               
-              <div className="flex-shrink-0 w-64 text-center">
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:border-gray-200 transition-colors duration-300 shadow-sm">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex-shrink-0 w-40 text-center">
+                <div className="bg-white rounded-lg p-3 border border-gray-100 hover:border-gray-200 transition-colors duration-300 shadow-sm">
+                  <div className="w-6 h-6 bg-emerald-100 rounded-md flex items-center justify-center mx-auto mb-2">
+                    <svg className="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                   </div>
-                  <div className="text-3xl font-bold font-heading text-gray-900 mb-2">100%</div>
-                  <div className="text-base text-gray-600 font-medium mb-1">Trust & Safety</div>
-                  <div className="text-sm text-gray-500">Fully verified</div>
+                  <div className="text-lg font-bold font-heading text-gray-900 mb-1">100%</div>
+                  <div className="text-xs text-gray-600 font-medium mb-1">Trust & Safety</div>
+                  <div className="text-xs text-gray-500">Fully verified</div>
                 </div>
               </div>
             </div>
@@ -423,32 +522,28 @@ const HomePage: React.FC<HomePageProps> = ({ properties, agents, clientViewCount
       {/* Featured Properties */}
       <section id="featured-properties" className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center mb-8">
-            <Star className="h-6 w-6 text-yellow-500 mr-2" />
-            <h2 className="text-3xl font-bold text-gray-900">Featured Properties</h2>
-          </div>
+          {featuredProperties.length > 0 && (
+            <div className="flex items-center mb-8">
+              <Star className="h-6 w-6 text-yellow-500 mr-2" />
+            </div>
+          )}
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredProperties.map(property => {
-              const agent = getAgentForProperty(property.agentId);
-              return agent ? (
-                <PropertyCard key={property.id} property={property} agent={agent} clientViewCounts={clientViewCounts} onUpdateViewCounts={onUpdateViewCounts} />
-              ) : null;
-            })}
-          </div>
+          {featuredProperties.length > 0 && (
+            <PropertyCarousel
+              properties={featuredProperties}
+              agents={agents}
+              clientViewCounts={clientViewCounts}
+              onUpdateViewCounts={onUpdateViewCounts}
+              title="Featured Properties"
+              itemsPerPage={10}
+            />
+          )}
         </div>
       </section>
 
       {/* All Properties */}
       <section id="all-properties" className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center mb-8">
-            <TrendingUp className="h-6 w-6 text-green-500 mr-2" />
-            <h2 className="text-3xl font-bold text-gray-900">
-              All Properties {filteredProperties.length > 0 && `(${filteredProperties.length})`}
-            </h2>
-          </div>
-          
           {filteredProperties.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-gray-400 text-6xl mb-4">🏠</div>
@@ -456,14 +551,14 @@ const HomePage: React.FC<HomePageProps> = ({ properties, agents, clientViewCount
               <p className="text-gray-600">Try adjusting your search criteria</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredProperties.map(property => {
-                const agent = getAgentForProperty(property.agentId);
-                return agent ? (
-                  <PropertyCard key={property.id} property={property} agent={agent} clientViewCounts={clientViewCounts} onUpdateViewCounts={onUpdateViewCounts} />
-                ) : null;
-              })}
-            </div>
+            <PropertyCarousel
+              properties={filteredProperties}
+              agents={agents}
+              clientViewCounts={clientViewCounts}
+              onUpdateViewCounts={onUpdateViewCounts}
+              title={`All Properties (${filteredProperties.length})`}
+              itemsPerPage={10}
+            />
           )}
         </div>
       </section>
@@ -485,9 +580,6 @@ const HomePage: React.FC<HomePageProps> = ({ properties, agents, clientViewCount
         <div className="max-w-4xl mx-auto text-center">
           {/* Header */}
           <div className="mb-16">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-6 shadow-lg">
-              <span className="text-3xl">🛡️</span>
-            </div>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 font-heading">
               Your Safety is Our Priority
             </h2>

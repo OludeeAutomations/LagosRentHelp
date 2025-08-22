@@ -5,22 +5,10 @@ const AboutPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="relative text-white py-20 px-4 overflow-hidden">
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: 'url(/gettyimages-691802402-612x612.jpg)'
-          }}
-        />
-        
-        {/* Dark Overlay for Better Contrast */}
-        <div className="absolute inset-0 bg-black bg-opacity-60"></div>
-        
-        {/* Content */}
+      <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">About LagosRentals</h1>
-          <p className="text-xl md:text-2xl text-blue-100 mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">About LagosRentals</h1>
+          <p className="text-xl md:text-2xl text-gray-700 mb-8">
             Connecting Lagos residents with verified agents and quality affordable housing
           </p>
         </div>
@@ -68,7 +56,7 @@ const AboutPage: React.FC = () => {
       <section className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Choose LagosRentals?</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Choose Lagos Rent Help?</h2>
             <p className="text-lg text-gray-600">We offer unique features designed specifically for the Lagos rental market</p>
           </div>
           

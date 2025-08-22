@@ -38,12 +38,13 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, onNavigate, curren
           {/* Logo */}
           <div 
             onClick={() => onNavigate('home')}
-            className="flex items-center space-x-2 cursor-pointer group"
+            className="flex items-center space-x-3 cursor-pointer group"
           >
-            <Home className="h-8 w-8 text-emerald-500 group-hover:text-emerald-600 transition-colors" />
-            <span className="text-xl font-bold text-white group-hover:text-emerald-100 transition-colors">
-              Lagos Homes
-            </span>
+            <img 
+              src="/Group 39.png" 
+              alt="Lagos Homes Logo" 
+             className="h-[150px] w-[150px] md:h-[200px] md:w-[200px] object-contain group-hover:scale-105 transition-transform duration-200"
+            />
           </div>
 
           {/* Desktop Menu */}

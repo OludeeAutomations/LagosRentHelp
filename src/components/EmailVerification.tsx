@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Mail, ArrowRight, RefreshCw, CheckCircle, AlertCircle, Clock, ArrowLeft } from 'lucide-react';
 import { Agent } from '../types';
 import { GmailService, generateVerificationCode, isCodeExpired } from '../utils/gmailService';
+import AgentRegistrationForm from './AgentRegistrationForm';
 
 interface EmailVerificationProps {
   agent: Agent;
@@ -22,6 +23,62 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error' | 'info'>('info');
   const [timeLeft, setTimeLeft] = useState(180); // 3 minutes in seconds
+  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+
+  // Show initial success message when component mounts
+  useEffect(() => {
+    // Check if email was already sent during registration
+    const sendInitialEmail = async () => {
+      const storedData = localStorage.getItem(`verification_${agent.email}`);
+      if (!storedData) {
+        setMessage('Please wait while we send your verification code...');
+        setMessageType('info');
+        
+        // Generate new code if none exists
+        const newCode = generateVerificationCode();
+        const timestamp = new Date().toISOString();
+        localStorage.setItem(`verification_${agent.email}`, JSON.stringify({
+          code: newCode,
+          timestamp
+        }));
+        
+        // Send email
+        const emailSent = await GmailService.sendVerificationEmail({
+          email: agent.email,
+          code: newCode,
+          name: agent.name
+        });
+        
+        if (emailSent) {
+          setMessage('✅ Verification code sent to your email! Check your inbox and spam folder.');
+          setMessageType('success');
+        } else {
+          setMessage('❌ Failed to send verification email. Please check your EmailJS configuration and try the resend button below.');
+          setMessageType('error');
+        }
+        return;
+      }
+
+      const { code } = JSON.parse(storedData);
+      
+      // Try to send email
+      const emailSent = await GmailService.sendVerificationEmail({
+        email: agent.email,
+        code: code,
+        name: agent.name
+      });
+      
+      if (emailSent) {
+        setMessage('✅ Verification code sent to your email! Check your inbox and spam folder.');
+        setMessageType('success');
+      } else {
+        setMessage('❌ Failed to send verification email. Please check your EmailJS configuration and click "Resend" to try again.');
+        setMessageType('error');
+      }
+    };
+    
+    sendInitialEmail();
+  }, [agent.email, agent.name]);
 
   // Countdown timer
   useEffect(() => {
@@ -92,12 +149,12 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
       // Clean up verification data
       localStorage.removeItem(`verification_${agent.email}`);
 
-      setMessage('Email verified successfully! Redirecting to dashboard...');
+      setMessage('Email verified successfully! Please complete your registration...');
       setMessageType('success');
 
-      // Redirect to dashboard after short delay
+      // Show registration form after short delay
       setTimeout(() => {
-        onVerificationComplete(verifiedAgent);
+        setShowRegistrationForm(true);
       }, 1500);
 
     } catch (error) {
@@ -123,7 +180,7 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
         timestamp
       }));
 
-      // Send email via Resend
+      // Send email via Gmail SMTP
       const emailSent = await GmailService.sendVerificationEmail({
         email: agent.email,
         code: newCode,
@@ -131,12 +188,12 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
       });
 
       if (emailSent) {
-        setMessage('New verification code sent to your email via Gmail SMTP!');
+        setMessage('New verification code sent to your email!');
         setMessageType('success');
         setTimeLeft(180); // Reset timer to 3 minutes
         onResendCode(agent, newCode);
       } else {
-        setMessage('Failed to send verification email via Gmail SMTP. Please try again.');
+        setMessage('Failed to send verification email. Please try again.');
         setMessageType('error');
       }
 
@@ -152,6 +209,35 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
     const value = e.target.value.replace(/\D/g, '').slice(0, 6);
     setVerificationCode(value);
   };
+
+  const handleRegistrationComplete = (updatedAgent: Agent) => {
+    // Ensure the agent is properly saved before completing registration
+    const savedAgents = JSON.parse(localStorage.getItem('lagosrentals_saved_agents') || '[]');
+    const existingAgentIndex = savedAgents.findIndex((a: Agent) => a.email === updatedAgent.email);
+    
+    if (existingAgentIndex >= 0) {
+      // Update existing agent
+      savedAgents[existingAgentIndex] = updatedAgent;
+    } else {
+      // Add new agent
+      savedAgents.push(updatedAgent);
+    }
+    
+    localStorage.setItem('lagosrentals_saved_agents', JSON.stringify(savedAgents));
+    
+    console.log('=== EMAIL VERIFICATION COMPLETE DEBUG ===');
+    console.log('Agent registration completed and saved:', updatedAgent);
+    console.log('All saved agents after verification:', savedAgents);
+    
+    onVerificationComplete(updatedAgent);
+  };
+
+  // Show registration form after email verification
+  if (showRegistrationForm) {
+    return (
+      <AgentRegistrationForm agent={agent} onRegistrationComplete={handleRegistrationComplete} />
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-blue-50">
@@ -191,11 +277,14 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
             <div className="flex items-start space-x-3">
               <Mail className="h-5 w-5 text-blue-600 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-blue-900 mb-1">
-                  Check your email
+                <p className="text-sm font-medium text-blue-900 mb-2">
+                  Check Your Email
                 </p>
-                <p className="text-sm text-blue-800">
-                  Please paste the 6-digit verification code here to verify your account and access your dashboard.
+                <p className="text-sm text-blue-800 mb-2">
+                  We've sent a 6-digit verification code to your email address. Please check your inbox and spam folder.
+                </p>
+                <p className="text-xs text-blue-700">
+                  <strong>Note:</strong> If email service is not configured, the code will appear in browser console for demo purposes.
                 </p>
               </div>
             </div>
@@ -306,8 +395,14 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
 
           {/* Help */}
           <div className="mt-8 p-4 bg-gray-50 rounded-xl">
-            <p className="text-xs text-gray-600 text-center">
-              <strong>Having trouble?</strong> Check your spam folder or contact our support team for assistance.
+            <p className="text-xs text-gray-600 text-center mb-1">
+              <strong>Didn't receive the email?</strong>
+            </p>
+            <p className="text-xs text-gray-500 text-center mb-2">
+              Check your spam/junk folder, or click "Resend verification code" above.
+            </p>
+            <p className="text-xs text-gray-400 text-center">
+              For demo purposes, if email service is not configured, check browser console (F12).
             </p>
           </div>
         </div>

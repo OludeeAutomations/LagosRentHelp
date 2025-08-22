@@ -26,22 +26,10 @@ const ContactPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="relative text-white py-20 px-4 overflow-hidden">
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: 'url(/gettyimages-691802402-612x612.jpg)'
-          }}
-        />
-        
-        {/* Dark Overlay for Better Contrast */}
-        <div className="absolute inset-0 bg-black bg-opacity-60"></div>
-        
-        {/* Content */}
+      <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">Get in Touch</h1>
-          <p className="text-xl md:text-2xl text-blue-100">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">Get in Touch</h1>
+          <p className="text-xl md:text-2xl text-gray-700">
             We're here to help with all your Lagos rental needs
           </p>
         </div>
@@ -161,8 +149,8 @@ const ContactPage: React.FC = () => {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-1">Phone Support</h4>
-                      <p className="text-gray-600 mb-2">+234-800-RENTALS</p>
-                      <p className="text-sm text-gray-500">Mon-Fri: 8AM - 6PM WAT</p>
+                      <p className="text-gray-600 mb-2">+234 708 229 3054</p>
+                      <p className="text-sm text-gray-500">Available 24/7</p>
                     </div>
                   </div>
                   
@@ -172,7 +160,7 @@ const ContactPage: React.FC = () => {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-1">WhatsApp Support</h4>
-                      <p className="text-gray-600 mb-2">+234-812-345-6789</p>
+                      <p className="text-gray-600 mb-2">+234 708 229 3054</p>
                       <p className="text-sm text-gray-500">Quick responses, 7 days a week</p>
                     </div>
                   </div>
@@ -183,7 +171,7 @@ const ContactPage: React.FC = () => {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-1">Email Support</h4>
-                      <p className="text-gray-600 mb-2">support@lagosrentals.ng</p>
+                      <p className="text-gray-600 mb-2">admin@lagosrenthelp.ng</p>
                       <p className="text-sm text-gray-500">We reply within 24 hours</p>
                     </div>
                   </div>
@@ -195,38 +183,11 @@ const ContactPage: React.FC = () => {
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-1">Office Address</h4>
                       <p className="text-gray-600 mb-2">
-                        123 Allen Avenue<br />
-                        Ikeja, Lagos State<br />
+                        Lagos State<br />
                         Nigeria
                       </p>
                     </div>
                   </div>
-                </div>
-              </div>
-              
-              <div className="bg-blue-50 rounded-2xl p-8 border border-blue-200">
-                <div className="flex items-center mb-4">
-                  <Clock className="h-6 w-6 text-blue-600 mr-2" />
-                  <h3 className="text-xl font-bold text-gray-900">Business Hours</h3>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-700">Monday - Friday</span>
-                    <span className="font-medium text-gray-900">8:00 AM - 6:00 PM</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-700">Saturday</span>
-                    <span className="font-medium text-gray-900">9:00 AM - 4:00 PM</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-700">Sunday</span>
-                    <span className="font-medium text-gray-900">Closed</span>
-                  </div>
-                </div>
-                <div className="mt-4 p-3 bg-blue-100 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Emergency Support:</strong> For urgent issues, WhatsApp us anytime!
-                  </p>
                 </div>
               </div>
               

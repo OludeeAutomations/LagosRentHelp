@@ -5,6 +5,7 @@ import EmailVerification from './EmailVerification';
 import AgentDashboard from './AgentDashboard';
 import { Agent, Property } from '../types';
 import { generateReferralCode, processReferralSignup, extractReferralCode } from '../utils/referralLogic';
+import { updateAgentStatus } from '../utils/trialLogic';
 
 interface AddListingPageProps {
   currentAgent: Agent | null;
@@ -26,7 +27,9 @@ const AddListingPage: React.FC<AddListingPageProps> = ({
   const mockNotifications = [];
 
   const handleLogin = (agent: Agent) => {
-    onUpdateAgent(agent);
+    // Update the current agent in the main app state
+    const updatedAgent = updateAgentStatus(agent);
+    onUpdateAgent(updatedAgent);
   };
 
   const handleRegister = (agentData: Omit<Agent, 'id' | 'registeredAt' | 'referralCode'>) => {
@@ -73,13 +76,17 @@ const AddListingPage: React.FC<AddListingPageProps> = ({
   // If no current agent, show auth page
   if (!currentAgent) {
     return (
-      <AgentAuth onLogin={handleLogin} onRegister={handleRegister} />
+      <AgentAuth 
+        onLogin={handleLogin} 
+        onRegister={handleRegister} 
+        onBack={() => window.history.back()}
+      />
     );
   }
 
   // If agent is logged in and verified, show dashboard
   return (
-    <div className="pt-32">
+    <div>
       <AgentDashboard
         agent={currentAgent}
         properties={[]} // Will be passed from parent
@@ -87,6 +94,7 @@ const AddListingPage: React.FC<AddListingPageProps> = ({
         notifications={mockNotifications}
         onAddListing={onAddListing}
         onUpdateAgent={onUpdateAgent}
+        onLogout={onClearCurrentAgent}
       />
     </div>
   );
