@@ -74,7 +74,7 @@ const Header: React.FC = () => {
           <Link to="/" className="flex items-center space-x-2">
             <img src="/icon.png" alt="" className=" w-14" />
 
-            <span className="text-xl font-bold text-[#0E0E0E] hidden sm:block">
+            <span className="text-xl font-bold text-[#0E0E0E] block">
               LagosRentHelp
             </span>
           </Link>

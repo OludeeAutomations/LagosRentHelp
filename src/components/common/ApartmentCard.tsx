@@ -135,7 +135,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             {title}
           </h3>
           <div className="text-right">
-            <div className="text-2xl font-bold text-green-600">
+            <div className=" text-xs md:text-sm font-bold text-green-600">
               {formatPrice(price)}
             </div>
             <div className="text-sm text-gray-500">{getRentalPeriod()}</div>
