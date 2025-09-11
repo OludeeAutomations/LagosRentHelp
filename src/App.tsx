@@ -1,186 +1,232 @@
-import React, { useState, useEffect } from 'react';
-import Navigation from './components/Navigation';
-import HomePage from './components/HomePage';
-import AddListingPage from './components/AddListingPage';
-import AboutPage from './components/AboutPage';
-import ContactPage from './components/ContactPage';
-import AgentProfile from './components/AgentProfile';
-import Footer from './components/Footer';
-import { mockProperties, mockAgents } from './data/mockData';
-import { Property, Agent, ClientViewCount } from './types';
-import { updateAgentStatus } from './utils/trialLogic';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import Layout from "./layout";
+import Home from "./page/home/Home";
+import Contact from "./page/contact/Contact";
+import About from "./page/about/About";
+import SearchPage from "./page/searchPage/SearchPage";
+import Features from "./page/feature/Features";
+import PrivacyPolicy from "./page/privacyPolicy/PrivacyPolicy";
+import TermsOfService from "./page/terms/Terms";
+import ScrollToTop from "./components/common/ScrollToTop";
+import FAQPage from "./page/faq/Faq";
+import Register from "./page/register/Register";
+import Login from "./page/login/Login";
+import AgentDashboard from "./page/agents/dashboard/AgentDashboard";
+import AgentOnboarding from "./page/agents/Auth/AgentOnboarding";
+import CreateListing from "./page/agents/dashboard/CreatList";
+import AgentDashboardLayout from "./page/agents/dashboard/DashboardLayout";
+import PropertyDetails from "./page/propertiesDetails/PropertyDetails";
+import AgentProfile from "./page/agents/AgentContact";
+//import AgentListings from "./page/agents/dashboard/AgentListings";
+//import AgentLeads from "./page/agents/dashboard/AgentLeads";
+//import AgentMessages from "./page/agents/dashboard/AgentMessages";
+//import AgentAnalytics from "./page/agents/dashboard/AgentAnalytics";
+//import AgentSettings from "./page/agents/dashboard/AgentSettings";
+//import AgentAppointments from "./page/agents/dashboard/AgentAppointments";
+//import AgentCommissions from "./page/agents/dashboard/AgentCommissions";
 
-function App() {
-  const [currentPage, setCurrentPage] = useState('home');
-  const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
-  const [properties, setProperties] = useState<Property[]>(mockProperties);
-  const [agents, setAgents] = useState<Agent[]>(mockAgents);
-  const [clientViewCounts, setClientViewCounts] = useState<ClientViewCount[]>([]);
-
-  // Load data from localStorage on component mount
-  useEffect(() => {
-    const savedProperties = localStorage.getItem('lagosrentals_properties');
-    const savedAgents = localStorage.getItem('lagosrentals_agents');
-    const savedCurrentAgent = localStorage.getItem('lagosrentals_currentAgent');
-    const savedViewCounts = localStorage.getItem('lagosrentals_viewCounts');
-    
-    if (savedProperties) {
-      setProperties(JSON.parse(savedProperties));
-    } else {
-      // Initialize with mock data if no saved data exists
-      setProperties(mockProperties);
-      localStorage.setItem('lagosrentals_properties', JSON.stringify(mockProperties));
-    }
-    if (savedAgents) {
-      const loadedAgents = JSON.parse(savedAgents);
-      // Update agent statuses based on trial expiry
-      const updatedAgents = loadedAgents.map(updateAgentStatus);
-      setAgents(updatedAgents);
-    } else {
-      // Initialize with mock data if no saved data exists
-      setAgents(mockAgents);
-      localStorage.setItem('lagosrentals_agents', JSON.stringify(mockAgents));
-    }
-    if (savedCurrentAgent) {
-      const loadedAgent = JSON.parse(savedCurrentAgent);
-      setCurrentAgent(updateAgentStatus(loadedAgent));
-    }
-    if (savedViewCounts) {
-      setClientViewCounts(JSON.parse(savedViewCounts));
-    }
-  }, []);
-
-  // Save to localStorage whenever state changes
-  useEffect(() => {
-    localStorage.setItem('lagosrentals_properties', JSON.stringify(properties));
-  }, [properties]);
-
-  useEffect(() => {
-    localStorage.setItem('lagosrentals_agents', JSON.stringify(agents));
-  }, [agents]);
-
-  useEffect(() => {
-    if (currentAgent) {
-      const updatedAgent = updateAgentStatus(currentAgent);
-      localStorage.setItem('lagosrentals_currentAgent', JSON.stringify(updatedAgent));
-      if (updatedAgent.status !== currentAgent.status) {
-        setCurrentAgent(updatedAgent);
-      }
-    } else {
-      localStorage.removeItem('lagosrentals_currentAgent');
-    }
-  }, [currentAgent]);
-
-  useEffect(() => {
-    localStorage.setItem('lagosrentals_viewCounts', JSON.stringify(clientViewCounts));
-  }, [clientViewCounts]);
-
-  // Listen for navigation events from footer
-  useEffect(() => {
-    const handleNavigateEvent = (event: CustomEvent) => {
-      setCurrentPage(event.detail);
-    };
-
-    window.addEventListener('navigate', handleNavigateEvent as EventListener);
-    return () => {
-      window.removeEventListener('navigate', handleNavigateEvent as EventListener);
-    };
-  }, []);
-
-  const handleNavigate = (page: string) => {
-    setCurrentPage(page);
-  };
-
-  const handleAgentRegister = (agentData: Omit<Agent, 'id' | 'registeredAt'>) => {
-    const now = new Date();
-    const trialExpiry = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
-    
-    const newAgent: Agent = {
-      ...agentData,
-      id: 'agent_' + Date.now(),
-      registeredAt: now.toISOString(),
-      status: 'trial',
-      trialExpiresAt: trialExpiry.toISOString()
-    };
-    
-    // Add to agents list in main app state
-    setAgents(prev => [...prev, newAgent]);
-    
-    // Set as current agent
-    setCurrentAgent(newAgent);
-  };
-
-  const handleAddListing = (listingData: Omit<Property, 'id' | 'createdAt'>) => {
-    const newListing: Property = {
-      ...listingData,
-      id: 'prop_' + Date.now(),
-      createdAt: new Date().toISOString()
-    };
-    
-    setProperties(prev => [...prev, newListing]);
-  };
-
-  const handleUpdateAgent = (updatedAgent: Agent) => {
-    setAgents(prev => prev.map(agent => 
-      agent.id === updatedAgent.id ? updatedAgent : agent
-    ));
-    if (currentAgent?.id === updatedAgent.id) {
-      setCurrentAgent(updatedAgent);
-    }
-  };
-
-  const handleClearCurrentAgent = () => {
-    setCurrentAgent(null);
-    // Also remove from localStorage when logging out
-    localStorage.removeItem('lagosrentals_currentAgent');
-  };
-
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'home':
-        return <HomePage properties={properties} agents={agents} clientViewCounts={clientViewCounts} onUpdateViewCounts={setClientViewCounts} onNavigate={handleNavigate} />;
-      case 'add-listing':
-        return (
-          <AddListingPage
-            currentAgent={currentAgent}
-            onAgentRegister={handleAgentRegister}
-            onAddListing={handleAddListing}
-            onUpdateAgent={handleUpdateAgent}
-            onClearCurrentAgent={handleClearCurrentAgent}
-          />
-        );
-      case 'about':
-        return <AboutPage />;
-      case 'contact':
-        return <ContactPage />;
-      case 'profile':
-        return currentAgent ? (
-          <AgentProfile
-            agent={currentAgent}
-            properties={properties}
-            allAgents={agents}
-          />
-        ) : (
-          <HomePage properties={properties} agents={agents} />
-        );
-      default:
-        return <HomePage properties={properties} agents={agents} />;
-    }
-  };
-
+const App: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {currentPage !== 'add-listing' && (
-        <Navigation
-          currentPage={currentPage}
-          onNavigate={handleNavigate}
-          currentAgent={currentAgent}
-        />
-      )}
-      {renderPage()}
-      {currentPage !== 'add-listing' && <Footer />}
-    </div>
+    <Router>
+      <AnimatePresence mode="wait">
+        <ScrollToTop />
+        <Routes>
+          {/* Public Routes with Main Layout */}
+          <Route
+            path="/"
+            element={
+              <Layout>
+                <Home />
+              </Layout>
+            }
+          />
+          <Route
+            path="/contact"
+            element={
+              <Layout>
+                <Contact />
+              </Layout>
+            }
+          />
+          <Route
+            path="/about"
+            element={
+              <Layout>
+                <About />
+              </Layout>
+            }
+          />
+          <Route
+            path="/search"
+            element={
+              <Layout>
+                <SearchPage />
+              </Layout>
+            }
+          />
+          <Route
+            path="/features"
+            element={
+              <Layout>
+                <Features />
+              </Layout>
+            }
+          />
+          <Route
+            path="/privacy"
+            element={
+              <Layout>
+                <PrivacyPolicy />
+              </Layout>
+            }
+          />
+          <Route
+            path="/terms"
+            element={
+              <Layout>
+                <TermsOfService />
+              </Layout>
+            }
+          />
+          <Route
+            path="/faq"
+            element={
+              <Layout>
+                <FAQPage />
+              </Layout>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <Layout>
+                <Register />
+              </Layout>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <Layout>
+                <Login />
+              </Layout>
+            }
+          />
+          <Route
+            path="/properties/:id"
+            element={
+              <Layout>
+                <PropertyDetails />
+              </Layout>
+            }
+          />
+          // In your router setup (e.g., App.tsx or router.tsx)
+          <Route
+            path="/agents/:agentId"
+            element={
+              <Layout>
+                <AgentProfile />
+              </Layout>
+            }
+          />
+          <Route
+            path="/agent-signup"
+            element={
+              <Layout>
+                <AgentOnboarding />
+              </Layout>
+            }
+          />
+          {/* Agent Dashboard Routes with Agent Layout */}
+          <Route
+            path="/agent-dashboard"
+            element={
+              <AgentDashboardLayout title="Dashboard">
+                <AgentDashboard />
+              </AgentDashboardLayout>
+            }
+          />
+          {/*  <Route
+            path="/agent-dashboard/listings"
+            element={
+              <AgentDashboardLayout title="My Listings">
+                <AgentListings />
+              </AgentDashboardLayout>
+            }
+          />
+          <Route
+            path="/agent-dashboard/leads"
+            element={
+              <AgentDashboardLayout title="Leads">
+                <AgentLeads />
+              </AgentDashboardLayout>
+            }
+          />
+          <Route
+            path="/agent-dashboard/messages"
+            element={
+              <AgentDashboardLayout title="Messages">
+                <AgentMessages />
+              </AgentDashboardLayout>
+            }
+          />
+          <Route
+            path="/agent-dashboard/analytics"
+            element={
+              <AgentDashboardLayout title="Analytics">
+                <AgentAnalytics />
+              </AgentDashboardLayout>
+            }
+          />
+          <Route
+            path="/agent-dashboard/appointments"
+            element={
+              <AgentDashboardLayout title="Appointments">
+                <AgentAppointments />
+              </AgentDashboardLayout>
+            }
+          />
+          <Route
+            path="/agent-dashboard/commissions"
+            element={
+              <AgentDashboardLayout title="Commissions">
+                <AgentCommissions />
+              </AgentDashboardLayout>
+            }
+          />
+          <Route
+            path="/agent-dashboard/settings"
+            element={
+              <AgentDashboardLayout title="Settings">
+                <AgentSettings />
+              </AgentDashboardLayout>
+            }
+          />
+*/}
+          {/* Create Listing - This could be in either layout depending on your design */}
+          <Route
+            path="/create-listing"
+            element={
+              <AgentDashboardLayout title="Create Listing">
+                <CreateListing />
+              </AgentDashboardLayout>
+            }
+          />
+          {/* 404 Page - Keep this at the end */}
+          <Route
+            path="*"
+            element={
+              <Layout>
+                <div>Page Not Found</div>
+              </Layout>
+            }
+          />
+        </Routes>
+      </AnimatePresence>
+    </Router>
   );
-}
+};
 
 export default App;
