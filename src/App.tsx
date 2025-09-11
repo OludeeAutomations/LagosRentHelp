@@ -19,6 +19,7 @@ import CreateListing from "./page/agents/dashboard/CreatList";
 import AgentDashboardLayout from "./page/agents/dashboard/DashboardLayout";
 import PropertyDetails from "./page/propertiesDetails/PropertyDetails";
 import AgentProfile from "./page/agents/AgentContact";
+import ComingSoonPage from "./page/ComingSoonPage";
 //import AgentListings from "./page/agents/dashboard/AgentListings";
 //import AgentLeads from "./page/agents/dashboard/AgentLeads";
 //import AgentMessages from "./page/agents/dashboard/AgentMessages";
@@ -219,7 +220,7 @@ const App: React.FC = () => {
             path="*"
             element={
               <Layout>
-                <div>Page Not Found</div>
+                <ComingSoonPage />
               </Layout>
             }
           />
