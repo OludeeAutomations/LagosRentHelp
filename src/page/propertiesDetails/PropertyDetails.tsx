@@ -37,6 +37,7 @@ import { toast } from "sonner";
 import { useAgentStore } from "@/stores/agentStore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Property } from "@/types";
+import { useAmenities } from "@/hooks/useAmenities";
 
 const PropertyDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,6 +51,7 @@ const PropertyDetails: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showAgentModal, setShowAgentModal] = useState(false);
+  const amenities = useAmenities(property?.amenities);
 
   useEffect(() => {
     console.log("URL ID:", id);
@@ -362,7 +364,7 @@ const PropertyDetails: React.FC = () => {
 
               <TabsContent value="features" className="pt-4">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {property.amenities?.map((amenity: string, index: number) => (
+                  {amenities.map((amenity: string, index: number) => (
                     <div
                       key={index}
                       className="flex items-center text-gray-700">

@@ -11,6 +11,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Property } from "@/types"; // Import Agent type
+import { useAmenities } from "@/hooks/useAmenities";
 
 interface ApartmentCardProps {
   property: Property;
@@ -36,7 +37,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
     bathrooms,
     area,
     images,
-    amenities,
+    amenities: rawAmenities,
     listingType,
     isFeatured,
     status,
@@ -44,6 +45,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
   } = property;
 
   const mainImage = images?.[0] || "/placeholder-property.jpg";
+  const amenities = useAmenities(rawAmenities);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("en-NG", {

@@ -33,12 +33,12 @@ const Footer: React.FC = () => {
             </p>
             <div className="flex space-x-4">
               <a
-                href="#"
+                href="https://www.facebook.com/lagosrenthelp"
                 className="text-white hover:text-[#129B36] transition-colors">
                 <Facebook className="h-5 w-5" />
               </a>
               <a
-                href="#"
+                href="https://x.com/lagos_rent?t=wwcqSDsWXvP3_KhYnKIZIg&s=09"
                 className="text-white hover:text-[#129B36] transition-colors">
                 <Twitter className="h-5 w-5" />
               </a>
@@ -155,7 +155,7 @@ const Footer: React.FC = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-5 w-5 text-[#129B36] flex-shrink-0" />
-                <p className="text-white">info@LagosRentHelp.com</p>
+                <p className="text-white">info@lagosrenthelp.ng</p>
               </div>
               <div className="flex items-center space-x-3">
                 <MessageCircle className="h-5 w-5 text-[#129B36] flex-shrink-0" />

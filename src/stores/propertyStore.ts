@@ -52,6 +52,7 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
   getPropertyById: async (id: string): Promise<Property | null> => {
     try {
       const response = await propertyService.getById(id);
+      console.log("Single property response:", response.data);
       return response.data;
     } catch (error: unknown) {
       const errorMessage =
@@ -230,6 +231,8 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await propertyService.getAll(filters);
+      console.log("Raw API response:", response.data);
+
       set({
         properties: response.data,
         filteredProperties: response.data,
