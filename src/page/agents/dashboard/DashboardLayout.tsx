@@ -24,6 +24,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AgentProfileResponse } from "@/types";
+import { canAgentListProperties } from "@/utils/agentUtils";
 
 interface AgentDashboardLayoutProps {
   children: React.ReactNode;
@@ -42,12 +43,41 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const canCreateListing =
+    agentData?.agent && canAgentListProperties(agentData.agent);
 
   useEffect(() => {
     if (user?.id) {
       loadAgentData(user.id);
     }
   }, [user?.id]);
+  const getSubscriptionStatus = () => {
+    if (!agentData?.agent) return "Loading...";
+
+    const { agent } = agentData;
+
+    if (agent.verificationStatus !== "verified") {
+      return "Not Verified";
+    }
+
+    if (agent.freeListingWeeks > 0) {
+      return `Free Weeks: ${agent.freeListingWeeks}`;
+    }
+
+    if (agent.subscription?.status === "trial") {
+      const daysLeft = Math.ceil(
+        (new Date(agent.subscription.trialEndsAt).getTime() - Date.now()) /
+          (1000 * 60 * 60 * 24)
+      );
+      return `Trial: ${daysLeft} days left`;
+    }
+
+    if (agent.subscription?.status === "active") {
+      return "Active Subscription";
+    }
+
+    return "Subscription Required";
+  };
 
   const loadAgentData = async (agentId: string) => {
     setIsLoading(true);
@@ -158,8 +188,9 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
                 <p className="text-sm text-muted-foreground truncate">
                   {user?.email}
                 </p>
+
                 <p className="text-xs text-muted-foreground capitalize">
-                  Verified Agent
+                  {getSubscriptionStatus()}
                 </p>
               </div>
             </div>
@@ -186,18 +217,33 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
             {agentNavigationItems.map((item, index) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.href;
+              const isDisabled =
+                item.href === "/create-listing" && !canCreateListing;
 
               return (
                 <Link
                   key={index}
-                  to={item.href}
+                  to={isDisabled ? "#" : item.href}
+                  onClick={(e) => {
+                    if (isDisabled) {
+                      e.preventDefault();
+                      toast.info(
+                        agentData?.agent.verificationStatus !== "verified"
+                          ? "Please verify your account first"
+                          : "Please subscribe to create listings"
+                      );
+                    }
+                  }}
                   className={`flex items-center space-x-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-200 ${
                     isActive
                       ? "bg-primary text-primary-foreground"
+                      : isDisabled
+                      ? "text-muted-foreground opacity-50 cursor-not-allowed"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}>
                   <Icon className="h-5 w-5" />
                   <span>{item.label}</span>
+                  {isDisabled && <span className="text-xs ml-2">🔒</span>}
                 </Link>
               );
             })}
@@ -256,9 +302,6 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
                   </p>
                   <p className="text-sm text-muted-foreground truncate">
                     {user?.email}
-                  </p>
-                  <p className="text-xs text-muted-foreground capitalize">
-                    Verified Agent
                   </p>
                 </div>
               </div>

@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { agentService } from "@/services/agentService";
 import { leadService } from "@/services/leadService";
 import { AgentProfileResponse } from "@/types";
+import { canAgentListProperties } from "@/utils/agentUtils";
 
 const AgentDashboard: React.FC = () => {
   const { user } = useAuthStore();
@@ -41,6 +42,8 @@ const AgentDashboard: React.FC = () => {
   const [agentData, setAgentData] = useState<AgentProfileResponse | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [recentLeads, setRecentLeads] = useState<any[]>([]);
+  const canCreateListing =
+    agentData?.agent && canAgentListProperties(agentData.agent);
 
   useEffect(() => {
     if (user?.id) {
@@ -282,10 +285,18 @@ const AgentDashboard: React.FC = () => {
                 <Button
                   asChild
                   variant="outline"
-                  className="h-auto py-6 flex-col gap-2">
-                  <Link to="/create-listing">
+                  className="h-auto py-6 flex-col gap-2"
+                  disabled={!canCreateListing}>
+                  <Link to={canCreateListing ? "/create-listing" : "#"}>
                     <Plus className="h-8 w-8 text-primary" />
                     <span>Create Listing</span>
+                    {!canCreateListing && (
+                      <span className="text-xs text-muted-foreground mt-1">
+                        {agentData?.agent.verificationStatus !== "verified"
+                          ? "Verify your account first"
+                          : "Subscription required"}
+                      </span>
+                    )}
                   </Link>
                 </Button>
                 <Button
@@ -417,6 +428,39 @@ const AgentDashboard: React.FC = () => {
           </AlertDescription>
         </Alert>
       )}
+      {agentData?.agent.verificationStatus === "pending" && (
+        <Alert className="mb-6 bg-yellow-100 border-yellow-300">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Verification in Progress</AlertTitle>
+          <AlertDescription>
+            Your agent verification is being reviewed. You'll be able to create
+            listings once verified.
+            {agentData.agent.subscription?.status ===
+              "pending_verification" && (
+              <span className="block mt-1">
+                You'll get 2 weeks free listing after verification.
+              </span>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+      {agentData?.agent.verificationStatus === "verified" &&
+        !canCreateListing && (
+          <Alert className="mb-6 bg-orange-100 border-orange-300">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Subscription Required</AlertTitle>
+            <AlertDescription>
+              Your free trial has ended. Please subscribe to continue creating
+              listings.
+              {agentData.agent.freeListingWeeks > 0 && (
+                <span className="block mt-1">
+                  You have {agentData.agent.freeListingWeeks} free week(s) from
+                  referrals available.
+                </span>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
     </div>
   );
 };

@@ -50,9 +50,22 @@ export const agentService = {
 
     return response.json();
   },
+  getSubscriptionStatus: async (): Promise<ApiResponse<any>> => {
+    return api.get("/agents/subscription/status");
+  },
 
+  applyReferralCode: async (code: string): Promise<ApiResponse<void>> => {
+    return api.post("/agents/referral/apply", { referralCode: code });
+  },
+
+  validateReferralCode: async (
+    code: string
+  ): Promise<ApiResponse<{ agentName: string }>> => {
+    return api.get(`/agents/referral/validate?code=${code}`);
+  },
   // optional if you still want a standalone stats fetch
   getStats: async (agentId: string): Promise<ApiResponse<AgentStats>> => {
     return api.get<AgentStats>(`/agents/${agentId}/stats`);
   },
 };
+// Add to your agentService

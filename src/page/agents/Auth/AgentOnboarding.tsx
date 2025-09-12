@@ -35,6 +35,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import ReferralCodeInput from "@/components/common/ReferralCodeInput";
 
 // Updated schema without FileList validation for files
 const onboardingSchema = z.object({
@@ -102,6 +103,7 @@ const AgentOnboarding: React.FC = () => {
       URL.revokeObjectURL(idPhotoPreview);
     }
   };
+  const [referralCode, setReferralCode] = useState("");
 
   const onSubmit = async (data: OnboardingForm) => {
     if (!user || !governmentIdFile || !idPhotoFile) return;
@@ -116,7 +118,9 @@ const AgentOnboarding: React.FC = () => {
       formData.append("whatsappNumber", data.whatsappNumber);
       formData.append("governmentId", governmentIdFile);
       formData.append("idPhoto", idPhotoFile);
-
+      if (referralCode) {
+        formData.append("referralCode", referralCode);
+      }
       await submitAgentApplication(formData);
 
       toast.success("Application submitted successfully!");
@@ -265,7 +269,10 @@ const AgentOnboarding: React.FC = () => {
                     </FormItem>
                   )}
                 />
-
+                <ReferralCodeInput
+                  onReferralValidated={(name, code) => setReferralCode(code)}
+                  onReferralRemoved={() => setReferralCode("")}
+                />
                 {/* Government ID */}
                 <div className="space-y-2">
                   <Label htmlFor="governmentId">Government Issued ID *</Label>

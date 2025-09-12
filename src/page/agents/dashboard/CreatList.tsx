@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   MapPin,
   DollarSign,
@@ -42,7 +42,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 // Schema definition with proper amenities array validation
 const createListingSchema = z.object({
@@ -139,6 +139,45 @@ const CreateListing: React.FC = () => {
       currentAmenities.filter((amenity) => amenity !== amenityToRemove)
     );
   };
+  useEffect(() => {
+    if (agent && !agent.canListProperties()) {
+      if (agent.verificationStatus !== "verified") {
+        toast.error("Please verify your agent account first");
+        navigate("/agent-dashboard");
+      } else {
+        toast.error(
+          "Your subscription has expired. Please subscribe to create listings"
+        );
+        navigate("/agent-dashboard/subscription");
+      }
+    }
+  }, [agent, navigate]);
+
+  if (!agent || !agent.canListProperties()) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Access Denied</CardTitle>
+            <CardDescription>
+              {agent?.verificationStatus !== "verified"
+                ? "Please verify your agent account to create listings"
+                : "Please subscribe to create listings"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild>
+              <Link to="/agent-dashboard">
+                {agent?.verificationStatus !== "verified"
+                  ? "Check Verification Status"
+                  : "View Subscription Options"}
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // In your CreateListing component, modify the onSubmit function:
   const onSubmit = async (data: CreateListingForm) => {

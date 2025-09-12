@@ -77,6 +77,9 @@ export interface Property {
 }
 
 export interface Agent {
+  freeListingWeeks: number;
+  subscription: any;
+  canListProperties: any;
   id: string;
   userId: string; // Reference to User
   bio?: string;
