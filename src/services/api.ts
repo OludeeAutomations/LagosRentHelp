@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://lagos-rent-help-backend.vercel.app/api";
+const API_BASE_URL = "https://lagos-rent-help-backend.vercel.app/api";
 
 export interface ApiResponse<T> {
   success: boolean;
