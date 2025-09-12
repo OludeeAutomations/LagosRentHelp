@@ -82,7 +82,7 @@ const PropertySections: React.FC<PropertySectionsProps> = ({
         <SectionHeader
           title="Featured Properties"
           subtitle="Discover our curated selection of premium properties"
-          viewAllLink="/properties"
+          viewAllLink="/search"
         />
         <PropertyGrid properties={allProperties.slice(0, 8)} />
       </section>
@@ -92,7 +92,7 @@ const PropertySections: React.FC<PropertySectionsProps> = ({
         <SectionHeader
           title="Properties for Rent"
           subtitle="Find your perfect long-term rental home"
-          viewAllLink="/properties?listingType=rent"
+          viewAllLink="/search?listingType=rent"
         />
         <PropertyGrid properties={rentProperties.slice(0, 4)} />
       </section>
@@ -102,7 +102,7 @@ const PropertySections: React.FC<PropertySectionsProps> = ({
         <SectionHeader
           title="Short-let Apartments"
           subtitle="Perfect for vacations and short stays"
-          viewAllLink="/properties?listingType=short-let"
+          viewAllLink="/search?listingType=short-let"
         />
         <PropertyGrid properties={shortLetProperties.slice(0, 4)} />
       </section>
@@ -122,7 +122,7 @@ const PropertySections: React.FC<PropertySectionsProps> = ({
             asChild
             size="lg"
             className="bg-green-600 hover:bg-green-700 text-white">
-            <Link to="/properties">Browse All Properties</Link>
+            <Link to="/search">Browse All Properties</Link>
           </Button>
           <Button
             variant="outline"
