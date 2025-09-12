@@ -45,7 +45,6 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
   const location = useLocation();
   const canCreateListing =
     agentData?.agent && canAgentListProperties(agentData.agent);
-
   useEffect(() => {
     if (user?.id) {
       loadAgentData(user.id);
@@ -64,7 +63,10 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
       return `Free Weeks: ${agent.freeListingWeeks}`;
     }
 
-    if (agent.subscription?.status === "trial") {
+    if (
+      agent.subscription?.status === "trial" &&
+      agent.subscription.trialEndsAt
+    ) {
       const daysLeft = Math.ceil(
         (new Date(agent.subscription.trialEndsAt).getTime() - Date.now()) /
           (1000 * 60 * 60 * 24)
@@ -227,10 +229,13 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
                   onClick={(e) => {
                     if (isDisabled) {
                       e.preventDefault();
+                      const canList = canAgentListProperties(agentData?.agent);
                       toast.info(
                         agentData?.agent.verificationStatus !== "verified"
                           ? "Please verify your account first"
-                          : "Please subscribe to create listings"
+                          : canList
+                          ? "Please subscribe to create listings"
+                          : "Your subscription has expired"
                       );
                     }
                   }}

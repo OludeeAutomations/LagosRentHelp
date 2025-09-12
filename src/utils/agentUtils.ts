@@ -1,5 +1,21 @@
 // src/utils/agentUtils.ts
-export const canAgentListProperties = (agent: any): boolean => {
+export interface AgentSubscription {
+  status: string;
+  trialStartsAt?: string | Date;
+  trialEndsAt?: string | Date;
+  currentPeriodEnd?: string | Date;
+  plan?: string;
+}
+
+export interface FrontendAgent {
+  verificationStatus: string;
+  freeListingWeeks?: number;
+  subscription?: AgentSubscription;
+}
+
+export const canAgentListProperties = (
+  agent: FrontendAgent | null | undefined
+): boolean => {
   if (!agent || agent.verificationStatus !== "verified") {
     return false;
   }
@@ -7,7 +23,7 @@ export const canAgentListProperties = (agent: any): boolean => {
   const now = new Date();
 
   // If they have free weeks from referrals
-  if (agent.freeListingWeeks > 0) {
+  if (agent.freeListingWeeks && agent.freeListingWeeks > 0) {
     return true;
   }
 
@@ -33,4 +49,35 @@ export const canAgentListProperties = (agent: any): boolean => {
   }
 
   return false;
+};
+
+export const getAgentSubscriptionStatus = (
+  agent: FrontendAgent | null | undefined
+): string => {
+  if (!agent) return "Loading...";
+
+  if (agent.verificationStatus !== "verified") {
+    return "Not Verified";
+  }
+
+  if (agent.freeListingWeeks && agent.freeListingWeeks > 0) {
+    return `Free Weeks: ${agent.freeListingWeeks}`;
+  }
+
+  if (
+    agent.subscription?.status === "trial" &&
+    agent.subscription.trialEndsAt
+  ) {
+    const daysLeft = Math.ceil(
+      (new Date(agent.subscription.trialEndsAt).getTime() - Date.now()) /
+        (1000 * 60 * 60 * 24)
+    );
+    return `Trial: ${daysLeft} days left`;
+  }
+
+  if (agent.subscription?.status === "active") {
+    return "Active Subscription";
+  }
+
+  return "Subscription Required";
 };
