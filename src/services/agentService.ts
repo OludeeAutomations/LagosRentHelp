@@ -32,7 +32,9 @@ export const agentService = {
     formData: FormData
   ): Promise<ApiResponse<Agent>> => {
     const token = localStorage.getItem("token");
-    const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const baseURL =
+      import.meta.env.VITE_API_URL ||
+      "https://lagos-rent-help-backend.vercel.app/api";
 
     const response = await fetch(`${baseURL}/agents/apply`, {
       method: "POST",
