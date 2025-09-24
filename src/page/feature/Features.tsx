@@ -11,6 +11,7 @@ import {
   Zap,
   Heart,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Features: React.FC = () => {
   const features = [
@@ -251,12 +252,15 @@ const Features: React.FC = () => {
             Join thousands of satisfied users who have found their perfect home
             through our platform
           </motion.p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="bg-[#129B36] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#41614F] transition-colors duration-300">
-            Create Account
-          </motion.button>
+          <Link to="/register">
+            {" "}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-[#129B36] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#41614F] transition-colors duration-300">
+              Create Account
+            </motion.button>
+          </Link>
         </div>
       </section>
     </div>

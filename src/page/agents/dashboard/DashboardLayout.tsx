@@ -14,6 +14,7 @@ import {
   Building,
   Calendar,
   DollarSign,
+  HomeIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { agentService } from "@/services/agentService";
@@ -391,6 +392,16 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
               </div>
 
               <div className="flex items-center space-x-4">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  asChild
+                  className="relative">
+                  <Link to="/">
+                    <HomeIcon className="h-5 w-5" />
+                    Back to Home
+                  </Link>
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"

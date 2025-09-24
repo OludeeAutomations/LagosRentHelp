@@ -20,6 +20,10 @@ import AgentDashboardLayout from "./page/agents/dashboard/DashboardLayout";
 import PropertyDetails from "./page/propertiesDetails/PropertyDetails";
 import AgentProfile from "./page/agents/AgentContact";
 import ComingSoonPage from "./page/ComingSoonPage";
+import MyListingsPage from "./page/agents/dashboard/MyListingsPage";
+import LeadsPage from "./page/agents/dashboard/LeadsPage";
+import SettingsPage from "./page/agents/dashboard/SettingsPage";
+import NotificationsPage from "./page/agents/dashboard/NotificationsPage";
 //import AgentListings from "./page/agents/dashboard/AgentListings";
 //import AgentLeads from "./page/agents/dashboard/AgentLeads";
 //import AgentMessages from "./page/agents/dashboard/AgentMessages";
@@ -149,11 +153,11 @@ const App: React.FC = () => {
               </AgentDashboardLayout>
             }
           />
-          {/*  <Route
+          <Route
             path="/agent-dashboard/listings"
             element={
               <AgentDashboardLayout title="My Listings">
-                <AgentListings />
+                <MyListingsPage />
               </AgentDashboardLayout>
             }
           />
@@ -161,11 +165,11 @@ const App: React.FC = () => {
             path="/agent-dashboard/leads"
             element={
               <AgentDashboardLayout title="Leads">
-                <AgentLeads />
+                <LeadsPage />
               </AgentDashboardLayout>
             }
           />
-          <Route
+          {/*  <Route
             path="/agent-dashboard/messages"
             element={
               <AgentDashboardLayout title="Messages">
@@ -196,16 +200,23 @@ const App: React.FC = () => {
                 <AgentCommissions />
               </AgentDashboardLayout>
             }
-          />
+          />*/}
           <Route
             path="/agent-dashboard/settings"
             element={
               <AgentDashboardLayout title="Settings">
-                <AgentSettings />
+                <SettingsPage />
               </AgentDashboardLayout>
             }
           />
-*/}
+          <Route
+            path="/agent-dashboard/notifications"
+            element={
+              <AgentDashboardLayout title="notifications">
+                <NotificationsPage />
+              </AgentDashboardLayout>
+            }
+          />
           {/* Create Listing - This could be in either layout depending on your design */}
           <Route
             path="/create-listing"
