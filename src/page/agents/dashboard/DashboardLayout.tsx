@@ -391,7 +391,7 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
                 </h1>
               </div>
 
-              <div className="flex items-center space-x-8">
+              <div className="flex items-center space-x-10">
                 <Button
                   variant="ghost"
                   size="icon"
