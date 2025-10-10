@@ -68,7 +68,7 @@ const Register: React.FC = () => {
       await registerUser(registrationData);
 
       toast.success("Account created successfully!");
-      navigate("/login");
+      navigate("/verify-email");
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to create account";

@@ -24,6 +24,12 @@ import MyListingsPage from "./page/agents/dashboard/MyListingsPage";
 import LeadsPage from "./page/agents/dashboard/LeadsPage";
 import SettingsPage from "./page/agents/dashboard/SettingsPage";
 import NotificationsPage from "./page/agents/dashboard/NotificationsPage";
+import EmailVerificationNotice from "./page/register/EmailVerificationNotice";
+import VerifyEmailResult from "./page/register/VerifyEmailResult";
+import ForgotPassword from "./page/login/ForgotPassword";
+import ResetPassword from "./page/login/ResetPassword";
+import { Toaster } from "sonner";
+import Favorites from "./page/user/Favorites";
 //import AgentListings from "./page/agents/dashboard/AgentListings";
 //import AgentLeads from "./page/agents/dashboard/AgentLeads";
 //import AgentMessages from "./page/agents/dashboard/AgentMessages";
@@ -35,6 +41,9 @@ import NotificationsPage from "./page/agents/dashboard/NotificationsPage";
 const App: React.FC = () => {
   return (
     <Router>
+
+      <Toaster position="top-right" />
+
       <AnimatePresence mode="wait">
         <ScrollToTop />
         <Routes>
@@ -71,6 +80,16 @@ const App: React.FC = () => {
               </Layout>
             }
           />
+          
+            <Route
+            path="/dashboard/favorites"
+            element={
+              <Layout>
+                <Favorites />
+              </Layout>
+            }
+          />
+
           <Route
             path="/features"
             element={
@@ -79,6 +98,8 @@ const App: React.FC = () => {
               </Layout>
             }
           />
+
+          
           <Route
             path="/privacy"
             element={
@@ -116,6 +137,40 @@ const App: React.FC = () => {
             element={
               <Layout>
                 <Login />
+              </Layout>
+            }
+          />
+            <Route
+            path="/verify-email"
+            element={
+              <Layout>
+                <EmailVerificationNotice />
+              </Layout>
+            }
+          />
+               <Route
+            path="/verify-email/:userId/:token"
+            element={
+              <Layout>
+                <VerifyEmailResult />
+              </Layout>
+            }
+          />
+
+           <Route
+            path="/forgot-password"
+            element={
+              <Layout>
+                <ForgotPassword />
+              </Layout>
+            }
+          />
+
+            <Route
+            path="/reset-password/:userId/:token"
+            element={
+              <Layout>
+                <ResetPassword />
               </Layout>
             }
           />

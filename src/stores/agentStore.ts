@@ -113,6 +113,7 @@ export const useAgentStore = create<AgentState>()((set, get) => ({
   fetchAgentById: async (agentId: string) => {
     set({ loading: true, error: null });
     try {
+      console.log("Getting agent profile")
       const response = await agentService.getProfile(agentId);
       set({
         agentProfile: response.data,

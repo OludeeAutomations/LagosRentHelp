@@ -243,6 +243,7 @@ export interface ApiResponse<T> {
 
 export interface LoginResponse {
   user: User;
+  agentData:Agent;
   token: string;
   refreshToken: string;
   expiresIn: number;

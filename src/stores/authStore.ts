@@ -80,11 +80,17 @@ export const useAuthStore = create<AuthState>()(
             localStorage.setItem("user", JSON.stringify(response.data.user));
           }
 
+          if(response.data.user.role == "agent"){
+            set({ agent: response.data.agentData, loading: false });
+          }
+
           set({
             user: response.data.user,
             isAuthenticated: true,
             loading: false,
           });
+
+          
         } catch (error: unknown) {
           const errorMessage =
             error instanceof Error ? error.message : "Failed to login";
@@ -174,11 +180,16 @@ export const useAuthStore = create<AuthState>()(
 
           // Update localStorage with latest user data
           localStorage.setItem("user", JSON.stringify(userResponse.data));
-
+          
+          if(userResponse.data.role == "agent"){
+            set({ agent: userResponse.agentData, loading: false });
+          }
           set({
             user: userResponse.data,
             loading: false,
           });
+
+        
         } catch (error: unknown) {
           const errorMessage =
             error instanceof Error

@@ -18,6 +18,16 @@ export const userService = {
     return api.delete<User>(`/users/favorites/${propertyId}`);
   },
 
+ fetchFavorites: async (): Promise<any> => {
+    try {
+      const response = await api.get<{ success: boolean; data: Property[] }>("/users/favorites");
+      return response.data; // <- the array of favorite properties
+    } catch (error) {
+      console.error("Failed to fetch favorites:", error);
+      return [];
+    }
+  },
+
   getFavorites: async (): Promise<string[]> => {
     try {
       const response = await api.get<User>("/users/profile");
