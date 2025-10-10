@@ -59,6 +59,11 @@ const AgentOnboarding: React.FC = () => {
   const { user, submitAgentApplication } = useAuthStore();
   const navigate = useNavigate();
 
+  const dojahAppId = import.meta.env.VITE_DOJAH_APP_ID;
+  const dojahPublicKey = import.meta.env.VITE_DOJAH_APP_ID
+  const dojahWidgetId = import.meta.env.VITE_DOJAH_WIDGET_ID
+
+
   const form = useForm<OnboardingForm>({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
@@ -148,11 +153,11 @@ const AgentOnboarding: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <Dojah
-          appID="68ddab0f220df2d4a1d57513"
-          publicKey="test_pk_JQt9lFi6J2GOFs67BqXS5jsck"
+          appID = {dojahAppId}
+          publicKey = {dojahPublicKey}
           type="custom"
           config={{
-            widget_id: "68e7b2ca31d31df5c7409af5", // replace with your Dojah EasyOnboard widget ID
+            widget_id: dojahWidgetId, // replace with your Dojah EasyOnboard widget ID
           }}
           metadata={{
             user_id: user.id,

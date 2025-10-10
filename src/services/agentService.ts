@@ -36,9 +36,7 @@ export const agentService = {
   ): Promise<ApiResponse<Agent>> => {
     const token = localStorage.getItem("token");
     const baseURL =
-      import.meta.env.VITE_API_URL ||
-      "http://localhost:500/api";
-
+      import.meta.env.VITE_API_BASE_URL 
     const response = await fetch(`${baseURL}/agents/apply`, {
       method: "POST",
       headers: {
