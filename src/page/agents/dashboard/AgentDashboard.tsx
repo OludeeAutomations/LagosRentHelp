@@ -297,7 +297,7 @@ const AgentDashboard: React.FC = () => {
                     )}
                   </Link>
                 </Button>
-                <Button
+                {/* <Button
                   asChild
                   variant="outline"
                   className="h-auto py-6 flex-col gap-2">
@@ -305,7 +305,7 @@ const AgentDashboard: React.FC = () => {
                     <MessageCircle className="h-8 w-8 text-blue-500" />
                     <span>View Messages</span>
                   </Link>
-                </Button>
+                </Button> */}
                 <Button
                   asChild
                   variant="outline"

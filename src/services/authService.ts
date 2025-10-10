@@ -56,6 +56,24 @@ export const authService = {
     }
   },
 
+  verifyEmail: async (userId: string, token: string) => {
+    return api.get(`/auth/verify-email/${userId}/${token}`);
+  },
+
+  sendPasswordResetEmail: async (email:string) => {
+    return api.post(`/auth/forgot-password`,{email:email});
+  },
+
+  resetPassword: async (userId: string, token: string,password:string) => {
+    return api.post(`/auth/reset-password`,{
+      userId,
+      token,
+      password,
+      confirmPassword : password
+    });
+  },
+
+
   logout: (): void => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");

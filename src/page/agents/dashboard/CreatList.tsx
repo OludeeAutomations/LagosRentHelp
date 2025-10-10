@@ -140,20 +140,23 @@ const CreateListing: React.FC = () => {
     );
   };
   useEffect(() => {
-    if (agent && !agent.canListProperties()) {
+    console.log("---------------------------------------")
+    console.log(agent)
+    if (agent) {
       if (agent.verificationStatus !== "verified") {
         toast.error("Please verify your agent account first");
         navigate("/agent-dashboard");
-      } else {
-        toast.error(
-          "Your subscription has expired. Please subscribe to create listings"
-        );
-        navigate("/agent-dashboard/subscription");
       }
+      //  else {
+      //   toast.error(
+      //     "Your subscription has expired. Please subscribe to create listings"
+      //   );
+      //   navigate("/agent-dashboard/subscription");
+      // }
     }
   }, [agent, navigate]);
 
-  if (!agent || !agent.canListProperties()) {
+  if (!agent) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -201,7 +204,7 @@ const CreateListing: React.FC = () => {
       formData.append("area", data.area.toString());
 
       // Append amenities as JSON string
-      formData.append("amenities", JSON.stringify(data.amenities || []));
+      formData.append("amenities", JSON.stringify(data.amenities));
 
       // Debug: Check what's being sent
       console.log("FormData contents:");

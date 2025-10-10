@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { MapPin, Bed, Bath, Square, Heart, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { propertyService } from "@/services/propertyService";
+
 import {
   Card,
   CardContent,
@@ -82,6 +84,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
     if (onFavorite) {
+      propertyService.toggleFavorite(_id)
       onFavorite(_id);
     }
   };

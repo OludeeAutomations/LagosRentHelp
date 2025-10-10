@@ -17,6 +17,9 @@ export const agentService = {
     return api.get<AgentProfileResponse>(`/agents/${agentId}`);
   },
 
+ fetchProfile: async (): Promise<ApiResponse<Agent[]>> => {
+    return api.get<Agent[]>("/agents/profile");
+  },
   updateProfile: async (
     agentId: string,
     updates: Partial<Agent>
@@ -34,7 +37,7 @@ export const agentService = {
     const token = localStorage.getItem("token");
     const baseURL =
       import.meta.env.VITE_API_URL ||
-      "https://lagos-rent-help-backend.vercel.app/api";
+      "http://localhost:500/api";
 
     const response = await fetch(`${baseURL}/agents/apply`, {
       method: "POST",

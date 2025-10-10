@@ -107,22 +107,22 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
     { icon: Plus, label: "Create Listing", href: "/create-listing" },
     { icon: Building, label: "My Listings", href: "/agent-dashboard/listings" },
     { icon: Users, label: "Leads", href: "/agent-dashboard/leads" },
-    {
-      icon: MessageCircle,
-      label: "Messages",
-      href: "/agent-dashboard/messages",
-    },
+    // {
+    //   icon: MessageCircle,
+    //   label: "Messages",
+    //   href: "/agent-dashboard/messages",
+    // },
     { icon: BarChart3, label: "Analytics", href: "/agent-dashboard/analytics" },
-    {
-      icon: Calendar,
-      label: "Appointments",
-      href: "/agent-dashboard/appointments",
-    },
-    {
-      icon: DollarSign,
-      label: "Commissions",
-      href: "/agent-dashboard/commissions",
-    },
+    // {
+    //   icon: Calendar,
+    //   label: "Appointments",
+    //   href: "/agent-dashboard/appointments",
+    // },
+    // {
+    //   icon: DollarSign,
+    //   label: "Commissions",
+    //   href: "/agent-dashboard/commissions",
+    // },
     { icon: Settings, label: "Settings", href: "/agent-dashboard/settings" },
   ];
 

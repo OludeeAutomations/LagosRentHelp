@@ -4,7 +4,6 @@ import {
   User,
   Shield,
   MapPin,
-  FileText,
   AlertCircle,
   Phone,
   Home,
@@ -36,8 +35,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import ReferralCodeInput from "@/components/common/ReferralCodeInput";
+import Dojah from "react-dojah";
 
-// Updated schema without FileList validation for files
+// ✅ Validation schema
 const onboardingSchema = z.object({
   bio: z
     .string()
@@ -51,12 +51,10 @@ type OnboardingForm = z.infer<typeof onboardingSchema>;
 
 const AgentOnboarding: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [governmentIdFile, setGovernmentIdFile] = useState<File | null>(null);
   const [idPhotoFile, setIdPhotoFile] = useState<File | null>(null);
-  const [governmentIdPreview, setGovernmentIdPreview] = useState<string | null>(
-    null
-  );
   const [idPhotoPreview, setIdPhotoPreview] = useState<string | null>(null);
+  const [referralCode, setReferralCode] = useState("");
+  const [showDojah, setShowDojah] = useState(false);
 
   const { user, submitAgentApplication } = useAuthStore();
   const navigate = useNavigate();
@@ -70,72 +68,61 @@ const AgentOnboarding: React.FC = () => {
     },
   });
 
-  const handleGovernmentIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setGovernmentIdFile(file);
-      const url = URL.createObjectURL(file);
-      setGovernmentIdPreview(url);
-    }
-  };
-
+  // ✅ Handle photo upload
   const handleIdPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setIdPhotoFile(file);
-      const url = URL.createObjectURL(file);
-      setIdPhotoPreview(url);
-    }
-  };
-
-  const removeGovernmentId = () => {
-    setGovernmentIdFile(null);
-    setGovernmentIdPreview(null);
-    if (governmentIdPreview) {
-      URL.revokeObjectURL(governmentIdPreview);
+      setIdPhotoPreview(URL.createObjectURL(file));
     }
   };
 
   const removeIdPhoto = () => {
+    if (idPhotoPreview) URL.revokeObjectURL(idPhotoPreview);
     setIdPhotoFile(null);
     setIdPhotoPreview(null);
-    if (idPhotoPreview) {
-      URL.revokeObjectURL(idPhotoPreview);
-    }
   };
-  const [referralCode, setReferralCode] = useState("");
 
+  // ✅ Submit agent application
   const onSubmit = async (data: OnboardingForm) => {
-    if (!user || !governmentIdFile || !idPhotoFile) return;
+    if (!user || !idPhotoFile) return;
 
     setIsSubmitting(true);
-
     try {
-      // Create FormData for file upload
       const formData = new FormData();
       formData.append("bio", data.bio);
       formData.append("address", data.address);
       formData.append("whatsappNumber", data.whatsappNumber);
-      formData.append("governmentId", governmentIdFile);
       formData.append("idPhoto", idPhotoFile);
-      if (referralCode) {
-        formData.append("referralCode", referralCode);
-      }
+      if (referralCode) formData.append("referralCode", referralCode);
+
       await submitAgentApplication(formData);
 
       toast.success("Application submitted successfully!");
-      navigate("/agent-dashboard");
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to submit application";
-      toast.error(errorMessage);
+      setShowDojah(true); // move to KYC step
+    } catch (error) {
+      console.log(error)
+      setShowDojah(false); // move to KYC step
+      toast.error("Failed to submit application. Please try again.");
       console.error("Agent onboarding error:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Check if user is logged in - if not, show access denied message
+  // ✅ Handle Dojah response
+  const handleDojahResponse = (eventType: string, data: any) => {
+    console.log("Dojah Event:", eventType, data);
+    if (eventType === "success") {
+      toast.success("KYC verification successful!");
+      navigate("/agent-dashboard");
+    } else if (eventType === "error") {
+      toast.error("KYC verification failed. Please try again.");
+      // navigate("/agent-dashboard");
+    }
+  };
+
+  // ✅ Ensure user is logged in
   if (!user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -156,10 +143,30 @@ const AgentOnboarding: React.FC = () => {
     );
   }
 
-  // Simple layout without dashboard for onboarding
+  // ✅ Show Dojah verification widget
+  if (showDojah) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Dojah
+          appID="68ddab0f220df2d4a1d57513"
+          publicKey="test_pk_JQt9lFi6J2GOFs67BqXS5jsck"
+          type="custom"
+          config={{
+            widget_id: "68e7b2ca31d31df5c7409af5", // replace with your Dojah EasyOnboard widget ID
+          }}
+          metadata={{
+            user_id: user.id,
+          }}
+          response={handleDojahResponse}
+        />
+      </div>
+    );
+  }
+
+  // ✅ Main onboarding form
   return (
     <div className="min-h-screen bg-background">
-      {/* Simple Header */}
+      {/* Header */}
       <header className="bg-white border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -176,31 +183,27 @@ const AgentOnboarding: React.FC = () => {
         </div>
       </header>
 
+      {/* Body */}
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Verification Notice */}
         <Alert className="mb-6">
           <Shield className="h-4 w-4" />
           <AlertTitle>Verification Process</AlertTitle>
           <AlertDescription>
-            Your verification documents will be reviewed within 24-48 hours.
-            Once approved, you'll receive 2 free listings to start with.
+            Your verification photo will be reviewed within 24–48 hours. Once
+            approved, you'll receive 2 free listings to start with.
           </AlertDescription>
         </Alert>
 
-        {/* Onboarding Form */}
         <Card>
           <CardHeader>
             <CardTitle>Complete Your Agent Profile</CardTitle>
             <CardDescription>
-              Please provide the following information to become a verified
-              agent.
+              Provide the following information to become a verified agent.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 {/* Bio */}
                 <FormField
                   control={form.control}
@@ -212,7 +215,7 @@ const AgentOnboarding: React.FC = () => {
                         <div className="relative">
                           <User className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                           <Textarea
-                            placeholder="Tell us about your experience as a real estate agent..."
+                            placeholder="Tell us about your experience as an agent..."
                             className="pl-10 min-h-[120px]"
                             disabled={isSubmitting}
                             {...field}
@@ -247,7 +250,7 @@ const AgentOnboarding: React.FC = () => {
                   )}
                 />
 
-                {/* WhatsApp Number */}
+                {/* WhatsApp */}
                 <FormField
                   control={form.control}
                   name="whatsappNumber"
@@ -269,58 +272,13 @@ const AgentOnboarding: React.FC = () => {
                     </FormItem>
                   )}
                 />
+
                 <ReferralCodeInput
                   onReferralValidated={(name, code) => setReferralCode(code)}
                   onReferralRemoved={() => setReferralCode("")}
                 />
-                {/* Government ID */}
-                <div className="space-y-2">
-                  <Label htmlFor="governmentId">Government Issued ID *</Label>
-                  <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center">
-                    <input
-                      type="file"
-                      accept=".jpg,.jpeg,.png,.pdf"
-                      id="governmentId"
-                      className="hidden"
-                      onChange={handleGovernmentIdChange}
-                      disabled={isSubmitting}
-                    />
-                    <label htmlFor="governmentId" className="cursor-pointer">
-                      <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-foreground font-medium mb-2">
-                        Upload Government ID
-                      </p>
-                      <p className="text-muted-foreground text-sm">
-                        Driver's license, national ID, or passport
-                      </p>
-                      {governmentIdPreview && (
-                        <div className="mt-4 relative">
-                          <img
-                            src={governmentIdPreview}
-                            alt="Government ID preview"
-                            className="max-h-32 mx-auto rounded-lg"
-                          />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
-                            onClick={removeGovernmentId}
-                            disabled={isSubmitting}>
-                            <AlertCircle className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      )}
-                    </label>
-                  </div>
-                  {!governmentIdFile && (
-                    <p className="text-sm text-destructive">
-                      Government ID is required
-                    </p>
-                  )}
-                </div>
 
-                {/* ID Photo */}
+                {/* Photo Upload */}
                 <div className="space-y-2">
                   <Label htmlFor="idPhoto">Recent Photo of Yourself *</Label>
                   <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center">
@@ -344,7 +302,7 @@ const AgentOnboarding: React.FC = () => {
                         <div className="mt-4 relative">
                           <img
                             src={idPhotoPreview}
-                            alt="ID photo preview"
+                            alt="Preview"
                             className="max-h-32 mx-auto rounded-lg"
                           />
                           <Button
@@ -353,7 +311,8 @@ const AgentOnboarding: React.FC = () => {
                             size="sm"
                             className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
                             onClick={removeIdPhoto}
-                            disabled={isSubmitting}>
+                            disabled={isSubmitting}
+                          >
                             <AlertCircle className="h-3 w-3" />
                           </Button>
                         </div>
@@ -367,11 +326,12 @@ const AgentOnboarding: React.FC = () => {
                   )}
                 </div>
 
-                {/* Submit Button */}
+                {/* Submit */}
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={isSubmitting || !governmentIdFile || !idPhotoFile}>
+                  disabled={isSubmitting || !idPhotoFile}
+                >
                   {isSubmitting
                     ? "Submitting for Verification..."
                     : "Submit for Verification"}

@@ -66,15 +66,17 @@ const PropertyDetails: React.FC = () => {
       setIsLoading(true);
 
       try {
-        const existingProperty = properties.find(
-          (p) => p._id === id || p._id === id
-        );
+        // const existingProperty = properties.find(
+        //   (p) => p._id === id || p._id === id
+        // );
 
-        if (existingProperty) {
-          console.log("Found property in store:", existingProperty);
-          setProperty(existingProperty);
-        } else {
-          console.log("Property not in store, fetching from API...");
+        // if (existingProperty) {
+        //   console.log("Found property in store:", existingProperty);
+        //   setProperty(existingProperty);
+        // } else {
+       
+        // }
+           console.log("Property not in store, fetching from API...");
           const propertyData = await getPropertyById(id);
           if (propertyData) {
             console.log("Fetched property from API:", propertyData);
@@ -82,7 +84,6 @@ const PropertyDetails: React.FC = () => {
           } else {
             console.error("Failed to fetch property from API");
           }
-        }
       } catch (error) {
         console.error("Error fetching property:", error);
       } finally {
@@ -105,19 +106,20 @@ const PropertyDetails: React.FC = () => {
 
   // Handle WhatsApp message
   const handleWhatsAppClick = () => {
-    if (!agent?.whatsappNumber) {
+    if (!property?.agentId.whatsappNumber) {
       toast.error("Agent WhatsApp number not available");
       return;
     }
 
     const message = `Hello, I'm interested in your property: ${property?.title}`;
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${agent.whatsappNumber}?text=${encodedMessage}`;
+    const whatsappUrl = `https://wa.me/${property?.agentId.whatsappNumber}?text=${encodedMessage}`;
     window.open(whatsappUrl, "_blank");
   };
 
   // Toggle favorite status
   const handleToggleFavorite = () => {
+    console.log("Adding to properties")
     if (!user) {
       toast.error("Please log in to save favorites");
       return;
@@ -425,10 +427,10 @@ const PropertyDetails: React.FC = () => {
               <CardContent>
                 <div className="flex items-center mb-4">
                   <div className="relative">
-                    {agent?.idPhoto ? (
+                    {property?.agentId.idPhoto ? (
                       <img
-                        src={agent.idPhoto}
-                        alt={agent.userId || "Agent"}
+                        src={property.agentId.idPhoto}
+                        // alt={agent.userId || "Agent"}
                         className="h-16 w-16 rounded-full object-cover cursor-pointer border-2 border-green-500"
                         onClick={() => setShowAgentModal(true)}
                       />
@@ -440,10 +442,10 @@ const PropertyDetails: React.FC = () => {
                   </div>
                   <div className="ml-4">
                     <h3 className="font-semibold text-gray-900">
-                      {agent?.userId || "Property Agent"}
+                      {property?.agentId.name|| "Property Agent"}
                     </h3>
                     <p className="text-sm text-gray-600">Real Estate Agent</p>
-                    {agent?.verificationStatus === "verified" && (
+                    {property?.agentId.verificationStatus == "verified" && (
                       <Badge className="mt-1 bg-green-100 text-green-800 border-0">
                         Verified
                       </Badge>
@@ -455,15 +457,16 @@ const PropertyDetails: React.FC = () => {
                   <Button
                     className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white"
                     onClick={handleWhatsAppClick}
-                    disabled={!agent?.whatsappNumber}>
+                    disabled={!user || !property?.agentId.whatsappNumber}>
                     <MessageCircle className="h-4 w-4" />
                     Chat on WhatsApp
                   </Button>
 
                   <Button
+                    onClick={() => window.location.href = `tel:${property?.agentId.phone}`}
                     variant="outline"
                     className="w-full flex items-center justify-center gap-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
-                    disabled={!agent?.whatsappNumber}>
+                    disabled={!user || !property?.agentId.phone}>
                     <Phone className="h-4 w-4" />
                     Call Agent
                   </Button>
