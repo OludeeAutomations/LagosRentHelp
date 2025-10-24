@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
@@ -15,11 +16,13 @@ import {
   Square,
   ArrowLeft,
   Star,
+  Send
 } from "lucide-react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAgentStore } from "@/stores/agentStore";
+import { useAuthStore } from "@/stores/authStore";
+import { agentReviewService } from "@/services/reviewService";
 
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -32,20 +35,34 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+
 
 const AgentProfile: React.FC = () => {
+  const { user } = useAuthStore();
   const { agentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
   const { agentProfile, fetchAgentById, loading, error } = useAgentStore();
 
   const [activeTab, setActiveTab] = useState("properties");
   const [isLoading, setIsLoading] = useState(true);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [comment, setComment] = useState("");
 
-  // Extract data from agentProfile
+
+    const [agentRating,setAgentRating] = useState(0)
+  const [totalReviews,setTotalReviews] = useState(0)
+
   const agent = agentProfile?.agent;
   const userInfo = agentProfile?.user;
   const agentProperties = agentProfile?.properties || [];
   const agentStats = agentProfile?.stats;
+
 
   // Filter properties by status
   const availableProperties = agentProperties.filter(
@@ -62,6 +79,15 @@ const AgentProfile: React.FC = () => {
       try {
         if (agentId) {
           await fetchAgentById(agentId);
+           const response = await agentReviewService.getByAgent(agentId);
+          if (response.success) {
+            setReviews(response.data.reviews || []);
+            const roundedRating = Number(response.data.averageRating.toFixed(1)); // 3.2
+            setAgentRating(roundedRating);
+            setTotalReviews(response.data.totalReviews)
+          } else {
+            toast.error("Failed to load agent reviews");
+          }
         }
       } catch (error) {
         console.error("Failed to load agent data:", error);
@@ -73,6 +99,67 @@ const AgentProfile: React.FC = () => {
 
     loadData();
   }, [agentId, fetchAgentById]);
+
+
+    const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((word) => word[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+
+  const handleSubmitReview  = async () =>  {
+
+    if (!rating || !comment.trim()) {
+      toast.error("Please add a rating and comment before submitting.");
+      return;
+    }
+
+    const newReview = {
+      id: Date.now(),
+      reviewerId:{
+        name :user?.name
+      },
+      reviewerImage:user?.avatar,
+      rating,
+      comment,
+      createdAt: new Date().toLocaleDateString(),
+    };
+     const newRev = {
+        agentId: agentId!,
+        rating,
+        comment,
+      };
+
+      
+      try{
+      const res = await agentReviewService.create(newRev);
+      console.log("-------------------------")
+      console.log(res)
+      setReviews((prev) => [newReview, ...prev]);
+      setRating(0);
+      setHoverRating(0);
+      setComment("");
+      toast.success("Review added successfully!");
+      return;
+      }catch(error){
+        console.log(error.message)
+        toast.error("Unable to add review")
+        return;
+      }
+      
+  };
+
+
+  const hasReviewed = reviews.some(
+  (rev) => rev.reviewerId?._id === user?.id || rev.reviewerId?._id === user?._id
+);
+
+
+
 
   if (loading || isLoading) {
     return (
@@ -159,8 +246,7 @@ const AgentProfile: React.FC = () => {
   };
 
   // Calculate agent rating from stats or use mock data
-  const agentRating = agentStats?.averageRating || 4.7;
-  const totalReviews = agentStats?.totalReviews || 23;
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -238,14 +324,14 @@ const AgentProfile: React.FC = () => {
                 <Button
                   className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
                   onClick={handleWhatsAppClick}
-                  disabled={!agent.whatsappNumber}>
+                  disabled={!agent.whatsappNumber || !user}>
                   <MessageCircle className="h-4 w-4" />
                   WhatsApp
                 </Button>
                 <Button
                   variant="outline"
                   className="flex items-center gap-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
-                  disabled={!agent.whatsappNumber}>
+                  disabled={!agent.whatsappNumber || !user}>
                   <Phone className="h-4 w-4" />
                   Call
                 </Button>
@@ -567,66 +653,86 @@ const AgentProfile: React.FC = () => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="reviews" className="pt-6">
-              <Card className="border-gray-200">
-                <CardHeader>
-                  <CardTitle className="text-gray-900">
-                    Customer Reviews
-                  </CardTitle>
-                  <CardDescription className="text-gray-600">
-                    What clients are saying about {userInfo.name}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {totalReviews === 0 ? (
-                    <div className="text-center py-8 text-gray-600">
-                      <Star className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No reviews yet</p>
-                      <p className="text-sm">
-                        This agent hasn't received any reviews yet.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      <div className="border-b border-gray-200 pb-6 last:border-0 last:pb-0">
-                        <div className="flex items-center mb-2">
-                          <div className="flex items-center mr-4">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-4 w-4 ${
-                                  i < 5
-                                    ? "text-yellow-400 fill-current"
-                                    : "text-gray-300"
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-sm text-gray-600">
-                            {new Date().toLocaleDateString()}
+
+
+              <TabsContent value="reviews" className="pt-6">
+            <Card className="p-6 space-y-6">
+              {user && !hasReviewed &&<form onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmitReview()
+              }}>
+                <h4 className="font-semibold text-lg mb-2">Leave a Review</h4>
+                <div className="flex items-center space-x-1 mb-3">
+                  {Array.from({ length: 5 }).map((_, i) => {
+                    const index = i + 1;
+                    return (
+                      <Star
+                        key={index}
+                        onClick={() => setRating(index)}
+                        onMouseEnter={() => setHoverRating(index)}
+                        onMouseLeave={() => setHoverRating(0)}
+                        className={`h-6 w-6 cursor-pointer ${
+                          index <= (hoverRating || rating)
+                            ? "text-yellow-400 fill-current"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
+                <Textarea
+                  placeholder="Write your review..."
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                />
+                <Button
+                  type="submit"
+                  className="mt-3 bg-green-600 hover:bg-green-700 text-white"
+                >
+                  Submit Review
+                </Button>
+              </form>}
+
+              <div>
+                <h4 className="font-semibold text-lg mb-4">All Reviews</h4>
+                {reviews.length === 0 ? (
+                  <p className="text-gray-600 text-sm">No reviews yet.</p>
+                ) : (
+              <div
+                className="space-y-4 max-h-96 overflow-y-auto pr-2"
+                style={{ scrollbarWidth: "thin" }} >                    
+                     {reviews.map((rev) => (
+                      <div key={rev._id || rev.id} className="border-b pb-3">
+                        <div className="flex items-center mb-1">
+                          <Avatar className="h-8 w-8 mr-2">
+                            <AvatarFallback>
+                              {getInitials(rev.reviewerId.name)}
+                            </AvatarFallback>
+                            {rev.reviewerImage && (
+                              <AvatarImage src={rev.reviewerImage} />
+                            )}
+                          </Avatar>
+                          <span className="font-medium text-gray-900">
+                            {rev.reviewerId.name}
                           </span>
                         </div>
-                        <h4 className="font-medium mb-1 text-gray-900">
-                          Excellent Service!
-                        </h4>
-                        <p className="text-gray-600">
-                          {userInfo.name} was very professional and helped me
-                          find the perfect apartment within my budget. The
-                          process was smooth and I would definitely recommend
-                          their services to others.
+                        <div className="flex items-center text-yellow-400">
+                          {Array.from({ length: rev.rating }).map((_, i) => (
+                            <Star key={i} className="h-4 w-4 fill-current" />
+                          ))}
+                        </div>
+                        <p className="text-gray-700 text-sm mt-1">{rev.comment}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(rev.createdAt).toLocaleDateString()}
                         </p>
-                        <div className="flex items-center mt-3">
-                          <div className="h-8 w-8 rounded-full bg-gray-200 mr-2"></div>
-                          <span className="text-sm font-medium text-gray-900">
-                            Chinedu O.
-                          </span>
-                        </div>
                       </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Card>
+              </TabsContent>
+          
           </Tabs>
         </motion.div>
       </div>
