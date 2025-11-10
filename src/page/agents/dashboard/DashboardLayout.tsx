@@ -233,10 +233,13 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
             </Button>
             <Button
               variant="ghost"
-              className="w-full justify-start text-destructive"
-              onClick={handleLogout}>
-              <LogOut className="h-5 w-5 mr-3" />
-              Logout
+              size="icon"
+              asChild
+              className="w-full justify-start text-destructive">
+              <Link to="/">
+                <HomeIcon className="h-5 w-5 mr-3" />
+                Back to Home
+              </Link>
             </Button>
           </div>
         </div>
@@ -328,12 +331,16 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
                   Notifications
                 </Link>
               </Button>
+
               <Button
                 variant="ghost"
-                className="w-full justify-start text-destructive"
-                onClick={handleLogout}>
-                <LogOut className="h-5 w-5 mr-3" />
-                Logout
+                size="icon"
+                asChild
+                className="w-full justify-start text-destructive">
+                <Link to="/">
+                  <HomeIcon className="h-5 w-5 mr-3" />
+                  Back to Home
+                </Link>
               </Button>
             </div>
           </div>
@@ -360,16 +367,6 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
               </div>
 
               <div className="flex items-center space-x-10">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  asChild
-                  className="relative">
-                  <Link to="/">
-                    <HomeIcon className="h-5 w-5" />
-                    Back to Home
-                  </Link>
-                </Button>
                 <Button
                   variant="ghost"
                   size="icon"

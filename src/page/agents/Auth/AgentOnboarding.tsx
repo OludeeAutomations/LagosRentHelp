@@ -92,6 +92,7 @@ const onboardingSchema = z.object({
     required_error: "Please select preferred communication method",
   }),
   socialMedia: z.string().optional(),
+  referredBy: z.string().optional(), // ✅ Change to referredBy
 
   // Contact
   whatsappNumber: z.string().min(10, "WhatsApp number is required"),
@@ -181,7 +182,6 @@ const AgentOnboarding: React.FC = () => {
   const [proofOfAddressPreview, setProofOfAddressPreview] = useState<
     string | null
   >(null);
-  const [referralCode, setReferralCode] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
 
@@ -209,6 +209,7 @@ const AgentOnboarding: React.FC = () => {
       preferredCommunication: "whatsapp",
       socialMedia: "",
       whatsappNumber: "",
+      referredBy: "", // ✅ Change to referredBy
     },
   });
 
@@ -293,10 +294,6 @@ const AgentOnboarding: React.FC = () => {
 
       formData.append("idPhoto", idPhotoFile);
       formData.append("proofOfAddress", proofOfAddressFile);
-
-      if (referralCode) {
-        formData.append("referralCode", referralCode);
-      }
 
       await useAgentStore.getState().submitAgentApplication(formData);
       await useAgentStore.getState().fetchAgentProfile();
@@ -588,12 +585,12 @@ const AgentOnboarding: React.FC = () => {
                 name="institutionName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Institution/Organization</FormLabel>
+                    <FormLabel>Company/Organization Name</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <School className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
-                          placeholder="University, company, etc."
+                          placeholder="organization, company, etc."
                           className="pl-10"
                           {...field}
                         />
@@ -609,9 +606,9 @@ const AgentOnboarding: React.FC = () => {
                 name="campusCode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Campus/Organization Code</FormLabel>
+                    <FormLabel>Company/Organization Code</FormLabel>
                     <FormControl>
-                      <Input placeholder="Campus acronym or code" {...field} />
+                      <Input placeholder="Company acronym or code" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -720,7 +717,6 @@ const AgentOnboarding: React.FC = () => {
             <h3 className="text-xl font-semibold">
               Professional & Verification Details
             </h3>
-
             <FormField
               control={form.control}
               name="bio"
@@ -738,7 +734,6 @@ const AgentOnboarding: React.FC = () => {
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="experience"
@@ -756,7 +751,6 @@ const AgentOnboarding: React.FC = () => {
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="motivation"
@@ -774,7 +768,6 @@ const AgentOnboarding: React.FC = () => {
                 </FormItem>
               )}
             />
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -828,7 +821,6 @@ const AgentOnboarding: React.FC = () => {
                 )}
               />
             </div>
-
             <FormField
               control={form.control}
               name="socialMedia"
@@ -845,7 +837,6 @@ const AgentOnboarding: React.FC = () => {
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="whatsappNumber"
@@ -866,10 +857,13 @@ const AgentOnboarding: React.FC = () => {
                 </FormItem>
               )}
             />
-
             <ReferralCodeInput
-              onReferralValidated={(name, code) => setReferralCode(code)}
-              onReferralRemoved={() => setReferralCode("")}
+              onReferralValidated={(name, code) => {
+                form.setValue("referredBy", code); // ✅ Update referredBy field
+              }}
+              onReferralRemoved={() => {
+                form.setValue("referredBy", ""); // ✅ Clear referredBy field
+              }}
             />
           </div>
         );
@@ -1096,9 +1090,9 @@ const AgentOnboarding: React.FC = () => {
           </div>
 
           {/* Main Form */}
-          <div className="lg:col-span-2">
-            <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-t-lg">
+          <div className="lg:col-span-2 ">
+            <Card className="shadow-lg p-0">
+              <CardHeader className="bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-t-lg py-5">
                 <CardTitle className="text-2xl">
                   {currentStep === 1 && "Personal Information"}
                   {currentStep === 2 && "Address & Location"}

@@ -119,6 +119,7 @@ export const authService = {
   validateToken: async (): Promise<{ valid: boolean; user?: User }> => {
     try {
       const response = await api.get("/auth/validate");
+      console.log("Token validation response:", response);
       return {
         valid: true,
         user: response.data.user,

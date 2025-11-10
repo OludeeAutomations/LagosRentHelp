@@ -13,13 +13,20 @@ if (!API_BASE_URL) {
 
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
+  withCredentials: false, // ❌ Turn off cookies
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-const getAccessToken = () => localStorage.getItem("accessToken");
+const getAccessToken = () => {
+  try {
+    const persisted = JSON.parse(localStorage.getItem("auth-storage") || "{}");
+    return persisted?.state?.accessToken || null;
+  } catch {
+    return null;
+  }
+};
 const setAccessToken = (token: string) =>
   localStorage.setItem("accessToken", token);
 const removeTokens = () => {

@@ -203,15 +203,6 @@ const Login: React.FC = () => {
           </motion.div>
         </motion.form>
       </Form>
-
-      {/* Demo Notice - Remove in production */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8 }}
-        className="text-center text-grey text-sm mt-6">
-        <p>Demo: Use any valid email and password to test</p>
-      </motion.div>
     </AuthLayout>
   );
 };

@@ -48,6 +48,7 @@ const App: React.FC = () => {
       validateAuth();
     }
   }, [validateAuth, isAuthenticated]);
+
   return (
     <Router>
       <Toaster position="top-right" />

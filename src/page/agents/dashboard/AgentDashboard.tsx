@@ -52,18 +52,18 @@ const AgentDashboard: React.FC = () => {
   const canCreateListing = agent && canAgentListProperties(agent);
 
   useEffect(() => {
-    if (user?.id && !agent) {
+    if (user?._id && !agent) {
       fetchAgentProfile();
     }
-  }, [user?.id, agent, fetchAgentProfile]);
+  }, [user?._id, agent, fetchAgentProfile]);
 
   useEffect(() => {
-    if (user?.id) {
-      loadRecentLeads(user.id);
-      loadAgentProperties(user.id);
-      loadAgentStats(user.id);
+    if (user?._id) {
+      loadRecentLeads(user._id);
+      loadAgentProperties(user._id);
+      loadAgentStats(user._id);
     }
-  }, [user?.id]);
+  }, [user?._id]);
 
   const loadRecentLeads = async (agentId: string) => {
     try {
