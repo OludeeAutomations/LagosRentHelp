@@ -53,7 +53,7 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
     try {
       const response = await propertyService.getById(id);
       console.log("Single property response:", response.data);
-      return response.data;
+      return response.data.data; // 👈 return the actual property object
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to fetch property";
