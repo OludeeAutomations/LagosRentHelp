@@ -29,6 +29,7 @@ const getAccessToken = () => {
 };
 const setAccessToken = (token: string) =>
   localStorage.setItem("accessToken", token);
+
 const removeTokens = () => {
   localStorage.removeItem("accessToken");
   window.dispatchEvent(new Event("auth-logout"));
