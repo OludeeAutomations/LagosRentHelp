@@ -1097,8 +1097,8 @@ const AgentOnboarding: React.FC = () => {
 
           {/* Main Form */}
           <div className="lg:col-span-2">
-            <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-t-lg">
+            <Card className="shadow-lg p-0">
+              <CardHeader className="bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-t-lg py-5">
                 <CardTitle className="text-2xl">
                   {currentStep === 1 && "Personal Information"}
                   {currentStep === 2 && "Address & Location"}
