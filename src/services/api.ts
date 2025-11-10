@@ -19,8 +19,14 @@ const api: AxiosInstance = axios.create({
   },
 });
 
-const getAccessToken = () => localStorage.getItem("accessToken");
-const setAccessToken = (token: string) =>
+const getAccessToken = () => {
+  try {
+    const persisted = JSON.parse(localStorage.getItem("auth-storage") || "{}");
+    return persisted?.state?.accessToken || null;
+  } catch {
+    return null;
+  }
+};const setAccessToken = (token: string) =>
   localStorage.setItem("accessToken", token);
 const removeTokens = () => {
   localStorage.removeItem("accessToken");
