@@ -1,6 +1,5 @@
-import { api, ApiResponse } from "./api";
-import { Agent } from "@/types";
-import { AgentProfileResponse, AgentStats } from "@/types";
+import { api } from "./api";
+import { Agent, AgentProfileResponse, AgentStats } from "@/types";
 
 export interface AgentApplicationData {
   bio: string;
@@ -10,65 +9,89 @@ export interface AgentApplicationData {
   whatsappNumber: string;
 }
 
+// Define a generic API response shape (if your API always wraps responses)
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: string;
+}
+
 export const agentService = {
-  getProfile: async (
-    agentId: string
-  ): Promise<ApiResponse<AgentProfileResponse>> => {
-    return api.get<AgentProfileResponse>(`/agents/${agentId}`);
+  // ✅ Get agent by ID
+  async getProfile(agentId: string): Promise<AgentProfileResponse> {
+    const res = await api.get<AgentProfileResponse>(`/agents/${agentId}`);
+    return res.data;
   },
 
- fetchProfile: async (): Promise<ApiResponse<Agent[]>> => {
-    return api.get<Agent[]>("/agents/profile");
+  // ✅ Get authenticated agent profile
+  async getAgentProfile(): Promise<AgentProfileResponse> {
+    const res = await api.get<AgentProfileResponse>("/agents/profile");
+    return res.data;
   },
-  updateProfile: async (
+
+  // ✅ Get all agents
+  async getAll(): Promise<Agent[]> {
+    const res = await api.get<Agent[]>("/agents");
+    return res.data;
+  },
+
+  // ✅ Update agent profile (fixed: use agentId)
+  async updateProfile(
     agentId: string,
     updates: Partial<Agent>
-  ): Promise<ApiResponse<Agent>> => {
-    return api.put<Agent>("/agents/profile", updates);
+  ): Promise<Agent> {
+    const res = await api.put<Agent>(`/agents/${agentId}`, updates);
+    return res.data;
   },
 
-  getAll: async (): Promise<ApiResponse<Agent[]>> => {
-    return api.get<Agent[]>("/agents");
-  },
-
-  submitApplication: async (
-    formData: FormData
-  ): Promise<ApiResponse<Agent>> => {
-    const token = localStorage.getItem("token");
-    const baseURL =
-      import.meta.env.VITE_API_BASE_URL 
-    const response = await fetch(`${baseURL}/agents/apply`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // ⚠️ don’t set Content-Type manually, browser will add boundary
-      },
-      body: formData,
+  // ✅ Submit agent application
+  async submitApplication(formData: FormData): Promise<ApiResponse<any>> {
+    const res = await api.post<ApiResponse<any>>("/agents/apply", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Application submission failed");
-    }
-
-    return response.json();
-  },
-  getSubscriptionStatus: async (): Promise<ApiResponse<any>> => {
-    return api.get("/agents/subscription/status");
+    return res.data;
   },
 
-  applyReferralCode: async (code: string): Promise<ApiResponse<void>> => {
-    return api.post("/agents/referral/apply", { referralCode: code });
+  // ✅ Verification status
+  async getVerificationStatus(): Promise<ApiResponse<any>> {
+    const res = await api.get<ApiResponse<any>>("/agents/verify/status");
+    return res.data;
   },
 
-  validateReferralCode: async (
+  async resubmitVerification(formData: FormData): Promise<ApiResponse<any>> {
+    const res = await api.post<ApiResponse<any>>(
+      "/agents/verify/resubmit",
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    );
+    return res.data;
+  },
+
+  async getSubscriptionStatus(): Promise<ApiResponse<any>> {
+    const res = await api.get<ApiResponse<any>>("/agents/subscription/status");
+    return res.data;
+  },
+
+  async applyReferralCode(code: string): Promise<ApiResponse<void>> {
+    const res = await api.post<ApiResponse<void>>("/agents/referral/apply", {
+      referralCode: code,
+    });
+    return res.data;
+  },
+
+  async validateReferralCode(
     code: string
-  ): Promise<ApiResponse<{ agentName: string }>> => {
-    return api.get(`/agents/referral/validate?code=${code}`);
+  ): Promise<ApiResponse<{ agentName: string }>> {
+    const res = await api.get<ApiResponse<{ agentName: string }>>(
+      `/agents/referral/validate?code=${code}`
+    );
+    return res.data;
   },
-  // optional if you still want a standalone stats fetch
-  getStats: async (agentId: string): Promise<ApiResponse<AgentStats>> => {
-    return api.get<AgentStats>(`/agents/${agentId}/stats`);
+
+  async getStats(agentId: string): Promise<AgentStats> {
+    const res = await api.get<AgentStats>(`/agents/${agentId}/stats`);
+    return res.data;
   },
 };
-// Add to your agentService

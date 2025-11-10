@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, User, Mail, Phone, Lock } from "lucide-react";
+import { Eye, EyeOff, User, Mail, Phone, Lock, Check, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import AuthLayout from "@/components/common/AuthLayout";
@@ -18,13 +18,26 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { RegisterData } from "@/services/authService";
+
+// Enhanced password validation schema
+const passwordRequirements = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number")
+  .regex(
+    /[^A-Za-z0-9]/,
+    "Password must contain at least one special character"
+  );
 
 const registerSchema = z
   .object({
     name: z.string().min(1, "Name is required"),
     email: z.string().email("Invalid email address"),
     phone: z.string().min(1, "Phone number is required"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
+    password: passwordRequirements,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -33,6 +46,17 @@ const registerSchema = z
   });
 
 type RegisterForm = z.infer<typeof registerSchema>;
+
+// Password requirement checker
+const checkPasswordRequirements = (password: string) => {
+  return {
+    length: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /[0-9]/.test(password),
+    special: /[^A-Za-z0-9]/.test(password),
+  };
+};
 
 const Register: React.FC = () => {
   const [showPassword, setShowPassword] = React.useState(false);
@@ -52,23 +76,33 @@ const Register: React.FC = () => {
     },
   });
 
+  const passwordValue = form.watch("password");
+  const confirmPasswordValue = form.watch("confirmPassword");
+  const passwordChecks = checkPasswordRequirements(passwordValue);
+
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true);
-    setError(null);
-
     try {
-      const registrationData = {
-        name: data.name.trim(),
-        email: data.email.trim().toLowerCase(),
-        phone: data.phone.trim(),
+      console.log("Submitting registration form...");
+
+      const formData: RegisterData = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
         password: data.password,
         role: "user",
       };
 
-      await registerUser(registrationData);
+      const result = await registerUser(formData);
 
-      toast.success("Account created successfully!");
-      navigate("/verify-email");
+      if (result.success) {
+        toast.success(
+          "Registration successful! Please check your email for verification."
+        );
+        navigate("/verify-email");
+      } else {
+        toast.error(result.error || "Registration failed");
+      }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to create account";
@@ -79,7 +113,7 @@ const Register: React.FC = () => {
     }
   };
 
-  // Animation variants
+  // Fixed animation variants with proper TypeScript types
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -98,7 +132,18 @@ const Register: React.FC = () => {
       y: 0,
       transition: {
         duration: 0.5,
-        ease: "easeOut",
+        ease: "easeOut" as const,
+      },
+    },
+  };
+
+  const fadeInVariant = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut" as const,
       },
     },
   };
@@ -203,7 +248,7 @@ const Register: React.FC = () => {
                       <Lock className="absolute left-3 top-3 h-5 w-5 text-grey" />
                       <Input
                         type={showPassword ? "text" : "password"}
-                        placeholder="Create a password (min. 6 characters)"
+                        placeholder="Create a strong password"
                         className="pl-10 pr-10 border-grey/30 focus:border-[#129B36] focus:ring-[#129B36]"
                         disabled={isLoading}
                         {...field}
@@ -227,6 +272,95 @@ const Register: React.FC = () => {
                 </FormItem>
               )}
             />
+
+            {/* Password Requirements */}
+            {passwordValue && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                className="mt-3 space-y-2">
+                <p className="text-sm font-medium text-gray-700">
+                  Password must contain:
+                </p>
+                <div className="space-y-1 text-sm">
+                  <div className="flex items-center gap-2">
+                    {passwordChecks.length ? (
+                      <Check className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <X className="h-3 w-3 text-red-500" />
+                    )}
+                    <span
+                      className={
+                        passwordChecks.length
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }>
+                      At least 8 characters
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {passwordChecks.uppercase ? (
+                      <Check className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <X className="h-3 w-3 text-red-500" />
+                    )}
+                    <span
+                      className={
+                        passwordChecks.uppercase
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }>
+                      One uppercase letter (A-Z)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {passwordChecks.lowercase ? (
+                      <Check className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <X className="h-3 w-3 text-red-500" />
+                    )}
+                    <span
+                      className={
+                        passwordChecks.lowercase
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }>
+                      One lowercase letter (a-z)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {passwordChecks.number ? (
+                      <Check className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <X className="h-3 w-3 text-red-500" />
+                    )}
+                    <span
+                      className={
+                        passwordChecks.number
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }>
+                      One number (0-9)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {passwordChecks.special ? (
+                      <Check className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <X className="h-3 w-3 text-red-500" />
+                    )}
+                    <span
+                      className={
+                        passwordChecks.special
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }>
+                      One special character (!@#$%^&*)
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </motion.div>
 
           {/* Confirm Password */}
@@ -266,18 +400,44 @@ const Register: React.FC = () => {
                       </Button>
                     </div>
                   </FormControl>
+
+                  {/* Password Match Indicator */}
+                  {confirmPasswordValue && passwordValue && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex items-center gap-2 mt-1">
+                      {confirmPasswordValue === passwordValue ? (
+                        <>
+                          <Check className="h-3 w-3 text-green-500" />
+                          <span className="text-green-600 text-sm">
+                            Passwords match
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <X className="h-3 w-3 text-red-500" />
+                          <span className="text-red-600 text-sm">
+                            Passwords do not match
+                          </span>
+                        </>
+                      )}
+                    </motion.div>
+                  )}
+
                   <FormMessage />
                 </FormItem>
               )}
             />
           </motion.div>
 
-          {/* Submit Button */}
+          {/* Submit Button with Enhanced Loader */}
           <motion.div variants={itemVariants}>
             <Button
               type="submit"
-              className="w-full bg-[#129B36] hover:bg-[#41614F] text-white"
-              disabled={isLoading}>
+              className="w-full bg-[#129B36] hover:bg-[#41614F] text-white relative"
+              disabled={isLoading}
+              size="lg">
               {isLoading ? (
                 <div className="flex items-center justify-center">
                   <motion.div
@@ -287,7 +447,7 @@ const Register: React.FC = () => {
                       repeat: Infinity,
                       ease: "linear",
                     }}
-                    className="h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"
+                    className="h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-2"
                   />
                   Creating Account...
                 </div>
@@ -313,9 +473,9 @@ const Register: React.FC = () => {
 
       {/* Terms Notice */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8 }}
+        variants={fadeInVariant}
+        initial="hidden"
+        animate="visible"
         className="text-center text-grey text-sm mt-6">
         <p>
           By creating an account, you agree to our{" "}
@@ -329,22 +489,6 @@ const Register: React.FC = () => {
             to="/privacy"
             className="text-[#129B36] hover:text-[#41614F] hover:underline">
             Privacy Policy
-          </Link>
-        </p>
-      </motion.div>
-
-      {/* Agent Registration Notice */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2 }}
-        className="text-center text-grey text-sm mt-4 p-4 bg-muted rounded-lg">
-        <p>
-          Want to list properties as an agent?{" "}
-          <Link
-            to="/agent-signup"
-            className="text-[#129B36] hover:text-[#41614F] font-medium underline">
-            Apply to become a verified agent
           </Link>
         </p>
       </motion.div>

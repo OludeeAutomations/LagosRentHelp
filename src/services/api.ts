@@ -1,115 +1,126 @@
+import axios, {
+  AxiosError,
+  AxiosInstance,
+  AxiosRequestConfig,
+  AxiosResponse,
+} from "axios";
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-    pages: number;
-  };
+if (!API_BASE_URL) {
+  throw new Error("VITE_API_BASE_URL is not defined in environment variables");
 }
 
-export interface ApiErrorData {
-  error: string;
-  code?: string;
-  details?: unknown;
-}
-
-export class ApiError extends Error {
-  status: number;
-  data: ApiErrorData;
-
-  constructor(message: string, status: number, data: ApiErrorData) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
-    this.data = data;
-  }
-}
-
-const handleResponse = async <T>(
-  response: Response
-): Promise<ApiResponse<T>> => {
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new ApiError(
-      data.error || "An error occurred",
-      response.status,
-      data
-    );
-  }
-
-  return data;
-};
-
-const getAuthHeaders = (): HeadersInit => {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  return {
+const api: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+  headers: {
     "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
+  },
+});
+
+const getAccessToken = () => localStorage.getItem("accessToken");
+const setAccessToken = (token: string) =>
+  localStorage.setItem("accessToken", token);
+const removeTokens = () => {
+  localStorage.removeItem("accessToken");
+  window.dispatchEvent(new Event("auth-logout"));
 };
 
-export const api = {
-  get: <T>(endpoint: string): Promise<ApiResponse<T>> =>
-    fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: getAuthHeaders(),
-    }).then(handleResponse<T>),
+let isRefreshing = false;
+let refreshSubscribers: {
+  resolve: (token: string) => void;
+  reject: (err: any) => void;
+}[] = [];
 
-  post: <T>(
-    endpoint: string,
-    data?: unknown,
-    extra?: { headers?: Record<string, string> }
-  ): Promise<ApiResponse<T>> => {
-    const isFormData = data instanceof FormData;
+function subscribeTokenRefresh(
+  resolveCb: (token: string) => void,
+  rejectCb: (err: any) => void
+) {
+  refreshSubscribers.push({ resolve: resolveCb, reject: rejectCb });
+}
 
-    // Start with auth headers
-    const headers: Record<string, string> = getAuthHeaders();
+function onTokenRefreshed(newToken: string) {
+  refreshSubscribers.forEach(({ resolve }) => resolve(newToken));
+  refreshSubscribers = [];
+}
 
-    if (isFormData) {
-      // Remove any Content-Type so browser sets multipart boundary automatically
-      delete headers["Content-Type"];
-    } else {
-      headers["Content-Type"] = "application/json";
+function onRefreshFailed(error: any) {
+  refreshSubscribers.forEach(({ reject }) => reject(error));
+  refreshSubscribers = [];
+}
+
+async function refreshAccessToken(): Promise<string> {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/auth/refresh`,
+      {},
+      { withCredentials: true }
+    );
+
+    const newToken = response.data?.accessToken;
+    if (!newToken) throw new Error("No access token in refresh response");
+
+    setAccessToken(newToken);
+    return newToken;
+  } catch (error) {
+    removeTokens();
+    throw error;
+  }
+}
+
+api.interceptors.request.use(
+  (config: AxiosRequestConfig) => {
+    const token = getAccessToken();
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+api.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  async (error: AxiosError) => {
+    const originalRequest: any = error.config || {};
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh(
+            (token) => {
+              if (!originalRequest.headers) originalRequest.headers = {};
+              originalRequest.headers["Authorization"] = `Bearer ${token}`;
+              resolve(api(originalRequest));
+            },
+            (err) => reject(err)
+          );
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const newToken = await refreshAccessToken();
+        onTokenRefreshed(newToken);
+
+        if (!originalRequest.headers) originalRequest.headers = {};
+        originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
+
+        return api(originalRequest);
+      } catch (refreshError) {
+        onRefreshFailed(refreshError);
+        removeTokens();
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
 
-    return fetch(`${API_BASE_URL}${endpoint}`, {
-      method: "POST",
-      headers: { ...headers, ...(extra?.headers || {}) },
-      body: isFormData
-        ? (data as FormData)
-        : data
-        ? JSON.stringify(data)
-        : undefined,
-    }).then(handleResponse<T>);
-  },
+    return Promise.reject(error);
+  }
+);
 
-  put: <T>(
-    endpoint: string,
-    data?: unknown,
-    config?: { headers: { "Content-Type": string } } | { headers?: undefined }
-  ): Promise<ApiResponse<T>> =>
-    fetch(`${API_BASE_URL}${endpoint}`, {
-      method: "PUT",
-      headers: getAuthHeaders(),
-      body: data ? JSON.stringify(data) : undefined,
-    }).then(handleResponse<T>),
-
-  patch: <T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> =>
-    fetch(`${API_BASE_URL}${endpoint}`, {
-      method: "PATCH",
-      headers: getAuthHeaders(),
-      body: data ? JSON.stringify(data) : undefined,
-    }).then(handleResponse<T>),
-
-  delete: <T>(endpoint: string): Promise<ApiResponse<T>> =>
-    fetch(`${API_BASE_URL}${endpoint}`, {
-      method: "DELETE",
-      headers: getAuthHeaders(),
-    }).then(handleResponse<T>),
-};
+export { api, setAccessToken, removeTokens };

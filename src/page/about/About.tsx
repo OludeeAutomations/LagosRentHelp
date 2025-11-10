@@ -69,7 +69,7 @@ const About: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className="text-4xl md:text-5xl font-bold mb-6">
-            About LagosHomes
+            About LagosRentHelp
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -161,7 +161,7 @@ const About: React.FC = () => {
             viewport={{ once: true }}
             className="text-center mb-16">
             <h2 className="text-3xl font-bold text-[#0E0E0E] mb-4">
-              Why Choose LagosHomes?
+              Why Choose LagosRentHelp?
             </h2>
             <p className="text-[#7F8080] text-lg max-w-2xl mx-auto">
               We offer unique features designed specifically for the Lagos
@@ -348,7 +348,7 @@ const About: React.FC = () => {
               transition={{ duration: 0.5, delay: 0.1 }}
               viewport={{ once: true }}
               className="text-[#7F8080] text-lg mb-6">
-              Founded in 2023, LagosHomes was born out of a need for a more
+              Founded in 2025, LagosRentHelp was born out of a need for a more
               transparent and reliable rental market in Lagos. Our founders,
               experienced in both real estate and technology, saw an opportunity
               to create a platform that would benefit both property owners and

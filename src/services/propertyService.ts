@@ -33,19 +33,13 @@ export const propertyService = {
     return api.get<Property>(`/properties/${id}`);
   },
 
-  create: async (
-    propertyData: FormData // Changed from object to FormData
-  ): Promise<ApiResponse<Property>> => {
-    return api.post<Property>(
-      "/properties",
-      propertyData
-      // REMOVE the headers completely - let the browser set it automatically
-    );
+  create: async (propertyData: FormData): Promise<ApiResponse<Property>> => {
+    return api.post<Property>("/properties", propertyData);
   },
 
   update: async (
     id: string,
-    updates: Partial<Property> | FormData // Accept both for updates
+    updates: Partial<Property> | FormData
   ): Promise<ApiResponse<Property>> => {
     const config =
       updates instanceof FormData

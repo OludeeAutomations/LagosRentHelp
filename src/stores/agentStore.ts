@@ -1,8 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { create } from "zustand";
-import { Agent, AgentProfileResponse, ApiResponse } from "@/types"; // Added ApiResponse import
-import { agentService } from "@/services/agentService";
+import { Agent, AgentProfileResponse } from "@/types";
+import { agentService, ApiResponse } from "@/services/agentService";
 
-// Define the subscription type
 interface Subscription {
   status: string;
   trialStartsAt?: Date;
@@ -15,14 +15,14 @@ interface AgentState {
   agents: Agent[];
   verifiedAgents: Agent[];
   loading: boolean;
+  isLoading: boolean;
   subscription: Subscription | null;
   error: string | null;
   agentProfile: AgentProfileResponse | null;
 
-  // Actions
   setAgents: (agents: Agent[]) => void;
   verifyAgent: (agentId: string) => Promise<void>;
-  rejectAgent: (agentId: string) => void;
+  rejectAgent: (agentId: string) => Promise<void>;
   fetchAgents: () => Promise<void>;
   fetchAgentById: (agentId: string) => Promise<void>;
   clearAgent: () => void;
@@ -31,13 +31,15 @@ interface AgentState {
   validateReferralCode: (
     code: string
   ) => Promise<ApiResponse<{ agentName: string }>>;
+  submitAgentApplication: (formData: FormData) => Promise<ApiResponse<any>>;
+  fetchAgentProfile: () => Promise<void>;
 }
 
 export const useAgentStore = create<AgentState>()((set, get) => ({
-  // Added get function
   agents: [],
   verifiedAgents: [],
   loading: false,
+  isLoading: false,
   error: null,
   agentProfile: null,
   subscription: null,
@@ -49,21 +51,87 @@ export const useAgentStore = create<AgentState>()((set, get) => ({
         (agent) => agent.verificationStatus === "verified"
       ),
     }),
+  //
+  submitAgentApplication: async (formData: FormData) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await agentService.submitApplication(formData);
+      if (!response.success)
+        throw new Error(response.error || "Application failed");
+
+      // ✅ Update auth store with the new agent data
+      const { useAuthStore } = await import("@/stores/authStore");
+      useAuthStore.getState().setAgent(response.data.agent); // or whatever the agent data is
+
+      return response;
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.error ||
+        error?.message ||
+        "Failed to submit application";
+      set({ error: errorMessage });
+      throw new Error(errorMessage);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  fetchAgentProfile: async () => {
+    set({ loading: true, error: null });
+    try {
+      console.log("🔄 Starting agent profile fetch...");
+      const response = await agentService.getAgentProfile();
+
+      console.log("📊 Raw API response:", response);
+      console.log("🔍 Response success:", response.success);
+      console.log("📦 Response data:", response.data);
+
+      if (response.success) {
+        // Debug the structure
+        console.log("👤 Agent data in response:", response.data);
+        console.log("🏠 Properties data:", response.data);
+        console.log("📈 Stats data:", response.data.stats);
+
+        // Update both stores
+        set({
+          agent: response.data,
+          user: response.data.userId, // This is in 'userId' field
+          success: true,
+        });
+
+        // Also update auth store
+        const { useAuthStore } = await import("@/stores/authStore");
+
+        if (response.data) {
+          console.log("✅ Updating auth store with agent:", response.data);
+          useAuthStore.getState().setAgent(response.data);
+        } else {
+          console.warn("⚠️ No agent data found in response");
+        }
+      } else {
+        throw new Error(response.error || "Failed to fetch agent profile");
+      }
+    } catch (error: any) {
+      console.error("❌ Error in fetchAgentProfile:", error);
+      set({ error: error.message });
+    } finally {
+      set({ loading: false });
+    }
+  },
 
   verifyAgent: async (agentId: string) => {
     set({ loading: true, error: null });
     try {
       await agentService.updateProfile(agentId, {
         verificationStatus: "verified",
-      } as Partial<Agent>);
+      });
 
       set((state) => {
         const updatedAgents = state.agents.map((agent) =>
-          agent.id === agentId
-            ? { ...agent, verificationStatus: "verified" as const }
+          (agent.id || agent._id) === agentId
+            ? { ...agent, verificationStatus: "verified" }
             : agent
         );
-
         return {
           agents: updatedAgents,
           verifiedAgents: updatedAgents.filter(
@@ -72,10 +140,11 @@ export const useAgentStore = create<AgentState>()((set, get) => ({
           loading: false,
         };
       });
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to verify agent";
-      set({ error: errorMessage, loading: false });
+    } catch (error: any) {
+      set({
+        error: error.message || "Failed to verify agent",
+        loading: false,
+      });
       throw error;
     }
   },
@@ -85,15 +154,14 @@ export const useAgentStore = create<AgentState>()((set, get) => ({
     try {
       await agentService.updateProfile(agentId, {
         verificationStatus: "rejected",
-      } as Partial<Agent>);
+      });
 
       set((state) => {
         const updatedAgents = state.agents.map((agent) =>
-          agent.id === agentId
-            ? { ...agent, verificationStatus: "rejected" as const }
+          (agent.id || agent._id) === agentId
+            ? { ...agent, verificationStatus: "rejected" }
             : agent
         );
-
         return {
           agents: updatedAgents,
           verifiedAgents: updatedAgents.filter(
@@ -102,10 +170,11 @@ export const useAgentStore = create<AgentState>()((set, get) => ({
           loading: false,
         };
       });
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to reject agent";
-      set({ error: errorMessage, loading: false });
+    } catch (error: any) {
+      set({
+        error: error.message || "Failed to reject agent",
+        loading: false,
+      });
       throw error;
     }
   },
@@ -113,86 +182,70 @@ export const useAgentStore = create<AgentState>()((set, get) => ({
   fetchAgentById: async (agentId: string) => {
     set({ loading: true, error: null });
     try {
-      console.log("Getting agent profile")
-      const response = await agentService.getProfile(agentId);
+      const profile = await agentService.getProfile(agentId);
+      set({ agentProfile: profile, loading: false });
+    } catch (error: any) {
       set({
-        agentProfile: response.data,
+        error: error.message || "Failed to fetch agent",
         loading: false,
       });
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to fetch agent";
-      set({ error: errorMessage, loading: false });
       throw error;
     }
   },
 
-  clearAgent: () => {
-    set({ agentProfile: null });
-  },
+  clearAgent: () => set({ agentProfile: null }),
 
   fetchAgents: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await agentService.getAll();
-      const agents = response.data;
-
+      const agents = await agentService.getAll();
       set({
         agents,
         verifiedAgents: agents.filter(
-          (agent: Agent) => agent.verificationStatus === "verified"
+          (a) => a.verificationStatus === "verified"
         ),
         loading: false,
       });
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to fetch agents";
-      set({ error: errorMessage, loading: false });
+    } catch (error: any) {
+      set({
+        error: error.message || "Failed to fetch agents",
+        loading: false,
+      });
     }
   },
 
   fetchSubscriptionStatus: async () => {
     set({ loading: true });
     try {
-      // You need to add this method to your agentService
-      const response = await agentService.getSubscriptionStatus();
-      set({ subscription: response.data, loading: false });
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch subscription status";
-      set({ error: errorMessage, loading: false });
+      const res = await agentService.getSubscriptionStatus();
+      set({ subscription: res.data, loading: false });
+    } catch (error: any) {
+      set({
+        error: error.message || "Failed to fetch subscription status",
+        loading: false,
+      });
     }
   },
 
   applyReferralCode: async (code: string) => {
     set({ loading: true });
     try {
-      // You need to add this method to your agentService
       await agentService.applyReferralCode(code);
-      // Refresh status using the get function from store
       await get().fetchSubscriptionStatus();
+    } catch (error: any) {
+      set({
+        error: error.message || "Failed to apply referral code",
+      });
+    } finally {
       set({ loading: false });
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to apply referral code";
-      set({ error: errorMessage, loading: false });
     }
   },
 
   validateReferralCode: async (code: string) => {
     try {
-      // You need to add this method to your agentService
       return await agentService.validateReferralCode(code);
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to validate referral code";
-      throw new Error(errorMessage);
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to validate referral code");
     }
   },
 }));

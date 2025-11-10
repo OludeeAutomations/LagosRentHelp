@@ -1,6 +1,12 @@
-// src/pages/agent/SettingsPage.tsx
-import React, { useState } from "react";
-import { User, Mail, Phone, MapPin, Shield, Camera, Save } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import {
+  Shield,
+  Camera,
+  Save,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+} from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useAgentStore } from "@/stores/agentStore";
 import { Button } from "@/components/ui/button";
@@ -16,10 +22,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import VerificationForm from "@/components/common/VerificationForm";
+import { useVerificationStore } from "@/stores/verificationStore";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -47,22 +58,36 @@ type ProfileForm = z.infer<typeof profileSchema>;
 type PasswordForm = z.infer<typeof passwordSchema>;
 
 const SettingsPage: React.FC = () => {
-  const { user, updateProfile } = useAuthStore();
-  const { agentProfile, updateAgentProfile } = useAgentStore();
+  const { user, updateProfile, agent } = useAuthStore();
+  const { updateAgentProfile, fetchAgentProfile } = useAgentStore();
+  const { checkVerificationStatus } = useVerificationStore();
+
   const [activeTab, setActiveTab] = useState("profile");
   const [isLoading, setIsLoading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (agent) {
+      checkVerificationStatus();
+    }
+  }, [agent, checkVerificationStatus]);
+
+  // Handle verification completion
+  const handleVerificationComplete = async () => {
+    await fetchAgentProfile();
+    await checkVerificationStatus();
+  };
+
+  const [notificationSettings, setNotificationSettings] = useState({
+    emailNotifications: true,
+    pushNotifications: true,
+    leadAlerts: true,
+    messageAlerts: true,
+    weeklyReports: false,
+  });
+
   const profileForm = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
-      name: user?.name || "",
-      email: user?.email || "",
-      phone: user?.phone || "",
-      bio: agentProfile?.agent?.bio || "",
-      address: agentProfile?.agent?.address || "",
-      whatsappNumber: agentProfile?.agent?.whatsappNumber || "",
-    },
   });
 
   const passwordForm = useForm<PasswordForm>({
@@ -73,6 +98,19 @@ const SettingsPage: React.FC = () => {
       confirmPassword: "",
     },
   });
+
+  useEffect(() => {
+    if (user && agent) {
+      profileForm.reset({
+        name: user?.name || "",
+        email: user?.email || "",
+        phone: user?.phone || "",
+        bio: agent?.bio || "",
+        address: agent?.residentialAddress || "",
+        whatsappNumber: agent?.whatsappNumber || "",
+      });
+    }
+  }, [user, agent, profileForm]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -99,6 +137,7 @@ const SettingsPage: React.FC = () => {
         address: data.address,
         whatsappNumber: data.whatsappNumber,
       });
+      await fetchAgentProfile();
 
       toast.success("Profile updated successfully");
     } catch (error) {
@@ -111,7 +150,6 @@ const SettingsPage: React.FC = () => {
   const onPasswordSubmit = async (data: PasswordForm) => {
     setIsLoading(true);
     try {
-      // In a real app, you would call your API to change password
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
       toast.success("Password changed successfully");
       passwordForm.reset();
@@ -120,6 +158,14 @@ const SettingsPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleNotificationToggle = (key: keyof typeof notificationSettings) => {
+    setNotificationSettings((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+    toast.success("Notification settings updated");
   };
 
   return (
@@ -137,10 +183,10 @@ const SettingsPage: React.FC = () => {
         className="space-y-6">
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="verification">Verification</TabsTrigger>
           <TabsTrigger value="password">Password</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
-
         <TabsContent value="profile">
           <Card>
             <CardHeader>
@@ -156,11 +202,11 @@ const SettingsPage: React.FC = () => {
                 {/* Avatar Upload */}
                 <div className="flex items-center space-x-6">
                   <div className="relative">
-                    <Avatar className="h-20 w-20">
+                    <Avatar className="h-20 w-20 border-2 border-b-black">
                       {avatarPreview ? (
                         <AvatarImage src={avatarPreview} alt={user?.name} />
-                      ) : user?.avatar ? (
-                        <AvatarImage src={user.avatar} alt={user.name} />
+                      ) : agent?.idPhoto ? (
+                        <AvatarImage src={agent.idPhoto} alt={user?.name} />
                       ) : (
                         <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
                           {user?.name?.charAt(0).toUpperCase() || "U"}
@@ -191,11 +237,7 @@ const SettingsPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      {...profileForm.register("name")}
-                      icon={User}
-                    />
+                    <Input id="name" placeholder={user?.name} />
                     {profileForm.formState.errors.name && (
                       <p className="text-sm text-destructive">
                         {profileForm.formState.errors.name.message}
@@ -205,12 +247,7 @@ const SettingsPage: React.FC = () => {
 
                   <div>
                     <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      {...profileForm.register("email")}
-                      icon={Mail}
-                    />
+                    <Input id="email" type="email" placeholder={user?.email} />
                     {profileForm.formState.errors.email && (
                       <p className="text-sm text-destructive">
                         {profileForm.formState.errors.email.message}
@@ -220,11 +257,7 @@ const SettingsPage: React.FC = () => {
 
                   <div>
                     <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      {...profileForm.register("phone")}
-                      icon={Phone}
-                    />
+                    <Input id="phone" placeholder={user?.phone} />
                     {profileForm.formState.errors.phone && (
                       <p className="text-sm text-destructive">
                         {profileForm.formState.errors.phone.message}
@@ -234,11 +267,7 @@ const SettingsPage: React.FC = () => {
 
                   <div>
                     <Label htmlFor="whatsapp">WhatsApp Number</Label>
-                    <Input
-                      id="whatsapp"
-                      {...profileForm.register("whatsappNumber")}
-                      icon={Phone}
-                    />
+                    <Input id="whatsapp" placeholder={agent?.whatsappNumber} />
                     {profileForm.formState.errors.whatsappNumber && (
                       <p className="text-sm text-destructive">
                         {profileForm.formState.errors.whatsappNumber.message}
@@ -250,8 +279,7 @@ const SettingsPage: React.FC = () => {
                     <Label htmlFor="address">Address</Label>
                     <Input
                       id="address"
-                      {...profileForm.register("address")}
-                      icon={MapPin}
+                      placeholder={agent?.residentialAddress}
                     />
                     {profileForm.formState.errors.address && (
                       <p className="text-sm text-destructive">
@@ -264,10 +292,13 @@ const SettingsPage: React.FC = () => {
                     <Label htmlFor="bio">Bio</Label>
                     <Textarea
                       id="bio"
-                      placeholder="Tell us about yourself and your experience as a real estate agent..."
-                      {...profileForm.register("bio")}
+                      placeholder={agent?.bio}
                       className="min-h-[100px]"
                     />
+                    <div className="flex justify-between text-sm text-muted-foreground mt-1">
+                      <span>Brief description about yourself</span>
+                      <span>{profileForm.watch("bio")?.length || 0}/500</span>
+                    </div>
                     {profileForm.formState.errors.bio && (
                       <p className="text-sm text-destructive">
                         {profileForm.formState.errors.bio.message}
@@ -284,7 +315,91 @@ const SettingsPage: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
+        <TabsContent value="verification">
+          <Card>
+            <CardHeader>
+              <CardTitle>Agent Verification</CardTitle>
+              <CardDescription>
+                Complete your verification to access all agent features
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Verification Status */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center space-x-3">
+                  {agent?.verificationStatus === "verified" ? (
+                    <CheckCircle className="h-8 w-8 text-green-500" />
+                  ) : agent?.verificationStatus === "pending" ? (
+                    <Clock className="h-8 w-8 text-yellow-500" />
+                  ) : (
+                    <AlertCircle className="h-8 w-8 text-red-500" />
+                  )}
+                  <div>
+                    <h3 className="font-semibold">
+                      {agent?.verificationStatus === "verified"
+                        ? "Verified Agent"
+                        : agent?.verificationStatus === "pending"
+                        ? "Verification in Progress"
+                        : "Verification Required"}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {agent?.verificationStatus === "verified"
+                        ? "Your account has been verified successfully"
+                        : agent?.verificationStatus === "pending"
+                        ? "Your verification is under review. This usually takes 24-48 hours."
+                        : "Complete verification to create listings and access all features"}
+                    </p>
+                  </div>
+                </div>
+                <Badge
+                  variant={
+                    agent?.verificationStatus === "verified"
+                      ? "default"
+                      : agent?.verificationStatus === "pending"
+                      ? "secondary"
+                      : "outline"
+                  }>
+                  {agent?.verificationStatus === "verified"
+                    ? "Verified"
+                    : agent?.verificationStatus === "pending"
+                    ? "Pending"
+                    : "Not Verified"}
+                </Badge>
+              </div>
 
+              {/* Show verification form only if not verified */}
+              {agent?.verificationStatus !== "verified" && (
+                <VerificationForm
+                  onVerificationComplete={handleVerificationComplete} // ✅ Fix this prop
+                />
+              )}
+
+              {/* Show verified badge if already verified */}
+              {agent?.verificationStatus === "verified" && (
+                <div className="text-center space-y-4 py-6">
+                  <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full">
+                    <CheckCircle className="h-10 w-10 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-green-600">
+                      Agent Verified
+                    </h3>
+                    <p className="text-muted-foreground mt-2">
+                      Your identity has been successfully verified. You now have
+                      full access to all agent features.
+                    </p>
+                  </div>
+                  <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 rounded-full px-4 py-2">
+                    <Shield className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-700">
+                      Verified Agent
+                    </span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
         <TabsContent value="password">
           <Card>
             <CardHeader>
@@ -347,22 +462,107 @@ const SettingsPage: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
-
         <TabsContent value="notifications">
           <Card>
             <CardHeader>
               <CardTitle>Notification Settings</CardTitle>
               <CardDescription>
-                Manage how you receive notifications
+                Manage how you receive notifications and alerts
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <p className="text-muted-foreground">
-                  Notification settings will be available soon. We're working on
-                  bringing you customizable notification preferences for leads,
-                  messages, and important updates.
-                </p>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="email-notifications">
+                      Email Notifications
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receive important updates via email
+                    </p>
+                  </div>
+                  <Switch
+                    id="email-notifications"
+                    checked={notificationSettings.emailNotifications}
+                    onCheckedChange={() =>
+                      handleNotificationToggle("emailNotifications")
+                    }
+                  />
+                </div>
+
+                <Separator />
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="push-notifications">
+                      Push Notifications
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receive browser push notifications
+                    </p>
+                  </div>
+                  <Switch
+                    id="push-notifications"
+                    checked={notificationSettings.pushNotifications}
+                    onCheckedChange={() =>
+                      handleNotificationToggle("pushNotifications")
+                    }
+                  />
+                </div>
+
+                <Separator />
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="lead-alerts">Lead Alerts</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Get notified when you receive new leads
+                    </p>
+                  </div>
+                  <Switch
+                    id="lead-alerts"
+                    checked={notificationSettings.leadAlerts}
+                    onCheckedChange={() =>
+                      handleNotificationToggle("leadAlerts")
+                    }
+                  />
+                </div>
+
+                <Separator />
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="message-alerts">Message Alerts</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Notifications for new messages from clients
+                    </p>
+                  </div>
+                  <Switch
+                    id="message-alerts"
+                    checked={notificationSettings.messageAlerts}
+                    onCheckedChange={() =>
+                      handleNotificationToggle("messageAlerts")
+                    }
+                  />
+                </div>
+
+                <Separator />
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="weekly-reports">Weekly Reports</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receive weekly performance summaries
+                    </p>
+                  </div>
+                  <Switch
+                    id="weekly-reports"
+                    checked={notificationSettings.weeklyReports}
+                    onCheckedChange={() =>
+                      handleNotificationToggle("weeklyReports")
+                    }
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>

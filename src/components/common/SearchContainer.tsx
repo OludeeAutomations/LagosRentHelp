@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useStore } from "../../stores/useStore";
+import { useStore } from "@/stores/useStore";
 
 const SearchContainer: React.FC = () => {
   const { setSearchFilters } = useStore();

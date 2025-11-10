@@ -2,6 +2,11 @@
 // src/types/index.ts
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare global {
+  interface Window {
+    google: typeof google;
+  }
+}
 export interface ApiResponse<T = any> {
   success: boolean;
   data: T;
@@ -16,14 +21,15 @@ export interface ApiResponse<T = any> {
 
 export interface LoginResponse {
   user: User;
-  token: string;
+  success: boolean;
+  accessToken: string;
   refreshToken: string;
   expiresIn: number;
 }
 
 // ... rest of your existing types remain the same
 export interface User {
-  id: string;
+  _id: string;
   name: string;
   email: string;
   phone: string;
@@ -59,7 +65,7 @@ export interface Property {
   area: number;
   amenities: string[];
   images: string[];
-  agentId: string;
+  agentId: Agent;
   isFeatured: boolean;
   createdAt: string;
 
@@ -77,16 +83,19 @@ export interface Property {
 }
 
 export interface Agent {
+  data: Agent | PromiseLike<Agent>;
   freeListingWeeks: number;
   subscription: any;
   canListProperties: any;
   id: string;
+  name: string;
+  phone: string;
   userId: string; // Reference to User
   bio?: string;
+  verificationIssue?: string;
   verificationStatus: "pending" | "verified" | "rejected";
-  governmentId?: string;
   idPhoto?: string;
-  address: string;
+  residentialAddress: string;
   whatsappNumber: string;
   isEmailVerified: boolean;
   emailVerificationToken?: string;
@@ -112,7 +121,29 @@ export interface Agent {
   responseTime?: number;
   createdAt: string;
 }
+// src/types/verification.ts
+export interface VerificationData {
+  idType: "nin" | "bvn" | "voters" | "drivers_license";
+  idNumber: string;
+  selfieImage: File;
+  dateOfBirth?: string;
+}
 
+export interface VerificationHistory {
+  id: string;
+  idType: string;
+  status: string;
+  submittedAt: string;
+  verifiedAt?: string;
+  reason?: string;
+}
+export interface VerificationStatus {
+  status: "pending" | "verified" | "rejected";
+  verificationIssue?: string;
+  idType?: string;
+  createdAt?: string;
+  verifiedAt?: string;
+}
 export interface Lead {
   id: string;
   agentId: string;
@@ -243,7 +274,7 @@ export interface ApiResponse<T> {
 
 export interface LoginResponse {
   user: User;
-  agentData:Agent;
+  agentData: Agent;
   token: string;
   refreshToken: string;
   expiresIn: number;
@@ -256,6 +287,7 @@ export interface ErrorResponse {
   details?: any;
 }
 export interface AgentStats {
+  data: AgentStats | PromiseLike<AgentStats>;
   totalListings: number;
   totalViews: number;
   activeListings: number;
@@ -266,8 +298,11 @@ export interface AgentStats {
 }
 
 export interface AgentProfileResponse {
-  agent: Agent; // agent-specific fields (bio, address, idPhoto, governmentId, etc.)
-  user: User; // linked user info (name, email, phone, etc.)
-  properties: Property[]; // list of properties managed by the agent
-  stats: AgentStats; // performance metrics for the agent
+  success: any;
+  data: {
+    agent: Agent; // This must match the Agent type
+    user?: User;
+    properties?: any[];
+    stats?: any;
+  }; // list of properties managed by the agent
 }
