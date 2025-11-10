@@ -38,9 +38,9 @@ const Contact: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-[#129B36] to-[#41614F] text-white py-20">
+      <section className="bg-gradient-to-r from-[#129B36] to-[#41614F] text-white py-24">
         <div className="container mx-auto px-4 text-center">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -225,9 +225,11 @@ const Contact: React.FC = () => {
                       <h4 className="font-semibold text-[#0E0E0E] mb-1">
                         Email Support
                       </h4>
-                      <p className="text-[#7F8080] mb-2">
-                        admin@lagosrenthelp.ng
-                      </p>
+                      <a
+                        href="mailTo=`info@lagosrenthelp.ng`"
+                        className="text-[#7F8080] mb-2">
+                        info@lagosrenthelp.ng
+                      </a>
                       <p className="text-sm text-[#7F8080]">
                         We reply within 24 hours
                       </p>

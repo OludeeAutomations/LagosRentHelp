@@ -1,21 +1,22 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import {
   Plus,
   Users,
   Eye,
-  MessageCircle,
   BarChart3,
   Calendar,
   TrendingUp,
-  FileText,
-  CheckCircle,
   Clock,
-  AlertCircle,
   Home,
   RefreshCw,
+  CheckCircle,
+  AlertCircle,
+  FileText,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import { useAgentStore } from "@/stores/agentStore";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,35 +31,42 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { agentService } from "@/services/agentService";
 import { leadService } from "@/services/leadService";
-import { AgentProfileResponse } from "@/types";
 import { canAgentListProperties } from "@/utils/agentUtils";
 
 const AgentDashboard: React.FC = () => {
-  const { user } = useAuthStore();
+  const { user, agent } = useAuthStore(); // ✅ Using agent from auth store
+
+  // ✅ Only need fetchAgentProfile and loading from agent store
+  const { fetchAgentProfile, loading: isLoading, error } = useAgentStore();
+
   const [activeTab, setActiveTab] = useState("overview");
-  const [isLoading, setIsLoading] = useState(true);
-  const [agentData, setAgentData] = useState<AgentProfileResponse | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [recentLeads, setRecentLeads] = useState<any[]>([]);
-  const canCreateListing =
-    agentData?.agent && canAgentListProperties(agentData.agent);
+  const [agentProperties, setAgentProperties] = useState<any[]>([]);
+  const [agentStats, setAgentStats] = useState({
+    totalViews: 0,
+    totalLeads: 0,
+    conversionRate: 0,
+  });
+
+  const canCreateListing = agent && canAgentListProperties(agent);
+
+  useEffect(() => {
+    if (user?.id && !agent) {
+      fetchAgentProfile();
+    }
+  }, [user?.id, agent, fetchAgentProfile]);
 
   useEffect(() => {
     if (user?.id) {
-      loadDashboardData(user.id);
+      loadRecentLeads(user.id);
+      loadAgentProperties(user.id);
+      loadAgentStats(user.id);
     }
   }, [user?.id]);
 
-  const loadDashboardData = async (agentId: string) => {
-    setIsLoading(true);
+  const loadRecentLeads = async (agentId: string) => {
     try {
-      // Get profile with agent, user, properties, stats
-      const profileResponse = await agentService.getProfile(agentId);
-      setAgentData(profileResponse.data);
-
-      // Get leads
       const leadsResponse = await leadService.getAll({
         agentId,
         limit: 5,
@@ -67,23 +75,57 @@ const AgentDashboard: React.FC = () => {
       setRecentLeads(leadsResponse.data);
     } catch (error: unknown) {
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to load dashboard data";
+        error instanceof Error ? error.message : "Failed to load leads";
       toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
+    }
+  };
+
+  const loadAgentProperties = async (agentId: string) => {
+    try {
+      // You might need to import a property service here
+      // const propertiesResponse = await propertyService.getAgentProperties(agentId);
+      // setAgentProperties(propertiesResponse.data);
+
+      // For now, using empty array as placeholder
+      setAgentProperties([]);
+    } catch (error: unknown) {
+      console.error("Failed to load properties:", error);
+    }
+  };
+
+  const loadAgentStats = async (agentId: string) => {
+    try {
+      // You might need to import a stats service here
+      // const statsResponse = await statsService.getAgentStats(agentId);
+      // setAgentStats(statsResponse.data);
+
+      // For now, using placeholder stats
+      setAgentStats({
+        totalViews: 0,
+        totalLeads: 0,
+        conversionRate: 0,
+      });
+    } catch (error: unknown) {
+      console.error("Failed to load stats:", error);
     }
   };
 
   const handleRefresh = async () => {
-    if (user?.id) {
-      await loadDashboardData(user.id);
+    try {
+      await fetchAgentProfile();
+      if (user?.id) {
+        await loadRecentLeads(user.id);
+        await loadAgentProperties(user.id);
+        await loadAgentStats(user.id);
+      }
       toast.success("Dashboard refreshed");
+    } catch {
+      toast.error("Failed to refresh dashboard");
     }
   };
 
-  if (!agentData) {
+  // ✅ Handle loading and empty states
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-muted-foreground">Loading agent data...</p>
@@ -91,9 +133,36 @@ const AgentDashboard: React.FC = () => {
     );
   }
 
-  const { agent, properties, stats } = agentData;
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
 
-  // Trial days left
+  if (!agent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Agent Access Required</h1>
+          <p className="text-muted-foreground mb-4">
+            {error
+              ? "Failed to load agent profile. Please try again."
+              : "Please complete your agent registration to access the dashboard."}
+          </p>
+          {error ? (
+            <Button onClick={() => fetchAgentProfile()}>Retry</Button>
+          ) : (
+            <Button asChild>
+              <Link to="/agent-onboarding">Complete Registration</Link>
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   const daysLeftInTrial = agent?.trialExpiresAt
     ? Math.ceil(
         (new Date(agent.trialExpiresAt).getTime() - Date.now()) /
@@ -103,7 +172,45 @@ const AgentDashboard: React.FC = () => {
 
   return (
     <div title="Dashboard">
-      
+      {agent.verificationStatus && (
+        <Alert
+          className={`mb-6 ${
+            agent.verificationStatus === "verified"
+              ? "bg-green-100 border-green-300"
+              : agent.verificationStatus === "pending"
+              ? "bg-yellow-100 border-yellow-300"
+              : "bg-red-400 border-blue-300" // or any color for "not verified"
+          }`}>
+          {agent.verificationStatus === "verified" ? (
+            <CheckCircle className="h-4 w-4" />
+          ) : (
+            <AlertCircle className="h-4 w-4" />
+          )}
+          <AlertTitle>
+            {agent.verificationStatus === "verified"
+              ? "Verified Agent"
+              : agent.verificationStatus === "pending"
+              ? "Verification in Progress"
+              : "Verification Required"}
+          </AlertTitle>
+          <AlertDescription>
+            {agent.verificationStatus === "verified" ? (
+              "Congratulations! Your agent profile has been verified."
+            ) : agent.verificationStatus === "pending" ? (
+              <>
+                Your agent verification is currently being reviewed.
+                {agent.subscription?.status === "pending_verification" && (
+                  <span className="block mt-1">
+                    You'll get 2 weeks free listing after verification.
+                  </span>
+                )}
+              </>
+            ) : (
+              "Please complete your agent verification to access all features."
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -127,7 +234,9 @@ const AgentDashboard: React.FC = () => {
                   <Home className="h-8 w-8 text-primary" />
                   <TrendingUp className="h-5 w-5 text-green-500" />
                 </div>
-                <div className="text-2xl font-bold">{properties.length}</div>
+                <div className="text-2xl font-bold">
+                  {agentProperties.length}
+                </div>
                 <div className="text-muted-foreground">Total Listings</div>
               </CardContent>
             </Card>
@@ -138,7 +247,9 @@ const AgentDashboard: React.FC = () => {
                   <Eye className="h-8 w-8 text-blue-500" />
                   <TrendingUp className="h-5 w-5 text-green-500" />
                 </div>
-                <div className="text-2xl font-bold">{stats.totalViews}</div>
+                <div className="text-2xl font-bold">
+                  {agentStats.totalViews}
+                </div>
                 <div className="text-muted-foreground">Total Views</div>
               </CardContent>
             </Card>
@@ -149,7 +260,9 @@ const AgentDashboard: React.FC = () => {
                   <Users className="h-8 w-8 text-purple-500" />
                   <TrendingUp className="h-5 w-5 text-green-500" />
                 </div>
-                <div className="text-2xl font-bold">{stats.totalLeads}</div>
+                <div className="text-2xl font-bold">
+                  {agentStats.totalLeads}
+                </div>
                 <div className="text-muted-foreground">Total Leads</div>
               </CardContent>
             </Card>
@@ -161,7 +274,7 @@ const AgentDashboard: React.FC = () => {
                   <TrendingUp className="h-5 w-5 text-green-500" />
                 </div>
                 <div className="text-2xl font-bold">
-                  {stats.conversionRate}%
+                  {agentStats.conversionRate}%
                 </div>
                 <div className="text-muted-foreground">Conversion Rate</div>
               </CardContent>
@@ -290,22 +403,13 @@ const AgentDashboard: React.FC = () => {
                     <span>Create Listing</span>
                     {!canCreateListing && (
                       <span className="text-xs text-muted-foreground mt-1">
-                        {agentData?.agent.verificationStatus !== "verified"
+                        {agent.verificationStatus !== "verified"
                           ? "Verify your account first"
                           : "Subscription required"}
                       </span>
                     )}
                   </Link>
                 </Button>
-                {/* <Button
-                  asChild
-                  variant="outline"
-                  className="h-auto py-6 flex-col gap-2">
-                  <Link to="/agent-dashboard/messages">
-                    <MessageCircle className="h-8 w-8 text-blue-500" />
-                    <span>View Messages</span>
-                  </Link>
-                </Button> */}
                 <Button
                   asChild
                   variant="outline"
@@ -333,46 +437,44 @@ const AgentDashboard: React.FC = () => {
                     <Skeleton key={index} className="h-20 w-full" />
                   ))}
                 </div>
-              ) : properties.length === 0 ? ( // Changed from agentProperties to properties
+              ) : agentProperties.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Home className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No listings yet</p>
                   <p className="text-sm mb-4">
                     Create your first listing to get started
                   </p>
-                  <Button asChild>
-                    <Link to="/create-listing">Create Listing</Link>
+                  <Button asChild disabled={!canCreateListing}>
+                    <Link to={canCreateListing ? "/create-listing" : "#"}>
+                      Create Listing
+                    </Link>
                   </Button>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {properties.map(
-                    (
-                      property // Changed from agentProperties to properties
-                    ) => (
-                      <div
-                        key={property._id}
-                        className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <h4 className="font-medium">{property.title}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {property.location}
-                          </p>
-                          <p className="text-sm">
-                            ₦{property.price.toLocaleString()}
-                          </p>
-                        </div>
-                        <Badge
-                          variant={
-                            property.status === "available"
-                              ? "default"
-                              : "secondary"
-                          }>
-                          {property.status}
-                        </Badge>
+                  {agentProperties.map((property) => (
+                    <div
+                      key={property._id}
+                      className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <h4 className="font-medium">{property.title}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {property.location}
+                        </p>
+                        <p className="text-sm">
+                          ₦{property.price.toLocaleString()}
+                        </p>
                       </div>
-                    )
-                  )}
+                      <Badge
+                        variant={
+                          property.status === "available"
+                            ? "default"
+                            : "secondary"
+                        }>
+                        {property.status}
+                      </Badge>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>
@@ -407,58 +509,23 @@ const AgentDashboard: React.FC = () => {
           </Card>
         </TabsContent>
       </Tabs>
-      {/* Verification Status */}
-      {agent.verificationStatus === "pending" && (
-        <Alert className="mb-6 bg-yellow-100 border-yellow-300">
+      {/* Verification Status Alerts */}
+      {agent.verificationStatus === "verified" && !canCreateListing && (
+        <Alert className="mb-6 bg-orange-100 border-orange-300">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Verification in Progress</AlertTitle>
+          <AlertTitle>Subscription Required</AlertTitle>
           <AlertDescription>
-            Your agent verification is currently being reviewed.
-          </AlertDescription>
-        </Alert>
-      )}
-      {agent.verificationStatus === "verified" && (
-        <Alert className="mb-6 bg-green-100 border-green-300">
-          <CheckCircle className="h-4 w-4" />
-          <AlertTitle>Verified Agent</AlertTitle>
-          <AlertDescription>
-            Congratulations! Your agent profile has been verified.
-          </AlertDescription>
-        </Alert>
-      )}
-      {agentData?.agent.verificationStatus === "pending" && (
-        <Alert className="mb-6 bg-yellow-100 border-yellow-300">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Verification in Progress</AlertTitle>
-          <AlertDescription>
-            Your agent verification is being reviewed. You'll be able to create
-            listings once verified.
-            {agentData.agent.subscription?.status ===
-              "pending_verification" && (
+            Your free trial has ended. Please subscribe to continue creating
+            listings.
+            {agent.freeListingWeeks > 0 && (
               <span className="block mt-1">
-                You'll get 2 weeks free listing after verification.
+                You have {agent.freeListingWeeks} free week(s) from referrals
+                available.
               </span>
             )}
           </AlertDescription>
         </Alert>
       )}
-      {agentData?.agent.verificationStatus === "verified" &&
-        !canCreateListing && (
-          <Alert className="mb-6 bg-orange-100 border-orange-300">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Subscription Required</AlertTitle>
-            <AlertDescription>
-              Your free trial has ended. Please subscribe to continue creating
-              listings.
-              {agentData.agent.freeListingWeeks > 0 && (
-                <span className="block mt-1">
-                  You have {agentData.agent.freeListingWeeks} free week(s) from
-                  referrals available.
-                </span>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
     </div>
   );
 };

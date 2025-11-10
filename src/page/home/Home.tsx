@@ -35,6 +35,7 @@ const Home: React.FC = () => {
     "mini-flat",
     "short-let",
   ];
+  console.log("Properties in Home component:", properties);
 
   useEffect(() => {
     fetchProperties();

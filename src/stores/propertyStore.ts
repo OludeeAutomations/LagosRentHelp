@@ -53,7 +53,7 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
     try {
       const response = await propertyService.getById(id);
       console.log("Single property response:", response.data);
-      return response.data;
+      return response.data.data; // 👈 return the actual property object
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to fetch property";
@@ -229,18 +229,23 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
 
   fetchProperties: async (filters) => {
     set({ loading: true, error: null });
+
     try {
       const response = await propertyService.getAll(filters);
       console.log("Raw API response:", response.data);
 
+      // ✅ Extract the array properly
+      const result = response.data; // { success, data, pagination }
+
       set({
-        properties: response.data,
-        filteredProperties: response.data,
-        featuredProperties: response.data.filter(
+        properties: result.data, // <-- only the array part
+        filteredProperties: result.data,
+        featuredProperties: result.data.filter(
           (prop: Property) => prop.isFeatured
         ),
         loading: false,
       });
+
       if (filters) get().filterProperties(filters);
     } catch (error: unknown) {
       const errorMessage =

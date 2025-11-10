@@ -1,3 +1,4 @@
+import axios from "axios";
 import { api, ApiResponse } from "./api";
 import { User, LoginResponse } from "@/types";
 
@@ -31,7 +32,6 @@ export const authService = {
     userData: RegisterData
   ): Promise<ApiResponse<LoginResponse>> => {
     try {
-      // Ensure all required fields are present
       const registrationData = {
         name: userData.name?.trim() || "",
         email: userData.email?.trim().toLowerCase() || "",
@@ -47,32 +47,54 @@ export const authService = {
         "/auth/register",
         registrationData
       );
+
+      // 🔍 ADD THIS DEBUG LOG
+      console.log("Registration response received:", {
+        fullResponse: response,
+        data: response.data,
+        userInResponse: response.data.user,
+        accessTokenInResponse: response.data.accessToken,
+      });
+
       return response;
     } catch (error) {
-      console.error("Registration error:", error);
-      throw new Error(
-        error instanceof Error ? error.message : "Registration failed"
-      );
+      if (axios.isAxiosError(error)) {
+        const backendMessage = error.response?.data?.error || error.message;
+        console.error("Registration error:", backendMessage);
+        throw new Error(backendMessage);
+      }
+
+      // Non-Axios error
+      throw new Error("An unexpected error occurred");
     }
   },
 
   verifyEmail: async (userId: string, token: string) => {
-    return api.get(`/auth/verify-email/${userId}/${token}`);
+    try {
+      const response = await api.get(`/auth/verify-email/${userId}/${token}`);
+      return response.data; // This should be { success: true, message: "..." }
+    } catch (error: any) {
+      // Make sure this only throws on actual errors, not on success responses
+      throw new Error(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          "Email verification failed"
+      );
+    }
   },
 
-  sendPasswordResetEmail: async (email:string) => {
-    return api.post(`/auth/forgot-password`,{email:email});
+  sendPasswordResetEmail: async (email: string) => {
+    return api.post(`/auth/forgot-password`, { email: email });
   },
 
-  resetPassword: async (userId: string, token: string,password:string) => {
-    return api.post(`/auth/reset-password`,{
+  resetPassword: async (userId: string, token: string, password: string) => {
+    return api.post(`/auth/reset-password`, {
       userId,
       token,
       password,
-      confirmPassword : password
+      confirmPassword: password,
     });
   },
-
 
   logout: (): void => {
     localStorage.removeItem("token");
@@ -94,7 +116,19 @@ export const authService = {
     if (typeof window === "undefined") return false;
     return !!localStorage.getItem("token");
   },
-
+  validateToken: async (): Promise<{ valid: boolean; user?: User }> => {
+    try {
+      const response = await api.get("/auth/validate");
+      return {
+        valid: true,
+        user: response.data.user,
+      };
+    } catch (error) {
+      return {
+        valid: false,
+      };
+    }
+  },
   updateProfile: async (updates: Partial<User>): Promise<ApiResponse<User>> => {
     try {
       const response = await api.put<User>("/users/profile", updates);

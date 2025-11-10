@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
@@ -8,23 +8,19 @@ import {
   Settings,
   LogOut,
   Menu,
-  MessageCircle,
   Shield,
   Bell,
   Building,
-  Calendar,
-  DollarSign,
   HomeIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
-import { agentService } from "@/services/agentService";
+import { useAgentStore } from "@/stores/agentStore";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AgentProfileResponse } from "@/types";
+import { toast } from "sonner";
 import { canAgentListProperties } from "@/utils/agentUtils";
 
 interface AgentDashboardLayoutProps {
@@ -39,22 +35,25 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
   showHeader = true,
 }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [agentData, setAgentData] = useState<AgentProfileResponse | null>(null);
-  const { user, logout } = useAuthStore();
+  const { user, logout, agent } = useAuthStore(); // ✅ Now using agent from auth store
+  const { fetchAgentProfile, loading, error } = useAgentStore();
   const navigate = useNavigate();
   const location = useLocation();
-  const canCreateListing =
-    agentData?.agent && canAgentListProperties(agentData.agent);
-  useEffect(() => {
-    if (user?.id) {
-      loadAgentData(user.id);
-    }
-  }, [user?.id]);
-  const getSubscriptionStatus = () => {
-    if (!agentData?.agent) return "Loading...";
 
-    const { agent } = agentData;
+  useEffect(() => {
+    if (user?._id) {
+      fetchAgentProfile();
+    }
+  }, [user?._id, fetchAgentProfile]);
+
+  const handleLogout = () => {
+    logout();
+    toast.success("Logged out successfully");
+    navigate("/");
+  };
+
+  const getSubscriptionStatus = () => {
+    if (!agent) return "Loading...";
 
     if (agent.verificationStatus !== "verified") {
       return "Not Verified";
@@ -82,51 +81,19 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
     return "Subscription Required";
   };
 
-  const loadAgentData = async (agentId: string) => {
-    setIsLoading(true);
-    try {
-      const profileResponse = await agentService.getProfile(agentId);
-      setAgentData(profileResponse.data);
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to load agent data";
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleLogout = () => {
-    logout();
-    toast.success("Logged out successfully");
-    navigate("/");
-  };
+  const canCreateListing = agent && canAgentListProperties(agent);
 
   const agentNavigationItems = [
     { icon: Home, label: "Overview", href: "/agent-dashboard" },
     { icon: Plus, label: "Create Listing", href: "/create-listing" },
     { icon: Building, label: "My Listings", href: "/agent-dashboard/listings" },
     { icon: Users, label: "Leads", href: "/agent-dashboard/leads" },
-    // {
-    //   icon: MessageCircle,
-    //   label: "Messages",
-    //   href: "/agent-dashboard/messages",
-    // },
     { icon: BarChart3, label: "Analytics", href: "/agent-dashboard/analytics" },
-    // {
-    //   icon: Calendar,
-    //   label: "Appointments",
-    //   href: "/agent-dashboard/appointments",
-    // },
-    // {
-    //   icon: DollarSign,
-    //   label: "Commissions",
-    //   href: "/agent-dashboard/commissions",
-    // },
     { icon: Settings, label: "Settings", href: "/agent-dashboard/settings" },
   ];
 
-  if (isLoading) {
+  // 🔄 Handle Loading State
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -137,23 +104,28 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
     );
   }
 
-  if (!agentData || !agentData.agent) {
+  // ❌ Handle No Agent Data - Now checking auth store's agent
+  if (!agent) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Agent Access Required</h1>
           <p className="text-muted-foreground mb-4">
-            Please complete your agent registration to access the dashboard.
+            {error
+              ? "Failed to load agent profile. Please try again."
+              : "Please complete your agent registration to access the dashboard."}
           </p>
-          <Button asChild>
-            <Link to="/agent-onboarding">Complete Registration</Link>
-          </Button>
+          {error ? (
+            <Button onClick={() => fetchAgentProfile()}>Retry</Button>
+          ) : (
+            <Button asChild>
+              <Link to="/agent-onboarding">Complete Registration</Link>
+            </Button>
+          )}
         </div>
       </div>
     );
   }
-
-  const { agent } = agentData;
 
   return (
     <div className="min-h-screen bg-background">
@@ -191,7 +163,6 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
                 <p className="text-sm text-muted-foreground truncate">
                   {user?.email}
                 </p>
-
                 <p className="text-xs text-muted-foreground capitalize">
                   {getSubscriptionStatus()}
                 </p>
@@ -230,13 +201,10 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
                   onClick={(e) => {
                     if (isDisabled) {
                       e.preventDefault();
-                      const canList = canAgentListProperties(agentData?.agent);
                       toast.info(
-                        agentData?.agent.verificationStatus !== "verified"
+                        agent.verificationStatus !== "verified"
                           ? "Please verify your account first"
-                          : canList
-                          ? "Please subscribe to create listings"
-                          : "Your subscription has expired"
+                          : "Please subscribe to create listings"
                       );
                     }
                   }}
