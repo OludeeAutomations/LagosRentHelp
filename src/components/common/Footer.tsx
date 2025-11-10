@@ -33,7 +33,7 @@ const Footer: React.FC = () => {
             </p>
             <div className="flex space-x-4">
               <a
-                href="https://www.facebook.com/lagosrenthelp"
+                href="https://www.facebook.com/profile.php?id=61580883641779"
                 className="text-white hover:text-[#129B36] transition-colors">
                 <Facebook className="h-5 w-5" />
               </a>
@@ -145,13 +145,11 @@ const Footer: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-start space-x-3">
                 <MapPin className="h-5 w-5 text-[#129B36] mt-1 flex-shrink-0" />
-                <p className="text-white">
-                  123 Victoria Island, Lagos, Nigeria
-                </p>
+                <p className="text-white">Lagos, Nigeria</p>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="h-5 w-5 text-[#129B36] flex-shrink-0" />
-                <p className="text-white">+234 123 456 7890</p>
+                <p className="text-white">+234 708 229 3054</p>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-5 w-5 text-[#129B36] flex-shrink-0" />
@@ -159,7 +157,7 @@ const Footer: React.FC = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <MessageCircle className="h-5 w-5 text-[#129B36] flex-shrink-0" />
-                <p className="text-white">WhatsApp: +234 123 456 7890</p>
+                <p className="text-white">WhatsApp: +234 708 229 3054</p>
               </div>
             </div>
           </div>

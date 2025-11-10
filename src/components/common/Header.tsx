@@ -44,7 +44,6 @@ const Header: React.FC = () => {
     { name: "Search", href: "/search", icon: Search },
     { name: "About", href: "/about", icon: Info },
     { name: "Contact", href: "/contact", icon: Building },
-
     { name: "Features", href: "/features", icon: Star },
   ];
 
@@ -87,7 +86,7 @@ const Header: React.FC = () => {
 
               return (
                 <Link
-                  key={item.name}
+                  key={`${item.name}-${item.href}`}
                   to={item.href}
                   className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive

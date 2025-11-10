@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import Layout from "./layout";
@@ -30,6 +30,7 @@ import ForgotPassword from "./page/login/ForgotPassword";
 import ResetPassword from "./page/login/ResetPassword";
 import { Toaster } from "sonner";
 import Favorites from "./page/user/Favorites";
+import { useAuthStore } from "./stores/authStore";
 //import AgentListings from "./page/agents/dashboard/AgentListings";
 //import AgentLeads from "./page/agents/dashboard/AgentLeads";
 //import AgentMessages from "./page/agents/dashboard/AgentMessages";
@@ -39,9 +40,16 @@ import Favorites from "./page/user/Favorites";
 //import AgentCommissions from "./page/agents/dashboard/AgentCommissions";
 
 const App: React.FC = () => {
+  const { validateAuth, isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    // Validate token when app starts if user is supposedly logged in
+    if (isAuthenticated) {
+      validateAuth();
+    }
+  }, [validateAuth, isAuthenticated]);
   return (
     <Router>
-
       <Toaster position="top-right" />
 
       <AnimatePresence mode="wait">
@@ -80,8 +88,8 @@ const App: React.FC = () => {
               </Layout>
             }
           />
-          
-            <Route
+
+          <Route
             path="/dashboard/favorites"
             element={
               <Layout>
@@ -99,7 +107,6 @@ const App: React.FC = () => {
             }
           />
 
-          
           <Route
             path="/privacy"
             element={
@@ -140,7 +147,7 @@ const App: React.FC = () => {
               </Layout>
             }
           />
-            <Route
+          <Route
             path="/verify-email"
             element={
               <Layout>
@@ -148,7 +155,7 @@ const App: React.FC = () => {
               </Layout>
             }
           />
-               <Route
+          <Route
             path="/verify-email/:userId/:token"
             element={
               <Layout>
@@ -157,7 +164,7 @@ const App: React.FC = () => {
             }
           />
 
-           <Route
+          <Route
             path="/forgot-password"
             element={
               <Layout>
@@ -166,7 +173,7 @@ const App: React.FC = () => {
             }
           />
 
-            <Route
+          <Route
             path="/reset-password/:userId/:token"
             element={
               <Layout>
@@ -182,7 +189,6 @@ const App: React.FC = () => {
               </Layout>
             }
           />
-          // In your router setup (e.g., App.tsx or router.tsx)
           <Route
             path="/agents/:agentId"
             element={

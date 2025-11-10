@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
@@ -36,8 +37,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useAgentStore } from "@/stores/agentStore";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Property } from "@/types";
+import { Property, Agent } from "@/types"; // Make sure to import Agent type
 import { useAmenities } from "@/hooks/useAmenities";
+import PropertyMap from "@/components/common/PropertyMap";
+
+// Type guard to check if agentId is an object
+const isAgentObject = (agentId: any): agentId is Agent => {
+  return agentId && typeof agentId === "object" && "name" in agentId;
+};
+
+// Type guard to check if agentId is a string
+const isAgentString = (agentId: any): agentId is string => {
+  return typeof agentId === "string";
+};
 
 const PropertyDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -53,6 +65,25 @@ const PropertyDetails: React.FC = () => {
   const [showAgentModal, setShowAgentModal] = useState(false);
   const amenities = useAmenities(property?.amenities);
 
+  // Get the agent information safely
+  const getAgentInfo = () => {
+    if (!property) return null;
+
+    if (isAgentObject(property.agentId)) {
+      // agentId is already an Agent object
+      return property.agentId;
+    } else if (isAgentString(property.agentId)) {
+      // agentId is a string ID, find the agent in the agents store
+      return agents.find(
+        (a) => a.id === property.agentId || a._id === property.agentId
+      );
+    }
+
+    return null;
+  };
+
+  const agent = getAgentInfo();
+
   useEffect(() => {
     console.log("URL ID:", id);
 
@@ -66,24 +97,14 @@ const PropertyDetails: React.FC = () => {
       setIsLoading(true);
 
       try {
-        // const existingProperty = properties.find(
-        //   (p) => p._id === id || p._id === id
-        // );
-
-        // if (existingProperty) {
-        //   console.log("Found property in store:", existingProperty);
-        //   setProperty(existingProperty);
-        // } else {
-       
-        // }
-           console.log("Property not in store, fetching from API...");
-          const propertyData = await getPropertyById(id);
-          if (propertyData) {
-            console.log("Fetched property from API:", propertyData);
-            setProperty(propertyData);
-          } else {
-            console.error("Failed to fetch property from API");
-          }
+        console.log("Property not in store, fetching from API...");
+        const propertyData = await getPropertyById(id);
+        if (propertyData) {
+          console.log("Fetched property from API:", propertyData);
+          setProperty(propertyData);
+        } else {
+          console.error("Failed to fetch property from API");
+        }
       } catch (error) {
         console.error("Error fetching property:", error);
       } finally {
@@ -94,38 +115,42 @@ const PropertyDetails: React.FC = () => {
     fetchProperty();
   }, [id, properties, getPropertyById]);
 
-  // Find the agent for this property
-  const agent = property
-    ? agents.find((a) => a.id === property.agentId || a.id === property.agentId)
-    : null;
-
   // Check if this property is favorited
-  const isFavorite = userFavorites.includes(
-    property?._id || property?._id || ""
-  );
+  const isFavorite = userFavorites.includes(property?._id || "");
 
   // Handle WhatsApp message
   const handleWhatsAppClick = () => {
-    if (!property?.agentId.whatsappNumber) {
+    const whatsappNumber = agent?.whatsappNumber;
+    if (!whatsappNumber) {
       toast.error("Agent WhatsApp number not available");
       return;
     }
 
     const message = `Hello, I'm interested in your property: ${property?.title}`;
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${property?.agentId.whatsappNumber}?text=${encodedMessage}`;
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
     window.open(whatsappUrl, "_blank");
+  };
+
+  // Handle phone call
+  const handlePhoneCall = () => {
+    const phoneNumber = agent?.phone;
+    if (!phoneNumber) {
+      toast.error("Agent phone number not available");
+      return;
+    }
+    window.location.href = `tel:${phoneNumber}`;
   };
 
   // Toggle favorite status
   const handleToggleFavorite = () => {
-    console.log("Adding to properties")
+    console.log("Adding to properties");
     if (!user) {
       toast.error("Please log in to save favorites");
       return;
     }
 
-    const propertyId = property?._id || property?._id;
+    const propertyId = property?._id;
     if (propertyId) {
       toggleFavorite(propertyId);
     }
@@ -397,15 +422,14 @@ const PropertyDetails: React.FC = () => {
               </TabsContent>
 
               <TabsContent value="location" className="pt-4">
-                <Card className="border-gray-200">
-                  <CardContent className="p-6">
-                    <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
-                      <MapPin className="h-12 w-12 text-gray-400" />
-                      <span className="ml-2 text-gray-500">
-                        Map would be displayed here
-                      </span>
-                    </div>
-                    <div className="mt-4">
+                <Card className="border-gray-200 p-0">
+                  <CardContent className="p-0">
+                    <PropertyMap
+                      address={property.location}
+                      height="400px"
+                      showStreetViewButton={true}
+                    />
+                    <div className=" p-4">
                       <h4 className="font-semibold mb-2 text-gray-900">
                         Address
                       </h4>
@@ -427,10 +451,10 @@ const PropertyDetails: React.FC = () => {
               <CardContent>
                 <div className="flex items-center mb-4">
                   <div className="relative">
-                    {property?.agentId.idPhoto ? (
+                    {agent?.idPhoto ? (
                       <img
-                        src={property.agentId.idPhoto}
-                        // alt={agent.userId || "Agent"}
+                        src={agent.idPhoto}
+                        alt={agent.name || "Agent"}
                         className="h-16 w-16 rounded-full object-cover cursor-pointer border-2 border-green-500"
                         onClick={() => setShowAgentModal(true)}
                       />
@@ -442,10 +466,10 @@ const PropertyDetails: React.FC = () => {
                   </div>
                   <div className="ml-4">
                     <h3 className="font-semibold text-gray-900">
-                      {property?.agentId.name|| "Property Agent"}
+                      {agent?.name || "Property Agent"}
                     </h3>
                     <p className="text-sm text-gray-600">Real Estate Agent</p>
-                    {property?.agentId.verificationStatus == "verified" && (
+                    {agent?.verificationStatus === "verified" && (
                       <Badge className="mt-1 bg-green-100 text-green-800 border-0">
                         Verified
                       </Badge>
@@ -457,16 +481,16 @@ const PropertyDetails: React.FC = () => {
                   <Button
                     className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white"
                     onClick={handleWhatsAppClick}
-                    disabled={!user || !property?.agentId.whatsappNumber}>
+                    disabled={!user || !agent?.whatsappNumber}>
                     <MessageCircle className="h-4 w-4" />
                     Chat on WhatsApp
                   </Button>
 
                   <Button
-                    onClick={() => window.location.href = `tel:${property?.agentId.phone}`}
+                    onClick={handlePhoneCall}
                     variant="outline"
                     className="w-full flex items-center justify-center gap-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
-                    disabled={!user || !property?.agentId.phone}>
+                    disabled={!user || !agent?.phone}>
                     <Phone className="h-4 w-4" />
                     Call Agent
                   </Button>
@@ -493,7 +517,7 @@ const PropertyDetails: React.FC = () => {
                   <span className="capitalize text-gray-900">
                     {property.listingType === "short-let"
                       ? "Short Let"
-                      : "Rent"}
+                      : property.listingType}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -556,7 +580,7 @@ const PropertyDetails: React.FC = () => {
               {agent.idPhoto ? (
                 <img
                   src={agent.idPhoto}
-                  alt={agent.userId || "Agent"}
+                  alt={agent.name || "Agent"}
                   className="h-24 w-24 rounded-full object-cover mx-auto mb-4 border-2 border-green-500"
                 />
               ) : (
@@ -566,7 +590,7 @@ const PropertyDetails: React.FC = () => {
               )}
 
               <h4 className="text-lg font-semibold text-gray-900">
-                {agent.userId || "Property Agent"}
+                {agent.name || "Property Agent"}
               </h4>
               <p className="text-gray-600">Real Estate Agent</p>
 
