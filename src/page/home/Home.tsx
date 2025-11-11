@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -23,9 +23,29 @@ const Home: React.FC = () => {
   const [selectedType, setSelectedType] = useState("");
   const [priceRange, setPriceRange] = useState("");
   const [showSearchBar, setShowSearchBar] = useState(false);
-  const [videoLoaded, setVideoLoaded] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Fallback if video doesn't load within 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!videoLoaded && !videoError) {
+        setVideoError(true);
+      }
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [videoLoaded, videoError]);
+
+  const handleVideoLoad = () => {
+    setVideoLoaded(true);
+  };
+
+  const handleVideoError = () => {
+    setVideoError(true);
+  };
   const propertyTypes = [
     "1-bedroom",
     "2-bedroom",
@@ -117,13 +137,17 @@ const Home: React.FC = () => {
         {/* Video Background */}
         <div className="absolute inset-0 z-0">
           <video
+            ref={videoRef}
             autoPlay
             muted
             loop
             playsInline
+            preload="metadata" // Better for performance
             className="w-full h-full object-cover"
             poster="https://images.unsplash.com/photo-1643389-pexels-photo-1643389.jpeg?auto=compress&cs=tinysrgb&w=1920"
-            onLoadedData={() => setVideoLoaded(true)}>
+            onLoadedData={handleVideoLoad}
+            onError={handleVideoError}
+            onCanPlayThrough={handleVideoLoad}>
             <source
               src="https://res.cloudinary.com/dsv4iggkz/video/upload/q_auto:low,w_1280,h_720,c_fill,f_mp4/v1755875417/Newly_Renovated_Room_Parlour_Self_Contain_TO_LET_In_Igbogbo_Baiyeku_Ikorodu_-_200k_Per_Annum._1_wxrz1s.mp4"
               type="video/mp4"
@@ -132,10 +156,12 @@ const Home: React.FC = () => {
               src="https://res.cloudinary.com/dsv4iggkz/video/upload/q_auto:low,w_1280,h_720,c_fill,f_webm/v1755875417/Newly_Renovated_Room_Parlour_Self_Contain_TO_LET_In_Igbogbo_Baiyeku_Ikorodu_-_200k_Per_Annum._1_wxrz1s.webm"
               type="video/webm"
             />
+            {/* Fallback text for unsupported browsers */}
+            Your browser does not support the video tag.
           </video>
 
           {/* Fallback background if video doesn't load */}
-          {!videoLoaded && (
+          {(videoError || !videoLoaded) && (
             <div
               className="absolute inset-0 bg-cover bg-center"
               style={{
@@ -145,8 +171,15 @@ const Home: React.FC = () => {
             />
           )}
 
+          {/* Loading state */}
+          {!videoLoaded && !videoError && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+              <div className="text-white">Loading video...</div>
+            </div>
+          )}
+
           {/* Dark overlay for better text contrast */}
-          <div className="absolute inset-0 bg-[#0E0E0E] bg-opacity-60"></div>
+          <div className="absolute inset-0 bg-black/50 bg-opacity-60"></div>
         </div>
 
         <div className="container mx-auto px-4 relative z-10">

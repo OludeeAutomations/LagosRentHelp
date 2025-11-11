@@ -113,10 +113,10 @@ const AgentDashboard: React.FC = () => {
   const handleRefresh = async () => {
     try {
       await fetchAgentProfile();
-      if (user?.id) {
-        await loadRecentLeads(user.id);
-        await loadAgentProperties(user.id);
-        await loadAgentStats(user.id);
+      if (user?._id) {
+        await loadRecentLeads(user._id);
+        await loadAgentProperties(user._id);
+        await loadAgentStats(user._id);
       }
       toast.success("Dashboard refreshed");
     } catch {
@@ -206,7 +206,16 @@ const AgentDashboard: React.FC = () => {
                 )}
               </>
             ) : (
-              "Please complete your agent verification to access all features."
+              <p className="text-white">
+                {" "}
+                Please complete your agent verification to access all features
+                in your Settings.{" "}
+                <a
+                  className="underline text-sm font-bold text-black"
+                  href="/agent-dashboard/settings">
+                  Got to Settings
+                </a>
+              </p>
             )}
           </AlertDescription>
         </Alert>

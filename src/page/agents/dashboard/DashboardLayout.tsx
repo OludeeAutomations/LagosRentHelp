@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   Home,
   Plus,
   Users,
   BarChart3,
   Settings,
-  LogOut,
   Menu,
   Shield,
   Bell,
@@ -35,9 +34,8 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
   showHeader = true,
 }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { user, logout, agent } = useAuthStore(); // ✅ Now using agent from auth store
+  const { user, agent } = useAuthStore(); // ✅ Now using agent from auth store
   const { fetchAgentProfile, loading, error } = useAgentStore();
-  const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
@@ -45,12 +43,6 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
       fetchAgentProfile();
     }
   }, [user?._id, fetchAgentProfile]);
-
-  const handleLogout = () => {
-    logout();
-    toast.success("Logged out successfully");
-    navigate("/");
-  };
 
   const getSubscriptionStatus = () => {
     if (!agent) return "Loading...";
@@ -87,8 +79,8 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
     { icon: Home, label: "Overview", href: "/agent-dashboard" },
     { icon: Plus, label: "Create Listing", href: "/create-listing" },
     { icon: Building, label: "My Listings", href: "/agent-dashboard/listings" },
-    { icon: Users, label: "Leads", href: "/agent-dashboard/leads" },
-    { icon: BarChart3, label: "Analytics", href: "/agent-dashboard/analytics" },
+    { icon: Users, label: "Leads", href: "#" },
+    { icon: BarChart3, label: "Analytics", href: "#" },
     { icon: Settings, label: "Settings", href: "/agent-dashboard/settings" },
   ];
 

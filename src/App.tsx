@@ -23,6 +23,7 @@ import ComingSoonPage from "./page/ComingSoonPage";
 import MyListingsPage from "./page/agents/dashboard/MyListingsPage";
 import LeadsPage from "./page/agents/dashboard/LeadsPage";
 import SettingsPage from "./page/agents/dashboard/SettingsPage";
+import UserSettingsPage from "./page/settings/SettingsPage";
 import NotificationsPage from "./page/agents/dashboard/NotificationsPage";
 import EmailVerificationNotice from "./page/register/EmailVerificationNotice";
 import VerifyEmailResult from "./page/register/VerifyEmailResult";
@@ -86,6 +87,14 @@ const App: React.FC = () => {
             element={
               <Layout>
                 <SearchPage />
+              </Layout>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <Layout>
+                <UserSettingsPage />
               </Layout>
             }
           />

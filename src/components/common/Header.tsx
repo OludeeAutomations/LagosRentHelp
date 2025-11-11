@@ -227,7 +227,7 @@ const Header: React.FC = () => {
                         </DialogContent>
                       </Dialog>
 
-                      <Link to="/dashboard/settings">
+                      <Link to="/settings">
                         <Button
                           variant="ghost"
                           className="w-full justify-start text-sm font-normal">

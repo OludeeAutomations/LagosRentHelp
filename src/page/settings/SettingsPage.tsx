@@ -1,0 +1,621 @@
+// src/pages/SettingsPage.tsx
+import React, { useState } from "react";
+import { useAuthStore } from "@/stores/authStore";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+
+import { toast } from "sonner";
+import {
+  User,
+  Shield,
+  Bell,
+  Lock,
+  Mail,
+  Phone,
+  MapPin,
+  Save,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+
+const SettingsPage: React.FC = () => {
+  const { user, updateProfile, changePassword } = useAuthStore();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("profile");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Profile form state
+  const [profileData, setProfileData] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+  });
+
+  // Security form state
+  const [securityData, setSecurityData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Notification preferences
+  const [notifications, setNotifications] = useState({
+    emailNotifications: true,
+    smsNotifications: user?.phone ? true : false,
+    pushNotifications: true,
+    marketingEmails: false,
+    securityAlerts: true,
+    bookingUpdates: true,
+    newListings: true,
+    priceChanges: false,
+  });
+
+  // Handle profile update
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      await updateProfile(profileData);
+      toast.success("Profile updated successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update profile");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle password change
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (securityData.newPassword !== securityData.confirmPassword) {
+      toast.error("New passwords don't match");
+      return;
+    }
+
+    if (securityData.newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      await changePassword(
+        securityData.currentPassword,
+        securityData.newPassword
+      );
+      toast.success("Password changed successfully");
+      setSecurityData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to change password");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle notification preferences change
+  const handleNotificationChange = (key: string, value: boolean) => {
+    setNotifications((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+    // You would typically save this to the backend here
+    toast.success("Notification preferences updated");
+  };
+
+  if (!user) {
+    navigate("/login");
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container mx-auto px-4 max-w-4xl">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+          <p className="text-gray-600 mt-2">
+            Manage your account settings and preferences
+          </p>
+        </div>
+
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6">
+          {/* Tab Navigation */}
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="profile" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Profile
+            </TabsTrigger>
+            <TabsTrigger value="security" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Security
+            </TabsTrigger>
+            <TabsTrigger
+              value="notifications"
+              className="flex items-center gap-2">
+              <Bell className="h-4 w-4" />
+              Notifications
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Profile Tab */}
+          <TabsContent value="profile" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Profile Information
+                </CardTitle>
+                <CardDescription>
+                  Update your personal information and how others see you on the
+                  platform.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleProfileUpdate} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Full Name</Label>
+                      <Input
+                        id="name"
+                        value={profileData.name}
+                        onChange={(e) =>
+                          setProfileData((prev) => ({
+                            ...prev,
+                            name: e.target.value,
+                          }))
+                        }
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email Address</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="email"
+                          type="email"
+                          value={profileData.email}
+                          onChange={(e) =>
+                            setProfileData((prev) => ({
+                              ...prev,
+                              email: e.target.value,
+                            }))
+                          }
+                          className="pl-10"
+                          placeholder="Enter your email"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="phone"
+                        value={profileData.phone}
+                        onChange={(e) =>
+                          setProfileData((prev) => ({
+                            ...prev,
+                            phone: e.target.value,
+                          }))
+                        }
+                        className="pl-10"
+                        placeholder="+234 812 345 6789"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Location</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="location"
+                        value={profileData.location}
+                        onChange={(e) =>
+                          setProfileData((prev) => ({
+                            ...prev,
+                            location: e.target.value,
+                          }))
+                        }
+                        className="pl-10"
+                        placeholder="Your city or area"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      className="flex items-center gap-2">
+                      <Save className="h-4 w-4" />
+                      {isLoading ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Account Type Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Account Type</CardTitle>
+                <CardDescription>
+                  Your current account type and permissions.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <p className="font-semibold capitalize">{user.role}</p>
+                    <p className="text-sm text-gray-600">
+                      {user.role === "agent"
+                        ? "Full access to agent features"
+                        : user.role === "admin"
+                        ? "Administrative access"
+                        : "Basic user access"}
+                    </p>
+                  </div>
+                  <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                    {user?.verificationStatus === "verified"
+                      ? "Verified"
+                      : "Unverified"}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Security Tab */}
+          <TabsContent value="security" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Lock className="h-5 w-5" />
+                  Change Password
+                </CardTitle>
+                <CardDescription>
+                  Update your password to keep your account secure.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handlePasswordChange} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="currentPassword">Current Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="currentPassword"
+                        type={showCurrentPassword ? "text" : "password"}
+                        value={securityData.currentPassword}
+                        onChange={(e) =>
+                          setSecurityData((prev) => ({
+                            ...prev,
+                            currentPassword: e.target.value,
+                          }))
+                        }
+                        className="pl-10 pr-10"
+                        placeholder="Enter current password"
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-3 top-2 h-6 w-6 p-0"
+                        onClick={() =>
+                          setShowCurrentPassword(!showCurrentPassword)
+                        }>
+                        {showCurrentPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">New Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="newPassword"
+                        type={showNewPassword ? "text" : "password"}
+                        value={securityData.newPassword}
+                        onChange={(e) =>
+                          setSecurityData((prev) => ({
+                            ...prev,
+                            newPassword: e.target.value,
+                          }))
+                        }
+                        className="pl-10 pr-10"
+                        placeholder="Enter new password"
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-3 top-2 h-6 w-6 p-0"
+                        onClick={() => setShowNewPassword(!showNewPassword)}>
+                        {showNewPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">
+                      Confirm New Password
+                    </Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={securityData.confirmPassword}
+                        onChange={(e) =>
+                          setSecurityData((prev) => ({
+                            ...prev,
+                            confirmPassword: e.target.value,
+                          }))
+                        }
+                        className="pl-10 pr-10"
+                        placeholder="Confirm new password"
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-3 top-2 h-6 w-6 p-0"
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }>
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      variant="destructive">
+                      {isLoading ? "Updating..." : "Change Password"}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Two-Factor Authentication Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Two-Factor Authentication</CardTitle>
+                <CardDescription>
+                  Add an extra layer of security to your account.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold">Two-Factor Authentication</p>
+                    <p className="text-sm text-gray-600">
+                      Protect your account with an extra layer of security
+                    </p>
+                  </div>
+                  <Switch />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Session Management */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Active Sessions</CardTitle>
+                <CardDescription>
+                  Manage your active login sessions.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-semibold">Current Session</p>
+                      <p className="text-sm text-gray-600">
+                        {navigator.userAgent} • Now
+                      </p>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      Logout This Device
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Notifications Tab */}
+          <TabsContent value="notifications" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Email Notifications</CardTitle>
+                <CardDescription>
+                  Control what email notifications you receive.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold">Email Notifications</p>
+                    <p className="text-sm text-gray-600">
+                      Receive notifications via email
+                    </p>
+                  </div>
+                  <Switch
+                    checked={notifications.emailNotifications}
+                    onCheckedChange={(checked) =>
+                      handleNotificationChange("emailNotifications", checked)
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold">Security Alerts</p>
+                    <p className="text-sm text-gray-600">
+                      Important security notifications
+                    </p>
+                  </div>
+                  <Switch
+                    checked={notifications.securityAlerts}
+                    onCheckedChange={(checked) =>
+                      handleNotificationChange("securityAlerts", checked)
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold">Booking Updates</p>
+                    <p className="text-sm text-gray-600">
+                      Updates about your property bookings
+                    </p>
+                  </div>
+                  <Switch
+                    checked={notifications.bookingUpdates}
+                    onCheckedChange={(checked) =>
+                      handleNotificationChange("bookingUpdates", checked)
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold">New Listings</p>
+                    <p className="text-sm text-gray-600">
+                      Notifications about new properties in your area
+                    </p>
+                  </div>
+                  <Switch
+                    checked={notifications.newListings}
+                    onCheckedChange={(checked) =>
+                      handleNotificationChange("newListings", checked)
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold">Marketing Emails</p>
+                    <p className="text-sm text-gray-600">
+                      Promotional offers and updates
+                    </p>
+                  </div>
+                  <Switch
+                    checked={notifications.marketingEmails}
+                    onCheckedChange={(checked) =>
+                      handleNotificationChange("marketingEmails", checked)
+                    }
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Push Notifications</CardTitle>
+                <CardDescription>
+                  Control push notifications on your devices.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold">Push Notifications</p>
+                    <p className="text-sm text-gray-600">
+                      Receive push notifications on your devices
+                    </p>
+                  </div>
+                  <Switch
+                    checked={notifications.pushNotifications}
+                    onCheckedChange={(checked) =>
+                      handleNotificationChange("pushNotifications", checked)
+                    }
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {user.phone && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>SMS Notifications</CardTitle>
+                  <CardDescription>
+                    Control SMS notifications sent to your phone.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold">SMS Notifications</p>
+                      <p className="text-sm text-gray-600">
+                        Receive SMS notifications on {user.phone}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={notifications.smsNotifications}
+                      onCheckedChange={(checked) =>
+                        handleNotificationChange("smsNotifications", checked)
+                      }
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};
+
+export default SettingsPage;
