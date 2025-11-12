@@ -10,9 +10,14 @@ export interface AgentSubscription {
 
 export interface FrontendAgent {
   verificationStatus: string;
-  verifiedAt?: string | Date; // <-- Add this if you store the verification timestamp
+  verifiedAt?: string | Date;
   freeListingWeeks?: number;
   subscription?: AgentSubscription;
+  verificationData?: {
+    verifiedAt?: string | Date;
+    status?: string;
+    submittedAt?: string | Date;
+  };
 }
 
 /**
@@ -53,10 +58,13 @@ export const canAgentListProperties = (
   }
 
   // ✅ 4. Grace period: 7 days after verification
-  if (agent.verifiedAt) {
-    const verifiedAt = new Date(agent.verifiedAt);
+  // FIX: Check both possible locations for verifiedAt
+  const verifiedAt =
+    agent.verifiedAt || (agent as any).verificationData?.verifiedAt;
+  if (verifiedAt) {
+    const verifiedDate = new Date(verifiedAt);
     const sevenDaysLater = new Date(
-      verifiedAt.getTime() + 7 * 24 * 60 * 60 * 1000
+      verifiedDate.getTime() + 7 * 24 * 60 * 60 * 1000
     );
 
     // Allow listing if within 7 days of verification
@@ -100,11 +108,13 @@ export const getAgentSubscriptionStatus = (
     return "Active Subscription";
   }
 
-  // ✅ Grace period display
-  if (agent.verifiedAt) {
-    const verifiedAt = new Date(agent.verifiedAt);
+  // ✅ Grace period display - FIX: Check both locations
+  const verifiedAt =
+    agent.verifiedAt || (agent as any).verificationData?.verifiedAt;
+  if (verifiedAt) {
+    const verifiedDate = new Date(verifiedAt);
     const daysSinceVerification = Math.floor(
-      (Date.now() - verifiedAt.getTime()) / (1000 * 60 * 60 * 24)
+      (Date.now() - verifiedDate.getTime()) / (1000 * 60 * 60 * 24)
     );
 
     if (daysSinceVerification < 7) {

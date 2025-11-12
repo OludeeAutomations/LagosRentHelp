@@ -5,13 +5,7 @@ import { Eye, Edit, Trash2, Plus, Home, Filter } from "lucide-react";
 import { usePropertyStore } from "@/stores/propertyStore";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,14 +28,14 @@ const MyListingsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
-    if (user?.id) {
+    if (user?._id) {
       fetchProperties();
     }
-  }, [user?.id, fetchProperties]);
+  }, [user?._id, fetchProperties]);
 
   useEffect(() => {
     let filtered = properties.filter(
-      (property) => property.agentId === user?.id
+      (property) => property.agentId?._id === user?._id
     );
 
     // Apply search filter
@@ -61,7 +55,7 @@ const MyListingsPage: React.FC = () => {
     }
 
     setFilteredProperties(filtered);
-  }, [properties, searchTerm, statusFilter, user?.id]);
+  }, [properties, searchTerm, statusFilter, user?._id]);
 
   const handleDeleteProperty = async (propertyId: string) => {
     if (window.confirm("Are you sure you want to delete this property?")) {
