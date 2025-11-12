@@ -34,7 +34,7 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
   showHeader = true,
 }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { user, agent } = useAuthStore(); // ✅ Now using agent from auth store
+  const { user, agent } = useAuthStore();
   const { fetchAgentProfile, loading, error } = useAgentStore();
   const location = useLocation();
 
@@ -51,7 +51,7 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
       return "Not Verified";
     }
 
-    if (agent.freeListingWeeks > 0) {
+    if (agent.freeListingWeeks && agent.freeListingWeeks > 0) {
       return `Free Weeks: ${agent.freeListingWeeks}`;
     }
 
@@ -68,6 +68,19 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
 
     if (agent.subscription?.status === "active") {
       return "Active Subscription";
+    }
+
+    // ✅ Grace period display
+    if (agent.verifiedAt) {
+      const verifiedAt = new Date(agent.verifiedAt);
+      const daysSinceVerification = Math.floor(
+        (Date.now() - verifiedAt.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      if (daysSinceVerification < 7) {
+        const daysLeft = 7 - daysSinceVerification;
+        return `Grace Period: ${daysLeft} days left`;
+      }
     }
 
     return "Subscription Required";
@@ -96,7 +109,7 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
     );
   }
 
-  // ❌ Handle No Agent Data - Now checking auth store's agent
+  // ❌ Handle No Agent Data
   if (!agent) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -118,6 +131,46 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
       </div>
     );
   }
+
+  // Navigation item component with consistent restrictions
+  const NavigationItem = ({ item, isMobile = false }) => {
+    const Icon = item.icon;
+    const isActive = location.pathname === item.href;
+    const isDisabled = item.href === "/create-listing" && !canCreateListing;
+
+    const handleClick = (e) => {
+      if (isDisabled) {
+        e.preventDefault();
+        toast.info(
+          agent.verificationStatus !== "verified"
+            ? "Please verify your account first"
+            : "Please subscribe to create listings"
+        );
+        if (isMobile) {
+          setIsSidebarOpen(false);
+        }
+      } else if (isMobile) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    return (
+      <Link
+        to={isDisabled ? "#" : item.href}
+        onClick={handleClick}
+        className={`flex items-center space-x-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-200 ${
+          isActive
+            ? "bg-primary text-primary-foreground"
+            : isDisabled
+            ? "text-muted-foreground opacity-50 cursor-not-allowed"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+        }`}>
+        <Icon className="h-5 w-5" />
+        <span>{item.label}</span>
+        {isDisabled && <span className="text-xs ml-2">🔒</span>}
+      </Link>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -180,39 +233,9 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            {agentNavigationItems.map((item, index) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.href;
-              const isDisabled =
-                item.href === "/create-listing" && !canCreateListing;
-
-              return (
-                <Link
-                  key={index}
-                  to={isDisabled ? "#" : item.href}
-                  onClick={(e) => {
-                    if (isDisabled) {
-                      e.preventDefault();
-                      toast.info(
-                        agent.verificationStatus !== "verified"
-                          ? "Please verify your account first"
-                          : "Please subscribe to create listings"
-                      );
-                    }
-                  }}
-                  className={`flex items-center space-x-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-200 ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : isDisabled
-                      ? "text-muted-foreground opacity-50 cursor-not-allowed"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}>
-                  <Icon className="h-5 w-5" />
-                  <span>{item.label}</span>
-                  {isDisabled && <span className="text-xs ml-2">🔒</span>}
-                </Link>
-              );
-            })}
+            {agentNavigationItems.map((item, index) => (
+              <NavigationItem key={index} item={item} isMobile={false} />
+            ))}
           </nav>
 
           {/* Footer */}
@@ -272,6 +295,10 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
                   <p className="text-sm text-muted-foreground truncate">
                     {user?.email}
                   </p>
+                  {/* ✅ Added subscription status to mobile */}
+                  <p className="text-xs text-muted-foreground capitalize">
+                    {getSubscriptionStatus()}
+                  </p>
                 </div>
               </div>
 
@@ -294,31 +321,17 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
 
             {/* Navigation */}
             <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-              {agentNavigationItems.map((item, index) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.href;
-
-                return (
-                  <Link
-                    key={index}
-                    to={item.href}
-                    onClick={() => setIsSidebarOpen(false)}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-200 ${
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    }`}>
-                    <Icon className="h-5 w-5" />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
+              {agentNavigationItems.map((item, index) => (
+                <NavigationItem key={index} item={item} isMobile={true} />
+              ))}
             </nav>
 
             {/* Footer */}
             <div className="p-4 border-t space-y-2">
               <Button variant="ghost" className="w-full justify-start" asChild>
-                <Link to="/agent-dashboard/notifications">
+                <Link
+                  to="/agent-dashboard/notifications"
+                  onClick={() => setIsSidebarOpen(false)}>
                   <Bell className="h-5 w-5 mr-3" />
                   Notifications
                 </Link>
@@ -329,7 +342,7 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
                 size="icon"
                 asChild
                 className="w-full justify-start text-destructive">
-                <Link to="/">
+                <Link to="/" onClick={() => setIsSidebarOpen(false)}>
                   <HomeIcon className="h-5 w-5 mr-3" />
                   Back to Home
                 </Link>

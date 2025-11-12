@@ -1,4 +1,5 @@
 // src/utils/agentUtils.ts
+
 export interface AgentSubscription {
   status: string;
   trialStartsAt?: string | Date;
@@ -9,10 +10,14 @@ export interface AgentSubscription {
 
 export interface FrontendAgent {
   verificationStatus: string;
+  verifiedAt?: string | Date; // <-- Add this if you store the verification timestamp
   freeListingWeeks?: number;
   subscription?: AgentSubscription;
 }
 
+/**
+ * Determines whether an agent can list properties
+ */
 export const canAgentListProperties = (
   agent: FrontendAgent | null | undefined
 ): boolean => {
@@ -22,12 +27,12 @@ export const canAgentListProperties = (
 
   const now = new Date();
 
-  // If they have free weeks from referrals
+  // ✅ 1. Free listing weeks from referrals
   if (agent.freeListingWeeks && agent.freeListingWeeks > 0) {
     return true;
   }
 
-  // If trial period is active
+  // ✅ 2. Active trial period
   if (
     agent.subscription?.status === "trial" &&
     agent.subscription.trialStartsAt &&
@@ -35,11 +40,10 @@ export const canAgentListProperties = (
   ) {
     const trialStarts = new Date(agent.subscription.trialStartsAt);
     const trialEnds = new Date(agent.subscription.trialEndsAt);
-
     return now >= trialStarts && now <= trialEnds;
   }
 
-  // If paid subscription is active
+  // ✅ 3. Active paid subscription
   if (
     agent.subscription?.status === "active" &&
     agent.subscription.currentPeriodEnd
@@ -48,9 +52,26 @@ export const canAgentListProperties = (
     return now <= periodEnd;
   }
 
+  // ✅ 4. Grace period: 7 days after verification
+  if (agent.verifiedAt) {
+    const verifiedAt = new Date(agent.verifiedAt);
+    const sevenDaysLater = new Date(
+      verifiedAt.getTime() + 7 * 24 * 60 * 60 * 1000
+    );
+
+    // Allow listing if within 7 days of verification
+    if (now <= sevenDaysLater) {
+      return true;
+    }
+  }
+
+  // ❌ Otherwise, not allowed
   return false;
 };
 
+/**
+ * Returns a human-readable subscription status
+ */
 export const getAgentSubscriptionStatus = (
   agent: FrontendAgent | null | undefined
 ): string => {
@@ -77,6 +98,19 @@ export const getAgentSubscriptionStatus = (
 
   if (agent.subscription?.status === "active") {
     return "Active Subscription";
+  }
+
+  // ✅ Grace period display
+  if (agent.verifiedAt) {
+    const verifiedAt = new Date(agent.verifiedAt);
+    const daysSinceVerification = Math.floor(
+      (Date.now() - verifiedAt.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (daysSinceVerification < 7) {
+      const daysLeft = 7 - daysSinceVerification;
+      return `Grace Period: ${daysLeft} days left`;
+    }
   }
 
   return "Subscription Required";

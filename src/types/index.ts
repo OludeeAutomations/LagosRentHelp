@@ -120,6 +120,7 @@ export interface Agent {
   responseRate?: number;
   responseTime?: number;
   createdAt: string;
+  verifiedAt: string;
 }
 // src/types/verification.ts
 export interface VerificationData {
