@@ -84,7 +84,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
     if (onFavorite) {
-      propertyService.toggleFavorite(_id)
+      propertyService.toggleFavorite(_id);
       onFavorite(_id);
     }
   };

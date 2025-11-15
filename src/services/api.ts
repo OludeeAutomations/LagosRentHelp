@@ -88,6 +88,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// utils/api.ts - Update the interceptor
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
@@ -121,6 +122,16 @@ api.interceptors.response.use(
       } catch (refreshError) {
         onRefreshFailed(refreshError);
         removeTokens();
+
+        // ✅ Show login modal using Zustand
+        const modalStore = await import("../stores/modalStore").then((module) =>
+          module.useLoginModalStore.getState()
+        );
+        modalStore.openLoginModal(
+          "Your session has expired. Please login again to continue.",
+          () => api(originalRequest) // Retry the original request after login
+        );
+
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -130,5 +141,4 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
 export { api, setAccessToken, removeTokens };

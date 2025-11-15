@@ -362,7 +362,7 @@ const Header: React.FC = () => {
                       </Link>
 
                       <Link
-                        to="/dashboard/settings"
+                        to="/settings"
                         onClick={() => setIsMenuOpen(false)}
                         className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium text-[#0E0E0E] hover:text-[#129B36] hover:bg-gray-50 transition-colors">
                         <Settings className="h-5 w-5" />

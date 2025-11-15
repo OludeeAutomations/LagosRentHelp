@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
@@ -16,7 +15,6 @@ import {
   Square,
   ArrowLeft,
   Star,
-  Send
 } from "lucide-react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAgentStore } from "@/stores/agentStore";
@@ -36,10 +34,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-
 
 const AgentProfile: React.FC = () => {
   const { user } = useAuthStore();
@@ -54,15 +50,12 @@ const AgentProfile: React.FC = () => {
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
 
+  const [agentRating, setAgentRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
 
-    const [agentRating,setAgentRating] = useState(0)
-  const [totalReviews,setTotalReviews] = useState(0)
-
-  const agent = agentProfile?.agent;
-  const userInfo = agentProfile?.user;
-  const agentProperties = agentProfile?.properties || [];
-  const agentStats = agentProfile?.stats;
-
+  const agent = agentProfile?.data?.agent;
+  const userInfo = agentProfile?.data?.user;
+  const agentProperties = agentProfile?.data?.properties || [];
 
   // Filter properties by status
   const availableProperties = agentProperties.filter(
@@ -79,12 +72,14 @@ const AgentProfile: React.FC = () => {
       try {
         if (agentId) {
           await fetchAgentById(agentId);
-           const response = await agentReviewService.getByAgent(agentId);
+          const response = await agentReviewService.getByAgent(agentId);
           if (response.success) {
             setReviews(response.data.reviews || []);
-            const roundedRating = Number(response.data.averageRating.toFixed(1)); // 3.2
+            const roundedRating = Number(
+              response.data.averageRating.toFixed(1)
+            ); // 3.2
             setAgentRating(roundedRating);
-            setTotalReviews(response.data.totalReviews)
+            setTotalReviews(response.data.totalReviews);
           } else {
             toast.error("Failed to load agent reviews");
           }
@@ -100,8 +95,7 @@ const AgentProfile: React.FC = () => {
     loadData();
   }, [agentId, fetchAgentById]);
 
-
-    const getInitials = (name: string) => {
+  const getInitials = (name: string) => {
     return name
       .split(" ")
       .map((word) => word[0])
@@ -110,9 +104,7 @@ const AgentProfile: React.FC = () => {
       .slice(0, 2);
   };
 
-
-  const handleSubmitReview  = async () =>  {
-
+  const handleSubmitReview = async () => {
     if (!rating || !comment.trim()) {
       toast.error("Please add a rating and comment before submitting.");
       return;
@@ -120,46 +112,41 @@ const AgentProfile: React.FC = () => {
 
     const newReview = {
       id: Date.now(),
-      reviewerId:{
-        name :user?.name
+      reviewerId: {
+        name: user?.name,
       },
-      reviewerImage:user?.avatar,
+      reviewerImage: user?.avatar,
       rating,
       comment,
       createdAt: new Date().toLocaleDateString(),
     };
-     const newRev = {
-        agentId: agentId!,
-        rating,
-        comment,
-      };
+    const newRev = {
+      agentId: agentId!,
+      rating,
+      comment,
+    };
 
-      
-      try{
+    try {
       const res = await agentReviewService.create(newRev);
-      console.log("-------------------------")
-      console.log(res)
+      console.log("-------------------------");
+      console.log(res);
       setReviews((prev) => [newReview, ...prev]);
       setRating(0);
       setHoverRating(0);
       setComment("");
       toast.success("Review added successfully!");
       return;
-      }catch(error){
-        console.log(error.message)
-        toast.error("Unable to add review")
-        return;
-      }
-      
+    } catch (error) {
+      console.log(error.message);
+      toast.error("Unable to add review");
+      return;
+    }
   };
 
-
   const hasReviewed = reviews.some(
-  (rev) => rev.reviewerId?._id === user?.id || rev.reviewerId?._id === user?._id
-);
-
-
-
+    (rev) =>
+      rev.reviewerId?._id === user?._id || rev.reviewerId?._id === user?._id
+  );
 
   if (loading || isLoading) {
     return (
@@ -247,7 +234,6 @@ const AgentProfile: React.FC = () => {
 
   // Calculate agent rating from stats or use mock data
 
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
@@ -298,7 +284,7 @@ const AgentProfile: React.FC = () => {
                 </h1>
                 <p className="text-gray-600 flex items-center">
                   <MapPin className="h-4 w-4 mr-1" />
-                  {agent.address || "Lagos, Nigeria"}
+                  {agent.residentialAddress || "Lagos, Nigeria"}
                 </p>
 
                 <div className="flex items-center mt-2">
@@ -605,7 +591,7 @@ const AgentProfile: React.FC = () => {
                       <div className="flex justify-between">
                         <span className="text-gray-600">Address</span>
                         <span className="text-gray-900">
-                          {agent.address || "Not specified"}
+                          {agent.residentialAddress || "Not specified"}
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -653,86 +639,89 @@ const AgentProfile: React.FC = () => {
               </Card>
             </TabsContent>
 
-
-
-              <TabsContent value="reviews" className="pt-6">
-            <Card className="p-6 space-y-6">
-              {user && !hasReviewed &&<form onSubmit={(e) => {
-                e.preventDefault();
-                handleSubmitReview()
-              }}>
-                <h4 className="font-semibold text-lg mb-2">Leave a Review</h4>
-                <div className="flex items-center space-x-1 mb-3">
-                  {Array.from({ length: 5 }).map((_, i) => {
-                    const index = i + 1;
-                    return (
-                      <Star
-                        key={index}
-                        onClick={() => setRating(index)}
-                        onMouseEnter={() => setHoverRating(index)}
-                        onMouseLeave={() => setHoverRating(0)}
-                        className={`h-6 w-6 cursor-pointer ${
-                          index <= (hoverRating || rating)
-                            ? "text-yellow-400 fill-current"
-                            : "text-gray-300"
-                        }`}
-                      />
-                    );
-                  })}
-                </div>
-                <Textarea
-                  placeholder="Write your review..."
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                />
-                <Button
-                  type="submit"
-                  className="mt-3 bg-green-600 hover:bg-green-700 text-white"
-                >
-                  Submit Review
-                </Button>
-              </form>}
-
-              <div>
-                <h4 className="font-semibold text-lg mb-4">All Reviews</h4>
-                {reviews.length === 0 ? (
-                  <p className="text-gray-600 text-sm">No reviews yet.</p>
-                ) : (
-              <div
-                className="space-y-4 max-h-96 overflow-y-auto pr-2"
-                style={{ scrollbarWidth: "thin" }} >                    
-                     {reviews.map((rev) => (
-                      <div key={rev._id || rev.id} className="border-b pb-3">
-                        <div className="flex items-center mb-1">
-                          <Avatar className="h-8 w-8 mr-2">
-                            <AvatarFallback>
-                              {getInitials(rev.reviewerId.name)}
-                            </AvatarFallback>
-                            {rev.reviewerImage && (
-                              <AvatarImage src={rev.reviewerImage} />
-                            )}
-                          </Avatar>
-                          <span className="font-medium text-gray-900">
-                            {rev.reviewerId.name}
-                          </span>
-                        </div>
-                        <div className="flex items-center text-yellow-400">
-                          {Array.from({ length: rev.rating }).map((_, i) => (
-                            <Star key={i} className="h-4 w-4 fill-current" />
-                          ))}
-                        </div>
-                        <p className="text-gray-700 text-sm mt-1">{rev.comment}</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(rev.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+            <TabsContent value="reviews" className="pt-6">
+              <Card className="p-6 space-y-6">
+                {user && !hasReviewed && (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSubmitReview();
+                    }}>
+                    <h4 className="font-semibold text-lg mb-2">
+                      Leave a Review
+                    </h4>
+                    <div className="flex items-center space-x-1 mb-3">
+                      {Array.from({ length: 5 }).map((_, i) => {
+                        const index = i + 1;
+                        return (
+                          <Star
+                            key={index}
+                            onClick={() => setRating(index)}
+                            onMouseEnter={() => setHoverRating(index)}
+                            onMouseLeave={() => setHoverRating(0)}
+                            className={`h-6 w-6 cursor-pointer ${
+                              index <= (hoverRating || rating)
+                                ? "text-yellow-400 fill-current"
+                                : "text-gray-300"
+                            }`}
+                          />
+                        );
+                      })}
+                    </div>
+                    <Textarea
+                      placeholder="Write your review..."
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                    />
+                    <Button
+                      type="submit"
+                      className="mt-3 bg-green-600 hover:bg-green-700 text-white">
+                      Submit Review
+                    </Button>
+                  </form>
                 )}
-              </div>
-            </Card>
-              </TabsContent>
-          
+
+                <div>
+                  <h4 className="font-semibold text-lg mb-4">All Reviews</h4>
+                  {reviews.length === 0 ? (
+                    <p className="text-gray-600 text-sm">No reviews yet.</p>
+                  ) : (
+                    <div
+                      className="space-y-4 max-h-96 overflow-y-auto pr-2"
+                      style={{ scrollbarWidth: "thin" }}>
+                      {reviews.map((rev) => (
+                        <div key={rev._id || rev.id} className="border-b pb-3">
+                          <div className="flex items-center mb-1">
+                            <Avatar className="h-8 w-8 mr-2">
+                              <AvatarFallback>
+                                {getInitials(rev.reviewerId.name)}
+                              </AvatarFallback>
+                              {rev.reviewerImage && (
+                                <AvatarImage src={rev.reviewerImage} />
+                              )}
+                            </Avatar>
+                            <span className="font-medium text-gray-900">
+                              {rev.reviewerId.name}
+                            </span>
+                          </div>
+                          <div className="flex items-center text-yellow-400">
+                            {Array.from({ length: rev.rating }).map((_, i) => (
+                              <Star key={i} className="h-4 w-4 fill-current" />
+                            ))}
+                          </div>
+                          <p className="text-gray-700 text-sm mt-1">
+                            {rev.comment}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {new Date(rev.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </TabsContent>
           </Tabs>
         </motion.div>
       </div>

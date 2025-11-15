@@ -74,9 +74,8 @@ const PropertyDetails: React.FC = () => {
       return property.agentId;
     } else if (isAgentString(property.agentId)) {
       // agentId is a string ID, find the agent in the agents store
-      return agents.find(
-        (a) => a.id === property.agentId || a._id === property.agentId
-      );
+      const agentId = property.agentId;
+      return agents.find((a) => a.id === agentId || a._id === agentId);
     }
 
     return null;

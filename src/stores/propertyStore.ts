@@ -52,12 +52,25 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
   getPropertyById: async (id: string): Promise<Property | null> => {
     try {
       const response = await propertyService.getById(id);
-      console.log("Single property response:", response.data);
-      return response.data.data; // 👈 return the actual property object
+      console.log("Full response:", response);
+      console.log("Response data:", response.data);
+      console.log("Response keys:", Object.keys(response.data));
+
+      // Check what's actually in the response
+      if (response.data && response.data.data) {
+        console.log("Found nested data:", response.data.data);
+        return response.data.data;
+      } else if (response.data) {
+        console.log("Using direct data:", response.data);
+        return response.data;
+      } else {
+        console.log("No data found in response");
+        return null;
+      }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to fetch property";
-      console.error(errorMessage);
+      console.error("Error fetching property:", errorMessage);
       return null;
     }
   },

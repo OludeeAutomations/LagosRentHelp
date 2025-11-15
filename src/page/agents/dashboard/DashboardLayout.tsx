@@ -21,6 +21,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { canAgentListProperties } from "@/utils/agentUtils";
+import { ModalProvider } from "@/provider/ModalProvider";
 
 interface AgentDashboardLayoutProps {
   children: React.ReactNode;
@@ -70,11 +71,13 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
       return "Active Subscription";
     }
 
-    // ✅ Grace period display
-    if (agent.verifiedAt) {
-      const verifiedAt = new Date(agent.verifiedAt);
+    // ✅ Grace period display - FIXED: Check both verifiedAt locations
+    const verifiedAt =
+      agent.verifiedAt || (agent as any).dojahResponse?.verifiedAt;
+    if (verifiedAt) {
+      const verifiedDate = new Date(verifiedAt);
       const daysSinceVerification = Math.floor(
-        (Date.now() - verifiedAt.getTime()) / (1000 * 60 * 60 * 24)
+        (Date.now() - verifiedDate.getTime()) / (1000 * 60 * 60 * 24)
       );
 
       if (daysSinceVerification < 7) {
@@ -97,52 +100,29 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
     { icon: Settings, label: "Settings", href: "/agent-dashboard/settings" },
   ];
 
-  // 🔄 Handle Loading State
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Skeleton className="h-8 w-32 mx-auto mb-4" />
-          <Skeleton className="h-4 w-48 mx-auto" />
-        </div>
-      </div>
-    );
-  }
-
-  // ❌ Handle No Agent Data
-  if (!agent) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Agent Access Required</h1>
-          <p className="text-muted-foreground mb-4">
-            {error
-              ? "Failed to load agent profile. Please try again."
-              : "Please complete your agent registration to access the dashboard."}
-          </p>
-          {error ? (
-            <Button onClick={() => fetchAgentProfile()}>Retry</Button>
-          ) : (
-            <Button asChild>
-              <Link to="/agent-onboarding">Complete Registration</Link>
-            </Button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   // Navigation item component with consistent restrictions
-  const NavigationItem = ({ item, isMobile = false }) => {
+  interface NavigationItemProps {
+    item: {
+      icon: React.ElementType;
+      label: string;
+      href: string;
+    };
+    isMobile?: boolean;
+  }
+
+  const NavigationItem: React.FC<NavigationItemProps> = ({
+    item,
+    isMobile = false,
+  }) => {
     const Icon = item.icon;
     const isActive = location.pathname === item.href;
     const isDisabled = item.href === "/create-listing" && !canCreateListing;
 
-    const handleClick = (e) => {
+    const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
       if (isDisabled) {
         e.preventDefault();
         toast.info(
-          agent.verificationStatus !== "verified"
+          agent?.verificationStatus !== "verified"
             ? "Please verify your account first"
             : "Please subscribe to create listings"
         );
@@ -171,6 +151,30 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
       </Link>
     );
   };
+
+  // 🔄 Handle Loading State
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Skeleton className="h-8 w-32 mx-auto mb-4" />
+          <Skeleton className="h-4 w-48 mx-auto" />
+        </div>
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (error && !agent) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-destructive mb-4">Error loading agent profile</p>
+          <Button onClick={() => fetchAgentProfile()}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -217,15 +221,15 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
             <div className="mt-3 flex items-center justify-between">
               <Badge
                 variant={
-                  agent.verificationStatus === "verified"
+                  agent?.verificationStatus === "verified"
                     ? "default"
-                    : agent.verificationStatus === "pending"
+                    : agent?.verificationStatus === "pending"
                     ? "secondary"
                     : "destructive"
                 }>
-                {agent.verificationStatus.toUpperCase()}
+                {agent?.verificationStatus?.toUpperCase() || "UNKNOWN"}
               </Badge>
-              {agent.verificationStatus === "verified" && (
+              {agent?.verificationStatus === "verified" && (
                 <Shield className="h-4 w-4 text-green-500" />
               )}
             </div>
@@ -295,7 +299,6 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
                   <p className="text-sm text-muted-foreground truncate">
                     {user?.email}
                   </p>
-                  {/* ✅ Added subscription status to mobile */}
                   <p className="text-xs text-muted-foreground capitalize">
                     {getSubscriptionStatus()}
                   </p>
@@ -305,15 +308,15 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
               <div className="mt-3 flex items-center justify-between">
                 <Badge
                   variant={
-                    agent.verificationStatus === "verified"
+                    agent?.verificationStatus === "verified"
                       ? "default"
-                      : agent.verificationStatus === "pending"
+                      : agent?.verificationStatus === "pending"
                       ? "secondary"
                       : "destructive"
                   }>
-                  {agent.verificationStatus.toUpperCase()}
+                  {agent?.verificationStatus?.toUpperCase() || "UNKNOWN"}
                 </Badge>
-                {agent.verificationStatus === "verified" && (
+                {agent?.verificationStatus === "verified" && (
                   <Shield className="h-4 w-4 text-green-500" />
                 )}
               </div>
@@ -396,7 +399,9 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
         )}
 
         {/* Page Content */}
-        <main className="p-6">{children}</main>
+        <main className="p-6">
+          <ModalProvider>{children}</ModalProvider>
+        </main>
       </div>
     </div>
   );

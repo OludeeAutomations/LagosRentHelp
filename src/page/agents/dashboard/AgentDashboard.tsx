@@ -35,9 +35,7 @@ import { leadService } from "@/services/leadService";
 import { canAgentListProperties } from "@/utils/agentUtils";
 
 const AgentDashboard: React.FC = () => {
-  const { user, agent } = useAuthStore(); // ✅ Using agent from auth store
-
-  // ✅ Only need fetchAgentProfile and loading from agent store
+  const { user, agent } = useAuthStore();
   const { fetchAgentProfile, loading: isLoading, error } = useAgentStore();
 
   const [activeTab, setActiveTab] = useState("overview");
@@ -55,8 +53,7 @@ const AgentDashboard: React.FC = () => {
     if (user?._id && !agent) {
       fetchAgentProfile();
     }
-  }, [user?._id, agent, fetchAgentProfile]);
-
+  }, [user?._id, agent]);
   useEffect(() => {
     if (user?._id) {
       loadRecentLeads(user._id);
@@ -72,7 +69,7 @@ const AgentDashboard: React.FC = () => {
         limit: 5,
         page: 1,
       });
-      setRecentLeads(leadsResponse.data);
+      setRecentLeads(leadsResponse.data || []);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to load leads";
@@ -82,31 +79,39 @@ const AgentDashboard: React.FC = () => {
 
   const loadAgentProperties = async (agentId: string) => {
     try {
-      // You might need to import a property service here
-      // const propertiesResponse = await propertyService.getAgentProperties(agentId);
-      // setAgentProperties(propertiesResponse.data);
+      // TODO: Replace with actual property service call
+      // const propertiesResponse = await propertyService.getByAgentId(agentId);
+      // setAgentProperties(propertiesResponse.data || []);
 
-      // For now, using empty array as placeholder
-      setAgentProperties([]);
+      // For now, use agent's listings if available
+      if (agent?.listings) {
+        setAgentProperties(agent.listings);
+      }
     } catch (error: unknown) {
       console.error("Failed to load properties:", error);
+      setAgentProperties([]);
     }
   };
 
   const loadAgentStats = async (agentId: string) => {
     try {
-      // You might need to import a stats service here
+      // TODO: Replace with actual stats service call
       // const statsResponse = await statsService.getAgentStats(agentId);
       // setAgentStats(statsResponse.data);
 
-      // For now, using placeholder stats
+      // Temporary mock data
+      setAgentStats({
+        totalViews: agent?.totalViews || 0,
+        totalLeads: recentLeads.length,
+        conversionRate: 0, // Calculate based on your business logic
+      });
+    } catch (error: unknown) {
+      console.error("Failed to load stats:", error);
       setAgentStats({
         totalViews: 0,
         totalLeads: 0,
         conversionRate: 0,
       });
-    } catch (error: unknown) {
-      console.error("Failed to load stats:", error);
     }
   };
 
@@ -124,7 +129,37 @@ const AgentDashboard: React.FC = () => {
     }
   };
 
-  // ✅ Handle loading and empty states
+  // Calculate days left in trial or grace period
+  const getDaysLeft = () => {
+    if (
+      agent?.subscription?.status === "trial" &&
+      agent.subscription.trialEndsAt
+    ) {
+      return Math.ceil(
+        (new Date(agent.subscription.trialEndsAt).getTime() - Date.now()) /
+          (1000 * 60 * 60 * 24)
+      );
+    }
+
+    // Check grace period
+    const verifiedAt =
+      agent?.verifiedAt || (agent as any)?.dojahResponse?.verifiedAt;
+    if (verifiedAt) {
+      const verifiedDate = new Date(verifiedAt);
+      const daysSinceVerification = Math.floor(
+        (Date.now() - verifiedDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      if (daysSinceVerification < 7) {
+        return 7 - daysSinceVerification;
+      }
+    }
+
+    return 0;
+  };
+
+  const daysLeft = getDaysLeft();
+
+  // Handle loading and empty states
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -163,15 +198,9 @@ const AgentDashboard: React.FC = () => {
     );
   }
 
-  const daysLeftInTrial = agent?.trialExpiresAt
-    ? Math.ceil(
-        (new Date(agent.trialExpiresAt).getTime() - Date.now()) /
-          (1000 * 60 * 60 * 24)
-      )
-    : 0;
-
   return (
-    <div title="Dashboard">
+    <div className="space-y-6">
+      {/* Verification Status Alert */}
       {agent.verificationStatus && (
         <Alert
           className={`mb-6 ${
@@ -179,7 +208,7 @@ const AgentDashboard: React.FC = () => {
               ? "bg-green-100 border-green-300"
               : agent.verificationStatus === "pending"
               ? "bg-yellow-100 border-yellow-300"
-              : "bg-red-400 border-blue-300" // or any color for "not verified"
+              : "bg-red-100 border-red-300"
           }`}>
           {agent.verificationStatus === "verified" ? (
             <CheckCircle className="h-4 w-4" />
@@ -206,20 +235,20 @@ const AgentDashboard: React.FC = () => {
                 )}
               </>
             ) : (
-              <p className="text-white">
-                {" "}
-                Please complete your agent verification to access all features
-                in your Settings.{" "}
-                <a
-                  className="underline text-sm font-bold text-black"
-                  href="/agent-dashboard/settings">
-                  Got to Settings
-                </a>
+              <p>
+                Please complete your agent verification to access all features.
+                <Link
+                  to="/agent-dashboard/settings"
+                  className="underline text-sm font-bold ml-1">
+                  Go to Settings
+                </Link>
               </p>
             )}
           </AlertDescription>
         </Alert>
       )}
+
+      {/* Stats Cards */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -295,13 +324,18 @@ const AgentDashboard: React.FC = () => {
                   <Calendar className="h-8 w-8 text-red-500" />
                   <Clock className="h-5 w-5 text-muted-foreground" />
                 </div>
-                <div className="text-2xl font-bold">{daysLeftInTrial}</div>
-                <div className="text-muted-foreground">Trial Days Left</div>
+                <div className="text-2xl font-bold">{daysLeft}</div>
+                <div className="text-muted-foreground">
+                  {agent?.subscription?.status === "trial"
+                    ? "Trial Days Left"
+                    : "Grace Period Days"}
+                </div>
               </CardContent>
             </Card>
           </>
         )}
       </motion.div>
+
       {/* Refresh Button */}
       <div className="flex justify-end mb-6">
         <Button
@@ -314,6 +348,7 @@ const AgentDashboard: React.FC = () => {
           Refresh Data
         </Button>
       </div>
+
       {/* Dashboard Tabs */}
       <Tabs
         value={activeTab}
@@ -385,7 +420,7 @@ const AgentDashboard: React.FC = () => {
                           {lead.status}
                         </Badge>
                         <p className="text-xs text-muted-foreground mt-1 capitalize">
-                          {lead.type.replace("_", " ")}
+                          {lead.type?.replace("_", " ") || "inquiry"}
                         </p>
                       </div>
                     </div>
@@ -471,7 +506,7 @@ const AgentDashboard: React.FC = () => {
                           {property.location}
                         </p>
                         <p className="text-sm">
-                          ₦{property.price.toLocaleString()}
+                          ₦{property.price?.toLocaleString()}
                         </p>
                       </div>
                       <Badge
@@ -518,7 +553,8 @@ const AgentDashboard: React.FC = () => {
           </Card>
         </TabsContent>
       </Tabs>
-      {/* Verification Status Alerts */}
+
+      {/* Subscription Required Alert */}
       {agent.verificationStatus === "verified" && !canCreateListing && (
         <Alert className="mb-6 bg-orange-100 border-orange-300">
           <AlertCircle className="h-4 w-4" />

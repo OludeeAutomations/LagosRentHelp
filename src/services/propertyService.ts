@@ -30,10 +30,15 @@ export const propertyService = {
   },
 
   getById: async (id: string): Promise<ApiResponse<Property>> => {
-    return api.get<Property>(`/properties/${id}`);
-    return response.data;
+    try {
+      const response = await api.get<ApiResponse<Property>>(
+        `/properties/${id}`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to fetch property: ${error.message}`);
+    }
   },
-
   create: async (propertyData: FormData): Promise<ApiResponse<Property>> => {
     return api.post<Property>("/properties", propertyData);
   },

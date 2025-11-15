@@ -41,15 +41,6 @@ import { useAuthStore } from "./stores/authStore";
 //import AgentCommissions from "./page/agents/dashboard/AgentCommissions";
 
 const App: React.FC = () => {
-  const { validateAuth, isAuthenticated } = useAuthStore();
-
-  useEffect(() => {
-    // Validate token when app starts if user is supposedly logged in
-    if (isAuthenticated) {
-      validateAuth();
-    }
-  }, [validateAuth, isAuthenticated]);
-
   return (
     <Router>
       <Toaster position="top-right" />

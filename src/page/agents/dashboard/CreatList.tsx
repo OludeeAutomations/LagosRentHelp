@@ -73,7 +73,9 @@ const CreateListing: React.FC = () => {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [amenityInput, setAmenityInput] = useState("");
-  const { agent } = useAuthStore();
+  const { agent } = useAuthStore() as {
+    agent: { verificationStatus: string; freeListingsUsed: number } | null;
+  };
   const { addProperty } = usePropertyStore();
   const navigate = useNavigate();
 
@@ -140,8 +142,8 @@ const CreateListing: React.FC = () => {
     );
   };
   useEffect(() => {
-    console.log("---------------------------------------")
-    console.log(agent)
+    console.log("---------------------------------------");
+    console.log(agent);
     if (agent) {
       if (agent.verificationStatus !== "verified") {
         toast.error("Please verify your agent account first");
