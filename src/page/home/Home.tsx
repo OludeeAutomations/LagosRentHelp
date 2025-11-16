@@ -13,6 +13,7 @@ import { usePropertyStore } from "@/stores/propertyStore";
 import { useAuthStore } from "@/stores/authStore";
 import { toast } from "sonner";
 import PropertySections from "@/components/common/PropertySections";
+import TopAgentsCarousel from "@/components/common/TopAgentsCarousel";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -462,6 +463,8 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
+
+      <TopAgentsCarousel />
 
       {/* CTA Section */}
       <section className="py-20 bg-[#129B36] text-white">

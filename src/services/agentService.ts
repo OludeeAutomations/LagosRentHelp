@@ -35,6 +35,11 @@ export const agentService = {
     return res.data;
   },
 
+    async getTopAgents(): Promise<Agent[]> {
+    const res = await api.get<Agent[]>("/agents/top?limit=10");
+    return res.data;
+  },
+
   // ✅ Update agent profile (fixed: use agentId)
   async updateProfile(
     agentId: string,
