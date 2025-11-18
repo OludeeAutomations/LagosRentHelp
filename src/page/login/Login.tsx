@@ -6,6 +6,7 @@ import { useAuthStore } from "@/stores/authStore";
 import AuthLayout from "@/components/common/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
 import {
   Form,
   FormControl,
@@ -19,6 +20,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 
+import { signInWithPopup } from "firebase/auth";
+import {auth,googleProvider}  from '../../firebaseConfig'
+import { GoogleLogin } from "@react-oauth/google";
+
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
@@ -29,7 +34,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 const Login: React.FC = () => {
   const [showPassword, setShowPassword] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
-  const { login, setError } = useAuthStore();
+  const { login,loginWithGoogle, setError, setUser } = useAuthStore();
   const navigate = useNavigate();
 
   const form = useForm<LoginForm>({
@@ -82,6 +87,28 @@ const Login: React.FC = () => {
     },
   };
 
+
+const loginWithGoogleHandler = async (token : any) => {
+  try {
+    setIsLoading(true);
+    setError(null);
+    const userData = {
+     idToken : token
+    };
+    // Call the store action, not the function itself
+    await loginWithGoogle(userData);
+    toast.success("Welcome back!");
+    navigate("/");
+  } catch (error: any) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to login";
+    toast.error(errorMessage);
+    setError(errorMessage);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
   return (
     <AuthLayout title="Welcome Back" subtitle="Sign in to your account">
       <Form {...form}>
@@ -91,6 +118,7 @@ const Login: React.FC = () => {
           variants={containerVariants}
           initial="hidden"
           animate="visible">
+
           {/* Email */}
           <motion.div variants={itemVariants}>
             <FormField
@@ -189,6 +217,29 @@ const Login: React.FC = () => {
               )}
             </Button>
           </motion.div>
+
+
+          <motion.div variants={itemVariants} className="flex items-center my-4">
+            <div className="flex-grow border-t border-gray-300"></div>
+            <span className="mx-3 text-gray-500 text-sm">OR</span>
+            <div className="flex-grow border-t border-gray-300"></div>
+          </motion.div>
+
+          {/* Google Login */}
+       <motion.div variants={itemVariants} className="flex justify-center">
+            <GoogleLogin
+      onSuccess={async (credentialResponse) => {
+        const idToken = credentialResponse.credential;
+        await loginWithGoogleHandler(idToken)
+      }}
+      onError={() => {
+        console.log("Login Failed");
+      }}
+    />
+      </motion.div>
+
+
+
 
           {/* Register Link */}
           <motion.div variants={itemVariants}>
