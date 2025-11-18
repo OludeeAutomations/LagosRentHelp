@@ -28,6 +28,19 @@ export const authService = {
     }
   },
 
+
+  loginWithGoogle: async (
+    userData: object,
+  ): Promise<ApiResponse<LoginResponse>> => {
+    try {
+      const response = await api.post<LoginResponse>("/auth/google", userData);
+      return response;
+    } catch (error) {
+      console.error("Login error:", error);
+      throw new Error(error instanceof Error ? error.message : "Login failed");
+    }
+  },
+
   register: async (
     userData: RegisterData
   ): Promise<ApiResponse<LoginResponse>> => {
