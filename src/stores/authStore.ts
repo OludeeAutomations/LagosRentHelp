@@ -23,6 +23,7 @@ interface AuthState {
 
   // Auth Actions
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: (userData:object) => Promise<void>;
   register: (
     userData: RegisterData
   ) => Promise<{ success: boolean; requiresVerification?: boolean }>;
@@ -149,6 +150,51 @@ export const useAuthStore = create<AuthState>()(
           throw error;
         }
       },
+
+      loginWithGoogle: async (userData) => {
+        set({ loading: true, error: null });
+
+        try {
+          const response = await authService.loginWithGoogle(userData);
+
+          // ✅ Handle both cases: direct data or axios response
+          const data = response.data || response;
+
+          console.log("🔍 Using data:", data);
+
+          const { user, accessToken, agentData } = data; // ✅ Changed from 'agent' to 'agentData'
+
+          if (!user || !accessToken) {
+            console.error("❌ Missing data in:", data);
+            throw new Error("Invalid response from server");
+          }
+
+          set({
+            user,
+            accessToken,
+            agent: agentData || null, // ✅ Store agentData as agent (or null if not an agent)
+            isAuthenticated: true,
+            loading: false,
+            error: null,
+          });
+
+          console.log("✅ Login successful - Agent data:", agentData);
+        } catch (error: unknown) {
+          const errorMessage =
+            error instanceof Error ? error.message : "Failed to login";
+
+          set({
+            error: errorMessage,
+            loading: false,
+            user: null,
+            accessToken: null,
+            agent: null,
+            isAuthenticated: false,
+          });
+          throw error;
+        }
+      },
+
       logout: () => {
         set({
           user: null,
