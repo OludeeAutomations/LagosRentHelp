@@ -20,6 +20,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAgentStore } from "@/stores/agentStore";
 import { useAuthStore } from "@/stores/authStore";
 import { agentReviewService } from "@/services/reviewService";
+import { useLeadStore } from "@/stores/leadStore";
 
 import {
   Card,
@@ -42,6 +43,12 @@ const AgentProfile: React.FC = () => {
   const { agentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
   const { agentProfile, fetchAgentById, loading, error } = useAgentStore();
+  const {
+    createLead,
+    checkContactStatus,
+    contactStatus,
+    loading: leadLoading,
+  } = useLeadStore();
 
   const [activeTab, setActiveTab] = useState("properties");
   const [isLoading, setIsLoading] = useState(true);
@@ -49,7 +56,6 @@ const AgentProfile: React.FC = () => {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
-
   const [agentRating, setAgentRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
 
@@ -66,6 +72,14 @@ const AgentProfile: React.FC = () => {
     (p) => p.status === "pending"
   );
 
+  const hasContacted = agentId ? contactStatus[agentId] : false;
+
+  useEffect(() => {
+    if (user && agentId) {
+      checkContactStatus(agentId);
+    }
+  }, [user, agentId, checkContactStatus]);
+
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
@@ -77,7 +91,7 @@ const AgentProfile: React.FC = () => {
             setReviews(response.data.reviews || []);
             const roundedRating = Number(
               response.data.averageRating.toFixed(1)
-            ); // 3.2
+            );
             setAgentRating(roundedRating);
             setTotalReviews(response.data.totalReviews);
           } else {
@@ -147,6 +161,75 @@ const AgentProfile: React.FC = () => {
     (rev) =>
       rev.reviewerId?._id === user?._id || rev.reviewerId?._id === user?._id
   );
+
+  // Handle WhatsApp message
+  const handleWhatsAppClick = async () => {
+    if (!user || !agentId) {
+      toast.error("Please login to contact agent");
+      navigate("/login");
+      return;
+    }
+
+    const whatsappNumber = agent?.whatsappNumber;
+    if (!whatsappNumber) {
+      toast.error("Agent WhatsApp number not available");
+      return;
+    }
+
+    try {
+      // Only create lead if it doesn't exist
+      if (!hasContacted) {
+        await createLead({
+          agentId,
+          type: "whatsapp",
+        });
+        toast.success("Contact initiated successfully!");
+      } else {
+        toast.info("Opening WhatsApp...");
+      }
+
+      // Open WhatsApp
+      const message = `Hello, I'm interested in your properties.`;
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+      window.open(whatsappUrl, "_blank");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to initiate contact");
+    }
+  };
+
+  // Handle Phone call
+  const handlePhoneClick = async () => {
+    if (!user || !agentId) {
+      toast.error("Please login to contact agent");
+      navigate("/login");
+      return;
+    }
+
+    const phoneNumber = agent?.phone || agent?.whatsappNumber;
+    if (!phoneNumber) {
+      toast.error("Agent phone number not available");
+      return;
+    }
+
+    try {
+      // Only create lead if it doesn't exist
+      if (!hasContacted) {
+        await createLead({
+          agentId,
+          type: "phone",
+        });
+        toast.success("Contact initiated successfully!");
+      } else {
+        toast.info("Initiating call...");
+      }
+
+      // Always open phone dialer (user can contact multiple times)
+      window.open(`tel:${phoneNumber}`);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to initiate contact");
+    }
+  };
 
   if (loading || isLoading) {
     return (
@@ -218,21 +301,6 @@ const AgentProfile: React.FC = () => {
       </div>
     );
   }
-
-  // Handle WhatsApp message
-  const handleWhatsAppClick = () => {
-    if (!agent.whatsappNumber) {
-      toast.error("Agent WhatsApp number not available");
-      return;
-    }
-
-    const message = `Hello, I'm interested in your properties.`;
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${agent.whatsappNumber}?text=${encodedMessage}`;
-    window.open(whatsappUrl, "_blank");
-  };
-
-  // Calculate agent rating from stats or use mock data
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -310,16 +378,17 @@ const AgentProfile: React.FC = () => {
                 <Button
                   className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
                   onClick={handleWhatsAppClick}
-                  disabled={!agent.whatsappNumber || !user}>
+                  disabled={!agent.whatsappNumber || !user || leadLoading}>
                   <MessageCircle className="h-4 w-4" />
-                  WhatsApp
+                  {leadLoading ? "Processing..." : "WhatsApp"}
                 </Button>
                 <Button
                   variant="outline"
                   className="flex items-center gap-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
-                  disabled={!agent.whatsappNumber || !user}>
+                  onClick={handlePhoneClick}
+                  disabled={!agent.whatsappNumber || !user || leadLoading}>
                   <Phone className="h-4 w-4" />
-                  Call
+                  {leadLoading ? "Processing..." : "Call"}
                 </Button>
               </div>
             </div>
@@ -514,11 +583,11 @@ const AgentProfile: React.FC = () => {
                         <div className="flex justify-between items-center mb-3">
                           <div className="text-xl font-bold text-green-600">
                             ₦{property.price.toLocaleString()}
-                            {property.listingType === "rent" && (
-                              <span className="text-sm font-normal text-gray-600">
-                                /month
-                              </span>
-                            )}
+                            <span className="text-sm font-normal text-gray-600">
+                              {property.listingType === "rent"
+                                ? "/year"
+                                : "/day"}
+                            </span>
                           </div>
 
                           <div className="flex items-center text-sm text-gray-600">
@@ -586,6 +655,14 @@ const AgentProfile: React.FC = () => {
                         <span className="text-gray-600">WhatsApp</span>
                         <span className="text-gray-900">
                           {agent.whatsappNumber || "Not provided"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Phone</span>
+                        <span className="text-gray-900">
+                          {agent.phone ||
+                            agent.whatsappNumber ||
+                            "Not provided"}
                         </span>
                       </div>
                       <div className="flex justify-between">

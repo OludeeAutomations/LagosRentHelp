@@ -32,6 +32,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -45,10 +46,15 @@ import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 
 // Schema definition with proper amenities array validation
+// Update your schema
 const createListingSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
   description: z.string().min(20, "Description must be at least 20 characters"),
   price: z.number().min(10000, "Price must be at least ₦10,000"),
+  totalPackagePrice: z
+    .number()
+    .min(10000, "Package price cannot be negative")
+    .optional(),
   location: z.string().min(3, "Location is required"),
   type: z.enum([
     "1-bedroom",
@@ -63,38 +69,152 @@ const createListingSchema = z.object({
   bedrooms: z.number().min(0, "Number of bedrooms is required"),
   bathrooms: z.number().min(0, "Number of bathrooms is required"),
   area: z.number().min(1, "Area is required"),
-  amenities: z.array(z.string()).default([]),
+  amenities: z.array(z.string()).min(2, "At least one amenity is required"),
 });
 
 type CreateListingForm = z.infer<typeof createListingSchema>;
 
-const CreateListing: React.FC = () => {
+type CreateListingProps = {
+  editMode?: boolean;
+  property?: (CreateListingForm & { _id?: string }) | null;
+};
+
+const CreateListing: React.FC<CreateListingProps> = ({
+  editMode = false,
+  property,
+}) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [amenityInput, setAmenityInput] = useState("");
-  const { agent } = useAuthStore() as {
-    agent: { verificationStatus: string; freeListingsUsed: number } | null;
-  };
-  const { addProperty } = usePropertyStore();
+  const { agent } = useAuthStore();
+  const { addProperty, updateProperty } = usePropertyStore();
   const navigate = useNavigate();
 
-  // Initialize form with proper typing
+  // Initialize form with proper pricing defaults
   const form = useForm<CreateListingForm>({
     resolver: zodResolver(createListingSchema) as never,
-    defaultValues: {
-      title: "",
-      description: "",
-      price: 0,
-      location: "",
-      type: "1-bedroom",
-      listingType: "rent",
-      bedrooms: 0,
-      bathrooms: 0,
-      area: 0,
-      amenities: [],
-    },
+    defaultValues:
+      editMode && property
+        ? {
+            title: property.title,
+            description: property.description,
+            price: property.price,
+            totalPackagePrice: property.totalPackagePrice,
+            location: property.location,
+            type: property.type,
+            listingType: property.listingType,
+            bedrooms: property.bedrooms,
+            bathrooms: property.bathrooms,
+            area: property.area,
+            amenities: property.amenities || [],
+          }
+        : {
+            title: "",
+            description: "",
+            price: 0,
+            totalPackagePrice: undefined,
+            location: "",
+            type: "1-bedroom",
+            listingType: "rent",
+            bedrooms: 0,
+            bathrooms: 0,
+            area: 0,
+            amenities: [],
+          },
   });
+
+  // Watch listing type to update price labels
+  const listingType = form.watch("listingType");
+
+  // Enhanced onSubmit with proper service integration
+  const onSubmit = async (data: CreateListingForm) => {
+    if (!agent) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData();
+
+      // Append all fields
+      formData.append("title", data.title);
+      formData.append("description", data.description);
+      formData.append("price", data.price.toString());
+      formData.append("location", data.location);
+      formData.append("type", data.type);
+      formData.append("listingType", data.listingType);
+      formData.append("bedrooms", data.bedrooms.toString());
+      formData.append("bathrooms", data.bathrooms.toString());
+      formData.append("area", data.area.toString());
+
+      // Append totalPackagePrice if it exists
+      if (data.totalPackagePrice) {
+        formData.append("totalPackagePrice", data.totalPackagePrice.toString());
+      }
+
+      formData.append("amenities", JSON.stringify(data.amenities));
+
+      if (editMode && property) {
+        // Update existing property using service
+        if (property._id) {
+          await updateProperty(property._id, formData);
+        } else {
+          throw new Error("Property ID is missing for update.");
+        }
+        // Also update in local store
+        await updateProperty(property._id, formData);
+        toast.success("Listing updated successfully!");
+      } else {
+        // Create new property using service
+        const newProperty = await addProperty(formData);
+        // Also add to local store
+        await addProperty(formData);
+        toast.success("Listing created successfully!");
+      }
+
+      navigate("/agent-dashboard");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : editMode
+          ? "Failed to update listing"
+          : "Failed to create listing";
+      toast.error(errorMessage);
+      console.error("Form submission error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Format price for display
+  const formatPrice = (price: number): string => {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(price);
+  };
+
+  // Price suggestions based on listing type
+  const getPriceSuggestions = () => {
+    if (listingType === "rent") {
+      return [
+        { label: "Budget (₦100K - ₦500K)", value: 100000 },
+        { label: "Standard (₦500K - ₦1.5M)", value: 500000 },
+        { label: "Premium (₦1.5M - ₦5M)", value: 1500000 },
+        { label: "Luxury (₦5M+)", value: 5000000 },
+      ];
+    } else {
+      return [
+        { label: "Budget (₦5K - ₦15K)", value: 5000 },
+        { label: "Standard (₦15K - ₦50K)", value: 15000 },
+        { label: "Premium (₦50K - ₦150K)", value: 50000 },
+        { label: "Luxury (₦150K+)", value: 150000 },
+      ];
+    }
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -185,54 +305,6 @@ const CreateListing: React.FC = () => {
   }
 
   // In your CreateListing component, modify the onSubmit function:
-  const onSubmit = async (data: CreateListingForm) => {
-    if (!agent) return;
-
-    setIsSubmitting(true);
-
-    try {
-      // Create FormData instead of JSON
-      const formData = new FormData();
-
-      // Append ALL required fields from your form
-      formData.append("title", data.title);
-      formData.append("description", data.description);
-      formData.append("price", data.price.toString());
-      formData.append("location", data.location);
-      formData.append("type", data.type);
-      formData.append("listingType", data.listingType); // ← FIXED: Use form value
-      formData.append("bedrooms", data.bedrooms.toString());
-      formData.append("bathrooms", data.bathrooms.toString());
-      formData.append("area", data.area.toString());
-
-      // Append amenities as JSON string
-      formData.append("amenities", JSON.stringify(data.amenities));
-
-      // Debug: Check what's being sent
-      console.log("FormData contents:");
-      for (const [key, value] of formData.entries()) {
-        console.log(key, value);
-      }
-
-      // Append images
-      selectedImages.forEach((image) => {
-        formData.append("images", image);
-      });
-
-      // Use the FormData to create property
-      await addProperty(formData);
-
-      toast.success("Listing created successfully!");
-      navigate("/agent-dashboard");
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to create listing";
-      toast.error(errorMessage);
-      console.error("Create listing error:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   if (!agent) {
     return (
@@ -413,34 +485,157 @@ const CreateListing: React.FC = () => {
                 />
 
                 {/* Price and Details */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  {/* Price Field */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Dynamic Price Field */}
+                    <FormField
+                      control={form.control}
+                      name="price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            {listingType === "rent"
+                              ? "Annual Rent (₦) *"
+                              : "Daily Rate (₦) *"}
+                          </FormLabel>
+                          <FormControl>
+                            <div className="space-y-2">
+                              <div className="relative">
+                                <DollarSign className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                                <Input
+                                  type="number"
+                                  placeholder={
+                                    listingType === "rent" ? "500000" : "25000"
+                                  }
+                                  className="pl-10"
+                                  disabled={isSubmitting}
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      parseFloat(e.target.value) || 0
+                                    )
+                                  }
+                                />
+                              </div>
+                              {field.value > 0 && (
+                                <p className="text-sm text-muted-foreground">
+                                  {listingType === "rent"
+                                    ? `≈ ${formatPrice(
+                                        Math.round(field.value / 12)
+                                      )}/month`
+                                    : `Total: ${formatPrice(
+                                        field.value
+                                      )} per day`}
+                                </p>
+                              )}
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Total Package Price Field */}
+                    <FormField
+                      control={form.control}
+                      name="totalPackagePrice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Total Package Price (₦)</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <DollarSign className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                              <Input
+                                type="number"
+                                placeholder="e.g., 5500000"
+                                className="pl-10"
+                                disabled={isSubmitting}
+                                value={field.value || ""}
+                                onChange={(e) =>
+                                  field.onChange(
+                                    e.target.value
+                                      ? parseFloat(e.target.value)
+                                      : undefined
+                                  )
+                                }
+                              />
+                            </div>
+                          </FormControl>
+                          <FormDescription className="text-xs">
+                            {listingType === "rent"
+                              ? "Optional: Total price for multi-year package or all-inclusive deal"
+                              : "Optional: Total price for extended stay package"}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Price Suggestions */}
+                  <div className="space-y-2">
+                    <Label className="text-sm">Quick Price Suggestions:</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {getPriceSuggestions().map((suggestion, index) => (
+                        <Button
+                          key={index}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            form.setValue("price", suggestion.value)
+                          }
+                          disabled={isSubmitting}>
+                          {suggestion.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Enhanced Listing Type with Better Descriptions */}
                   <FormField
                     control={form.control}
-                    name="price"
+                    name="listingType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Price (₦) *</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <DollarSign className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                            <Input
-                              type="number"
-                              placeholder="500000"
-                              className="pl-10"
-                              disabled={isSubmitting}
-                              value={field.value}
-                              onChange={(e) =>
-                                field.onChange(parseFloat(e.target.value) || 0)
-                              }
-                            />
-                          </div>
-                        </FormControl>
+                        <FormLabel>Listing Type *</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          disabled={isSubmitting}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select listing type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="rent">
+                              <div className="flex flex-col">
+                                <span className="font-medium">Rent</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Long-term rental (per year)
+                                </span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="short-let">
+                              <div className="flex flex-col">
+                                <span className="font-medium">Short Let</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Temporary rental (per day)
+                                </span>
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          {field.value === "rent"
+                            ? "Perfect for long-term tenants (minimum 1 year)"
+                            : "Ideal for vacations, business trips, and temporary stays"}
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
                   {/* Bedrooms Field */}
                   <FormField
                     control={form.control}
@@ -631,8 +826,16 @@ const CreateListing: React.FC = () => {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={isSubmitting || selectedImages.length === 0}>
-                  {isSubmitting ? "Creating Listing..." : "Create Listing"}
+                  disabled={
+                    isSubmitting || (!editMode && selectedImages.length === 0)
+                  }>
+                  {isSubmitting
+                    ? editMode
+                      ? "Updating Listing..."
+                      : "Creating Listing..."
+                    : editMode
+                    ? "Update Listing"
+                    : "Create Listing"}
                 </Button>
               </form>
             </Form>

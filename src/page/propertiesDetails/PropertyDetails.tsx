@@ -24,6 +24,7 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import { usePropertyStore } from "@/stores/propertyStore";
 import { useAuthStore } from "@/stores/authStore";
+import { useLeadStore } from "@/stores/leadStore"; // Import lead store
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -37,7 +38,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useAgentStore } from "@/stores/agentStore";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Property, Agent } from "@/types"; // Make sure to import Agent type
+import { Property, Agent } from "@/types";
 import { useAmenities } from "@/hooks/useAmenities";
 import PropertyMap from "@/components/common/PropertyMap";
 
@@ -58,6 +59,12 @@ const PropertyDetails: React.FC = () => {
     usePropertyStore();
   const { user } = useAuthStore();
   const { agents } = useAgentStore();
+  const {
+    createLead,
+    checkContactStatus,
+    contactStatus,
+    loading: leadLoading,
+  } = useLeadStore(); // Use lead store
 
   const [property, setProperty] = useState<Property | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -82,6 +89,16 @@ const PropertyDetails: React.FC = () => {
   };
 
   const agent = getAgentInfo();
+  const agentId = agent?._id || agent?.id;
+
+  // Check if user has already contacted this agent
+  const hasContacted = agentId ? contactStatus[agentId] : false;
+
+  useEffect(() => {
+    if (user && agentId) {
+      checkContactStatus(agentId);
+    }
+  }, [user, agentId, checkContactStatus]);
 
   useEffect(() => {
     console.log("URL ID:", id);
@@ -117,28 +134,66 @@ const PropertyDetails: React.FC = () => {
   // Check if this property is favorited
   const isFavorite = userFavorites.includes(property?._id || "");
 
-  // Handle WhatsApp message
-  const handleWhatsAppClick = () => {
+  // Handle WhatsApp message with lead tracking
+  const handleWhatsAppClick = async () => {
+    if (!user || !agentId) {
+      toast.error("Please login to contact agent");
+      navigate("/login");
+      return;
+    }
+
     const whatsappNumber = agent?.whatsappNumber;
     if (!whatsappNumber) {
       toast.error("Agent WhatsApp number not available");
       return;
     }
 
+    // Always create lead (silently - don't wait for it)
+    createLead({
+      agentId,
+      type: "whatsapp",
+      propertyId: property?._id,
+    }).catch((error) => {
+      console.error("Lead creation failed:", error);
+      // Silently fail - don't show error to user
+    });
+
+    // Always open WhatsApp immediately
     const message = `Hello, I'm interested in your property: ${property?.title}`;
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
     window.open(whatsappUrl, "_blank");
+
+    toast.info("Opening WhatsApp...");
   };
 
-  // Handle phone call
-  const handlePhoneCall = () => {
+  const handlePhoneCall = async () => {
+    if (!user || !agentId) {
+      toast.error("Please login to contact agent");
+      navigate("/login");
+      return;
+    }
+
     const phoneNumber = agent?.phone;
     if (!phoneNumber) {
       toast.error("Agent phone number not available");
       return;
     }
+
+    // Always create lead (silently - don't wait for it)
+    createLead({
+      agentId,
+      type: "phone",
+      propertyId: property?._id,
+    }).catch((error) => {
+      console.error("Lead creation failed:", error);
+      // Silently fail - don't show error to user
+    });
+
+    // Always open phone dialer immediately
     window.location.href = `tel:${phoneNumber}`;
+
+    toast.info("Initiating call...");
   };
 
   // Toggle favorite status
@@ -330,12 +385,12 @@ const PropertyDetails: React.FC = () => {
                 ₦{property.price.toLocaleString()}
                 {property.listingType === "rent" && (
                   <span className="text-lg font-normal text-gray-600">
-                    /month
+                    /year
                   </span>
                 )}
                 {property.listingType === "short-let" && (
                   <span className="text-lg font-normal text-gray-600">
-                    /night
+                    /day
                   </span>
                 )}
               </div>
@@ -480,18 +535,18 @@ const PropertyDetails: React.FC = () => {
                   <Button
                     className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white"
                     onClick={handleWhatsAppClick}
-                    disabled={!user || !agent?.whatsappNumber}>
+                    disabled={!user || !agent?.whatsappNumber || leadLoading}>
                     <MessageCircle className="h-4 w-4" />
-                    Chat on WhatsApp
+                    {leadLoading ? "Processing..." : "Chat on WhatsApp"}
                   </Button>
 
                   <Button
                     onClick={handlePhoneCall}
                     variant="outline"
                     className="w-full flex items-center justify-center gap-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
-                    disabled={!user || !agent?.phone}>
+                    disabled={!user || !agent?.phone || leadLoading}>
                     <Phone className="h-4 w-4" />
-                    Call Agent
+                    {leadLoading ? "Processing..." : "Call Agent"}
                   </Button>
                 </div>
               </CardContent>
@@ -611,7 +666,7 @@ const PropertyDetails: React.FC = () => {
               <div className="flex justify-between">
                 <span className="text-gray-600">Address</span>
                 <span className="text-gray-900">
-                  {agent.address || "Not specified"}
+                  {agent.residentialAddress || "Not specified"}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -638,9 +693,9 @@ const PropertyDetails: React.FC = () => {
             <Button
               className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white"
               onClick={handleWhatsAppClick}
-              disabled={!agent.whatsappNumber}>
+              disabled={!agent.whatsappNumber || leadLoading}>
               <MessageCircle className="h-4 w-4" />
-              Chat on WhatsApp
+              {leadLoading ? "Processing..." : "Chat on WhatsApp"}
             </Button>
           </motion.div>
         </div>

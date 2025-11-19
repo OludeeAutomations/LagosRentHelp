@@ -1,7 +1,7 @@
 // src/components/property/ApartmentCard.tsx
 import React from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Bed, Bath, Square, Heart, Calendar } from "lucide-react";
+import { MapPin, Bed, Bath, Square, Heart, Calendar, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { propertyService } from "@/services/propertyService";
@@ -43,6 +43,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
     listingType,
     isFeatured,
     status,
+    views,
     agentId,
   } = property;
 
@@ -176,7 +177,6 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             </div>
           </div>
         </div>
-
         {/* Amenities Preview */}
         {amenities && amenities.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
@@ -197,7 +197,14 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             )}
           </div>
         )}
-
+        <div className="mt-2 flex items-center gap-2 text-sm">
+          <Badge
+            variant="secondary"
+            className="flex items-center gap-1 bg-white text-gray-700 border-gray-300">
+            <Eye className="h-3 w-3" />
+            {views || 0} views
+          </Badge>
+        </div>{" "}
         {/* Rental Period for Short-lets */}
         {listingType === "short-let" && (
           <div className="flex items-center gap-1 text-sm text-gray-600">

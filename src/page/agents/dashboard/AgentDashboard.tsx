@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useAgentStore } from "@/stores/agentStore";
+import { useLeadStore } from "@/stores/leadStore";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,21 +32,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { leadService } from "@/services/leadService";
 import { canAgentListProperties } from "@/utils/agentUtils";
 
 const AgentDashboard: React.FC = () => {
   const { user, agent } = useAuthStore();
   const { fetchAgentProfile, loading: isLoading, error } = useAgentStore();
+  const { leads, fetchAgentLeads, loading: leadsLoading } = useLeadStore();
 
   const [activeTab, setActiveTab] = useState("overview");
-  const [recentLeads, setRecentLeads] = useState<any[]>([]);
   const [agentProperties, setAgentProperties] = useState<any[]>([]);
-  const [agentStats, setAgentStats] = useState({
-    totalViews: 0,
-    totalLeads: 0,
-    conversionRate: 0,
-  });
 
   const canCreateListing = agent && canAgentListProperties(agent);
 
@@ -54,22 +49,17 @@ const AgentDashboard: React.FC = () => {
       fetchAgentProfile();
     }
   }, [user?._id, agent]);
+
   useEffect(() => {
     if (user?._id) {
       loadRecentLeads(user._id);
       loadAgentProperties(user._id);
-      loadAgentStats(user._id);
     }
   }, [user?._id]);
 
   const loadRecentLeads = async (agentId: string) => {
     try {
-      const leadsResponse = await leadService.getAll({
-        agentId,
-        limit: 5,
-        page: 1,
-      });
-      setRecentLeads(leadsResponse.data || []);
+      await fetchAgentLeads(agentId, { limit: 5, page: 1 });
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to load leads";
@@ -93,35 +83,12 @@ const AgentDashboard: React.FC = () => {
     }
   };
 
-  const loadAgentStats = async (agentId: string) => {
-    try {
-      // TODO: Replace with actual stats service call
-      // const statsResponse = await statsService.getAgentStats(agentId);
-      // setAgentStats(statsResponse.data);
-
-      // Temporary mock data
-      setAgentStats({
-        totalViews: agent?.totalViews || 0,
-        totalLeads: recentLeads.length,
-        conversionRate: 0, // Calculate based on your business logic
-      });
-    } catch (error: unknown) {
-      console.error("Failed to load stats:", error);
-      setAgentStats({
-        totalViews: 0,
-        totalLeads: 0,
-        conversionRate: 0,
-      });
-    }
-  };
-
   const handleRefresh = async () => {
     try {
       await fetchAgentProfile();
       if (user?._id) {
         await loadRecentLeads(user._id);
         await loadAgentProperties(user._id);
-        await loadAgentStats(user._id);
       }
       toast.success("Dashboard refreshed");
     } catch {
@@ -285,9 +252,7 @@ const AgentDashboard: React.FC = () => {
                   <Eye className="h-8 w-8 text-blue-500" />
                   <TrendingUp className="h-5 w-5 text-green-500" />
                 </div>
-                <div className="text-2xl font-bold">
-                  {agentStats.totalViews}
-                </div>
+                <div className="text-2xl font-bold">{agent.totalViews}</div>
                 <div className="text-muted-foreground">Total Views</div>
               </CardContent>
             </Card>
@@ -298,9 +263,7 @@ const AgentDashboard: React.FC = () => {
                   <Users className="h-8 w-8 text-purple-500" />
                   <TrendingUp className="h-5 w-5 text-green-500" />
                 </div>
-                <div className="text-2xl font-bold">
-                  {agentStats.totalLeads}
-                </div>
+                <div className="text-2xl font-bold">{agent?.totalLeads}</div>
                 <div className="text-muted-foreground">Total Leads</div>
               </CardContent>
             </Card>
@@ -311,9 +274,7 @@ const AgentDashboard: React.FC = () => {
                   <BarChart3 className="h-8 w-8 text-orange-500" />
                   <TrendingUp className="h-5 w-5 text-green-500" />
                 </div>
-                <div className="text-2xl font-bold">
-                  {agentStats.conversionRate}%
-                </div>
+                <div className="text-2xl font-bold">0%</div>
                 <div className="text-muted-foreground">Conversion Rate</div>
               </CardContent>
             </Card>
@@ -342,9 +303,13 @@ const AgentDashboard: React.FC = () => {
           variant="outline"
           size="sm"
           onClick={handleRefresh}
-          disabled={isLoading}
+          disabled={isLoading || leadsLoading}
           className="flex items-center gap-2">
-          <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+          <RefreshCw
+            className={`h-4 w-4 ${
+              isLoading || leadsLoading ? "animate-spin" : ""
+            }`}
+          />
           Refresh Data
         </Button>
       </div>
@@ -373,13 +338,13 @@ const AgentDashboard: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {leadsLoading ? (
                 <div className="space-y-4">
                   {Array.from({ length: 3 }).map((_, index) => (
                     <Skeleton key={index} className="h-16 w-full" />
                   ))}
                 </div>
-              ) : recentLeads.length === 0 ? (
+              ) : leads.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No leads yet</p>
@@ -389,38 +354,35 @@ const AgentDashboard: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {recentLeads.map((lead) => (
+                  {leads.map((lead) => (
                     <div
-                      key={lead.id}
+                      key={lead._id}
                       className="flex items-center justify-between p-4 bg-muted rounded-lg">
                       <div className="flex-1">
                         <h4 className="font-medium text-foreground">
-                          {lead.name}
+                          {lead.userId?.name || "Unknown User"}
                         </h4>
                         <p className="text-sm text-muted-foreground">
-                          {lead.email}
+                          {lead.userId?.email || "No email"}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {lead.property}
+                          {lead.propertyId?.title || "General Inquiry"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          ₦
+                          {lead.propertyId?.price?.toLocaleString() ||
+                            "Price not set"}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-muted-foreground">
-                          {new Date(lead.date).toLocaleDateString()}
+                          {new Date(lead.timestamp).toLocaleDateString()}
                         </p>
-                        <Badge
-                          variant={
-                            lead.status === "new"
-                              ? "default"
-                              : lead.status === "contacted"
-                              ? "secondary"
-                              : "outline"
-                          }
-                          className="mt-1 capitalize">
-                          {lead.status}
+                        <Badge variant="secondary" className="mt-1 capitalize">
+                          {lead.type}
                         </Badge>
                         <p className="text-xs text-muted-foreground mt-1 capitalize">
-                          {lead.type?.replace("_", " ") || "inquiry"}
+                          Via {lead.type}
                         </p>
                       </div>
                     </div>

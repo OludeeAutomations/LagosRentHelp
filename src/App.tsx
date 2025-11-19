@@ -32,6 +32,7 @@ import ResetPassword from "./page/login/ResetPassword";
 import { Toaster } from "sonner";
 import Favorites from "./page/user/Favorites";
 import { useAuthStore } from "./stores/authStore";
+import EditListing from "./page/agents/dashboard/EditListing";
 //import AgentListings from "./page/agents/dashboard/AgentListings";
 //import AgentLeads from "./page/agents/dashboard/AgentLeads";
 //import AgentMessages from "./page/agents/dashboard/AgentMessages";
@@ -89,7 +90,6 @@ const App: React.FC = () => {
               </Layout>
             }
           />
-
           <Route
             path="/dashboard/favorites"
             element={
@@ -98,7 +98,6 @@ const App: React.FC = () => {
               </Layout>
             }
           />
-
           <Route
             path="/features"
             element={
@@ -107,7 +106,6 @@ const App: React.FC = () => {
               </Layout>
             }
           />
-
           <Route
             path="/privacy"
             element={
@@ -164,7 +162,6 @@ const App: React.FC = () => {
               </Layout>
             }
           />
-
           <Route
             path="/forgot-password"
             element={
@@ -173,7 +170,6 @@ const App: React.FC = () => {
               </Layout>
             }
           />
-
           <Route
             path="/reset-password/:userId/:token"
             element={
@@ -285,6 +281,15 @@ const App: React.FC = () => {
             element={
               <AgentDashboardLayout title="Create Listing">
                 <CreateListing />
+              </AgentDashboardLayout>
+            }
+          />
+          // In your App.tsx or routing file
+          <Route
+            path="/edit-listing/:id"
+            element={
+              <AgentDashboardLayout title="Edit Listing">
+                <EditListing />{" "}
               </AgentDashboardLayout>
             }
           />

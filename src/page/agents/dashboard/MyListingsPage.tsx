@@ -1,7 +1,7 @@
 // src/pages/agent/MyListingsPage.tsx
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Eye, Edit, Trash2, Plus, Home, Filter } from "lucide-react";
+import { Eye, Edit, Trash2, Plus, Home } from "lucide-react";
 import { usePropertyStore } from "@/stores/propertyStore";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
@@ -266,7 +266,7 @@ const MyListingsPage: React.FC = () => {
                     size="sm"
                     asChild
                     className="flex-1">
-                    <Link to={`/agent-dashboard/listings/edit/${property._id}`}>
+                    <Link to={`/edit-listing/${property._id}`}>
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
                     </Link>

@@ -59,7 +59,7 @@ export interface Property {
     | "mini-flat"
     | "short-let";
   listingType: "rent" | "short-let";
-
+  totalPackagePrice: number; // Optional package price
   bedrooms: number;
   bathrooms: number;
   area: number;
@@ -87,7 +87,7 @@ export interface Agent {
   freeListingWeeks: number;
   subscription: any;
   canListProperties: any;
-  id: string;
+  _id: string;
   name: string;
   phone: string;
   userId: string; // Reference to User
@@ -117,6 +117,7 @@ export interface Agent {
   // Backend fields
   rating?: number;
   totalReviews?: number;
+  totalViews?: number;
   responseRate?: number;
   responseTime?: number;
   createdAt: string;
@@ -144,24 +145,6 @@ export interface VerificationStatus {
   idType?: string;
   createdAt?: string;
   verifiedAt?: string;
-}
-export interface Lead {
-  id: string;
-  agentId: string;
-  propertyId?: string;
-  type:
-    | "listing_view"
-    | "contact_click"
-    | "referral_click"
-    | "whatsapp_contact";
-  timestamp: string;
-  clientId: string;
-  source?: string;
-  message?: string;
-  // Backend fields
-  status?: "new" | "contacted" | "viewing" | "closed";
-  priority?: "low" | "medium" | "high";
-  notes?: string;
 }
 
 export interface Notification {
@@ -306,4 +289,37 @@ export interface AgentProfileResponse {
     properties?: any[];
     stats?: any;
   }; // list of properties managed by the agent
+}
+export interface LeadsResponse {
+  success: boolean;
+  data: Lead[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+export interface LeadResponse {
+  success: boolean;
+  data: Lead;
+}
+export interface Lead {
+  _id: string;
+  status: string;
+  type: string;
+  message: string;
+  timestamp: string;
+  propertyId?: {
+    title: string;
+    price?: number;
+  };
+  userId?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+  }; // Add userId property here
 }
