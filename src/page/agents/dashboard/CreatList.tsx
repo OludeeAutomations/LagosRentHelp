@@ -51,10 +51,7 @@ const createListingSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
   description: z.string().min(20, "Description must be at least 20 characters"),
   price: z.number().min(10000, "Price must be at least ₦10,000"),
-  totalPackagePrice: z
-    .number()
-    .min(10000, "Package price cannot be negative")
-    .optional(),
+  totalPackagePrice: z.number().min(10000, "Package price cannot be negative"),
   location: z.string().min(3, "Location is required"),
   type: z.enum([
     "1-bedroom",
@@ -113,7 +110,7 @@ const CreateListing: React.FC<CreateListingProps> = ({
             title: "",
             description: "",
             price: 0,
-            totalPackagePrice: undefined,
+            totalPackagePrice: 0,
             location: "",
             type: "1-bedroom",
             listingType: "rent",
@@ -140,6 +137,7 @@ const CreateListing: React.FC<CreateListingProps> = ({
       formData.append("title", data.title);
       formData.append("description", data.description);
       formData.append("price", data.price.toString());
+      formData.append("totalPackagePrice", data.totalPackagePrice.toString());
       formData.append("location", data.location);
       formData.append("type", data.type);
       formData.append("listingType", data.listingType);

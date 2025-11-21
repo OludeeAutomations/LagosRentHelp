@@ -42,12 +42,10 @@ import { Property, Agent } from "@/types";
 import { useAmenities } from "@/hooks/useAmenities";
 import PropertyMap from "@/components/common/PropertyMap";
 
-// Type guard to check if agentId is an object
 const isAgentObject = (agentId: any): agentId is Agent => {
   return agentId && typeof agentId === "object" && "name" in agentId;
 };
 
-// Type guard to check if agentId is a string
 const isAgentString = (agentId: any): agentId is string => {
   return typeof agentId === "string";
 };
@@ -62,7 +60,7 @@ const PropertyDetails: React.FC = () => {
   const {
     createLead,
     checkContactStatus,
-    contactStatus,
+
     loading: leadLoading,
   } = useLeadStore(); // Use lead store
 
@@ -77,10 +75,8 @@ const PropertyDetails: React.FC = () => {
     if (!property) return null;
 
     if (isAgentObject(property.agentId)) {
-      // agentId is already an Agent object
       return property.agentId;
     } else if (isAgentString(property.agentId)) {
-      // agentId is a string ID, find the agent in the agents store
       const agentId = property.agentId;
       return agents.find((a) => a.id === agentId || a._id === agentId);
     }
@@ -90,9 +86,6 @@ const PropertyDetails: React.FC = () => {
 
   const agent = getAgentInfo();
   const agentId = agent?._id || agent?.id;
-
-  // Check if user has already contacted this agent
-  const hasContacted = agentId ? contactStatus[agentId] : false;
 
   useEffect(() => {
     if (user && agentId) {
@@ -132,7 +125,7 @@ const PropertyDetails: React.FC = () => {
   }, [id, properties, getPropertyById]);
 
   // Check if this property is favorited
-  const isFavorite = userFavorites.includes(property?._id || "");
+  const isFavorite = userFavorites.includes(property?.id || "");
 
   // Handle WhatsApp message with lead tracking
   const handleWhatsAppClick = async () => {
@@ -152,7 +145,7 @@ const PropertyDetails: React.FC = () => {
     createLead({
       agentId,
       type: "whatsapp",
-      propertyId: property?._id,
+      propertyId: property?.id,
     }).catch((error) => {
       console.error("Lead creation failed:", error);
       // Silently fail - don't show error to user
@@ -184,7 +177,7 @@ const PropertyDetails: React.FC = () => {
     createLead({
       agentId,
       type: "phone",
-      propertyId: property?._id,
+      propertyId: property?.id,
     }).catch((error) => {
       console.error("Lead creation failed:", error);
       // Silently fail - don't show error to user
@@ -204,7 +197,7 @@ const PropertyDetails: React.FC = () => {
       return;
     }
 
-    const propertyId = property?._id;
+    const propertyId = property?.id;
     if (propertyId) {
       toggleFavorite(propertyId);
     }
