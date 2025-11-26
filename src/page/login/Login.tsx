@@ -19,9 +19,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-
-import { signInWithPopup } from "firebase/auth";
-import {auth,googleProvider}  from '../../firebaseConfig'
 import { GoogleLogin } from "@react-oauth/google";
 
 const loginSchema = z.object({

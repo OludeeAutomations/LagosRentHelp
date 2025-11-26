@@ -95,8 +95,8 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
     { icon: Home, label: "Overview", href: "/agent-dashboard" },
     { icon: Plus, label: "Create Listing", href: "/create-listing" },
     { icon: Building, label: "My Listings", href: "/agent-dashboard/listings" },
-    { icon: Users, label: "Leads", href: "/agent-dashboard/leads" },
-    { icon: BarChart3, label: "Analytics", href: "#" },
+    // { icon: Users, label: "Leads", href: "/agent-dashboard/leads" },
+    // { icon: BarChart3, label: "Analytics", href: "#" },
     { icon: Settings, label: "Settings", href: "/agent-dashboard/settings" },
   ];
 
