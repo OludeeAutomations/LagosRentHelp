@@ -1,5 +1,4 @@
-// src/pages/SettingsPage.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,9 +12,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-
 import { toast } from "sonner";
 import {
   User,
@@ -31,39 +28,61 @@ import {
 } from "lucide-react";
 
 const SettingsPage: React.FC = () => {
+  // 1. Destructure refresh/fetch method if available, or rely on user
   const { user, updateProfile, changePassword } = useAuthStore();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("profile");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Profile form state
+  // 2. Initial State (Safe defaults)
   const [profileData, setProfileData] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    phone: user?.phone || "",
+    name: "",
+    email: "",
+    phone: "",
+    location: "", // Added location safety
   });
 
-  // Security form state
   const [securityData, setSecurityData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
+
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Notification preferences
+  // 3. Notification State
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
-    smsNotifications: user?.phone ? true : false,
+    smsNotifications: false,
     pushNotifications: true,
     marketingEmails: false,
     securityAlerts: true,
     bookingUpdates: true,
     newListings: true,
-    priceChanges: false,
   });
+
+  // ✅ FIX 1: Sync Local State with Auth Store
+  // This runs whenever the 'user' object changes (e.g., after page load)
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        // If your user model has location, map it here.
+        // If it's on the Agent profile, you might need to fetch Agent profile separately.
+        location: (user as any).location || (user as any).address || "",
+      });
+
+      // Update notifications if user has saved preferences
+      // setNotifications(user.preferences?.notifications || defaultNotifications);
+    } else {
+      // If no user is found after a timeout/check, redirect
+      // navigate("/login");
+    }
+  }, [user]); // Dependency on 'user' is crucial
 
   // Handle profile update
   const handleProfileUpdate = async (e: React.FormEvent) => {
@@ -71,16 +90,21 @@ const SettingsPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await updateProfile(profileData);
+      // Pass only the allowed fields to updateProfile
+      await updateProfile({
+        name: profileData.name,
+        phone: profileData.phone,
+        // email is usually redundant to send if not changing, but depends on backend
+      });
       toast.success("Profile updated successfully");
     } catch (error: any) {
+      console.error(error);
       toast.error(error.message || "Failed to update profile");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle password change
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -114,25 +138,28 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  // Handle notification preferences change
   const handleNotificationChange = (key: string, value: boolean) => {
     setNotifications((prev) => ({
       ...prev,
       [key]: value,
     }));
-    // You would typically save this to the backend here
+    // TODO: Call API to save preference
+    // api.put('/users/preferences', { notifications: { ...notifications, [key]: value } })
     toast.success("Notification preferences updated");
   };
 
+  // Prevent rendering empty form if user isn't loaded yet
   if (!user) {
-    navigate("/login");
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 max-w-4xl">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
           <p className="text-gray-600 mt-2">
@@ -144,21 +171,17 @@ const SettingsPage: React.FC = () => {
           value={activeTab}
           onValueChange={setActiveTab}
           className="space-y-6">
-          {/* Tab Navigation */}
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="profile" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Profile
+              <User className="h-4 w-4" /> Profile
             </TabsTrigger>
             <TabsTrigger value="security" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Security
+              <Shield className="h-4 w-4" /> Security
             </TabsTrigger>
             <TabsTrigger
               value="notifications"
               className="flex items-center gap-2">
-              <Bell className="h-4 w-4" />
-              Notifications
+              <Bell className="h-4 w-4" /> Notifications
             </TabsTrigger>
           </TabsList>
 
@@ -167,12 +190,10 @@ const SettingsPage: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Profile Information
+                  <User className="h-5 w-5" /> Profile Information
                 </CardTitle>
                 <CardDescription>
-                  Update your personal information and how others see you on the
-                  platform.
+                  Update your personal information.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -201,16 +222,13 @@ const SettingsPage: React.FC = () => {
                           id="email"
                           type="email"
                           value={profileData.email}
-                          onChange={(e) =>
-                            setProfileData((prev) => ({
-                              ...prev,
-                              email: e.target.value,
-                            }))
-                          }
-                          className="pl-10"
-                          placeholder="Enter your email"
+                          disabled // Usually email update requires verify, so disable for now
+                          className="pl-10 bg-gray-100 cursor-not-allowed"
                         />
                       </div>
+                      <p className="text-xs text-muted-foreground">
+                        Contact support to change email.
+                      </p>
                     </div>
                   </div>
 
@@ -228,11 +246,12 @@ const SettingsPage: React.FC = () => {
                           }))
                         }
                         className="pl-10"
-                        placeholder="+234 812 345 6789"
+                        placeholder="+234..."
                       />
                     </div>
                   </div>
 
+                  {/* Only show location if your User model actually has it, otherwise remove or sync with Agent profile */}
                   <div className="space-y-2">
                     <Label htmlFor="location">Location</Label>
                     <div className="relative">
@@ -247,7 +266,7 @@ const SettingsPage: React.FC = () => {
                           }))
                         }
                         className="pl-10"
-                        placeholder="Your city or area"
+                        placeholder="City, State"
                       />
                     </div>
                   </div>
@@ -265,12 +284,11 @@ const SettingsPage: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Account Type Card */}
             <Card>
               <CardHeader>
                 <CardTitle>Account Type</CardTitle>
                 <CardDescription>
-                  Your current account type and permissions.
+                  Your current account permissions.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -278,17 +296,12 @@ const SettingsPage: React.FC = () => {
                   <div>
                     <p className="font-semibold capitalize">{user.role}</p>
                     <p className="text-sm text-gray-600">
-                      {user.role === "agent"
-                        ? "Full access to agent features"
-                        : user.role === "admin"
-                        ? "Administrative access"
-                        : "Basic user access"}
+                      {user.role === "agent" ? "Agent Account" : "User Account"}
                     </p>
                   </div>
+                  {/* You can display verification status if it exists on user or agent */}
                   <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                    {user?.verificationStatus === "verified"
-                      ? "Verified"
-                      : "Unverified"}
+                    Active
                   </div>
                 </div>
               </CardContent>
@@ -300,12 +313,9 @@ const SettingsPage: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Lock className="h-5 w-5" />
-                  Change Password
+                  <Lock className="h-5 w-5" /> Change Password
                 </CardTitle>
-                <CardDescription>
-                  Update your password to keep your account secure.
-                </CardDescription>
+                <CardDescription>Update your password.</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handlePasswordChange} className="space-y-4">
@@ -324,8 +334,6 @@ const SettingsPage: React.FC = () => {
                           }))
                         }
                         className="pl-10 pr-10"
-                        placeholder="Enter current password"
-                        required
                       />
                       <Button
                         type="button"
@@ -359,8 +367,6 @@ const SettingsPage: React.FC = () => {
                           }))
                         }
                         className="pl-10 pr-10"
-                        placeholder="Enter new password"
-                        required
                       />
                       <Button
                         type="button"
@@ -378,9 +384,7 @@ const SettingsPage: React.FC = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">
-                      Confirm New Password
-                    </Label>
+                    <Label htmlFor="confirmPassword">Confirm Password</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
@@ -394,8 +398,6 @@ const SettingsPage: React.FC = () => {
                           }))
                         }
                         className="pl-10 pr-10"
-                        placeholder="Confirm new password"
-                        required
                       />
                       <Button
                         type="button"
@@ -418,57 +420,11 @@ const SettingsPage: React.FC = () => {
                     <Button
                       type="submit"
                       disabled={isLoading}
-                      variant="destructive">
+                      variant="default">
                       {isLoading ? "Updating..." : "Change Password"}
                     </Button>
                   </div>
                 </form>
-              </CardContent>
-            </Card>
-
-            {/* Two-Factor Authentication Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Two-Factor Authentication</CardTitle>
-                <CardDescription>
-                  Add an extra layer of security to your account.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold">Two-Factor Authentication</p>
-                    <p className="text-sm text-gray-600">
-                      Protect your account with an extra layer of security
-                    </p>
-                  </div>
-                  <Switch />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Session Management */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Active Sessions</CardTitle>
-                <CardDescription>
-                  Manage your active login sessions.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-semibold">Current Session</p>
-                      <p className="text-sm text-gray-600">
-                        {navigator.userAgent} • Now
-                      </p>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      Logout This Device
-                    </Button>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -479,138 +435,27 @@ const SettingsPage: React.FC = () => {
               <CardHeader>
                 <CardTitle>Email Notifications</CardTitle>
                 <CardDescription>
-                  Control what email notifications you receive.
+                  Manage your email preferences.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold">Email Notifications</p>
-                    <p className="text-sm text-gray-600">
-                      Receive notifications via email
-                    </p>
-                  </div>
-                  <Switch
-                    checked={notifications.emailNotifications}
-                    onCheckedChange={(checked) =>
-                      handleNotificationChange("emailNotifications", checked)
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold">Security Alerts</p>
-                    <p className="text-sm text-gray-600">
-                      Important security notifications
-                    </p>
-                  </div>
-                  <Switch
-                    checked={notifications.securityAlerts}
-                    onCheckedChange={(checked) =>
-                      handleNotificationChange("securityAlerts", checked)
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold">Booking Updates</p>
-                    <p className="text-sm text-gray-600">
-                      Updates about your property bookings
-                    </p>
-                  </div>
-                  <Switch
-                    checked={notifications.bookingUpdates}
-                    onCheckedChange={(checked) =>
-                      handleNotificationChange("bookingUpdates", checked)
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold">New Listings</p>
-                    <p className="text-sm text-gray-600">
-                      Notifications about new properties in your area
-                    </p>
-                  </div>
-                  <Switch
-                    checked={notifications.newListings}
-                    onCheckedChange={(checked) =>
-                      handleNotificationChange("newListings", checked)
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold">Marketing Emails</p>
-                    <p className="text-sm text-gray-600">
-                      Promotional offers and updates
-                    </p>
-                  </div>
-                  <Switch
-                    checked={notifications.marketingEmails}
-                    onCheckedChange={(checked) =>
-                      handleNotificationChange("marketingEmails", checked)
-                    }
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Push Notifications</CardTitle>
-                <CardDescription>
-                  Control push notifications on your devices.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold">Push Notifications</p>
-                    <p className="text-sm text-gray-600">
-                      Receive push notifications on your devices
-                    </p>
-                  </div>
-                  <Switch
-                    checked={notifications.pushNotifications}
-                    onCheckedChange={(checked) =>
-                      handleNotificationChange("pushNotifications", checked)
-                    }
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {user.phone && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>SMS Notifications</CardTitle>
-                  <CardDescription>
-                    Control SMS notifications sent to your phone.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
+                {Object.entries(notifications).map(([key, value]) => (
+                  <div key={key} className="flex items-center justify-between">
                     <div>
-                      <p className="font-semibold">SMS Notifications</p>
-                      <p className="text-sm text-gray-600">
-                        Receive SMS notifications on {user.phone}
+                      <p className="font-semibold capitalize">
+                        {key.replace(/([A-Z])/g, " $1").trim()}
                       </p>
                     </div>
                     <Switch
-                      checked={notifications.smsNotifications}
+                      checked={value}
                       onCheckedChange={(checked) =>
-                        handleNotificationChange("smsNotifications", checked)
+                        handleNotificationChange(key, checked)
                       }
                     />
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                ))}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
