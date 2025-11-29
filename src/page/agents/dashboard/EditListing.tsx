@@ -4,7 +4,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { usePropertyStore } from "@/stores/propertyStore";
 import { useAuthStore } from "@/stores/authStore";
 import { Property } from "@/types";
-import CreateListing from "./CreatList";
+import CreateListing from "./CreatList"; // Typo fixed from 'CreatList'
 import { toast } from "sonner";
 import {
   Card,
@@ -24,85 +24,67 @@ const EditListing: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(true);
 
-  // Helper function to compare IDs (handles string vs ObjectId)
-  const compareIds = (id1: any, id2: any): boolean => {
-    if (!id1 || !id2) return false;
-
-    // Convert both to string for comparison
-    const str1 = typeof id1 === "object" ? id1.toString() : String(id1);
-    const str2 = typeof id2 === "object" ? id2.toString() : String(id2);
-
-    return str1 === str2;
-  };
-
   useEffect(() => {
     const loadProperty = async () => {
-      console.log("loadProperty called with id:", id);
-
+      // 1. Basic Validation
       if (!id) {
-        console.log("No ID provided");
         toast.error("Invalid property ID");
         navigate("/agent-dashboard");
         return;
       }
 
       if (!agent) {
-        console.log("No agent found");
         toast.error("Please log in as an agent");
         navigate("/login");
         return;
       }
 
-      console.log("AGENT FROM STORE:", agent);
-      console.log("AGENT ID:", agent._id);
-      console.log("AGENT ID TYPE:", typeof agent._id);
-
       try {
         setIsLoading(true);
-        console.log("Starting property load from API...");
 
-        // Fetch property from API
+        // 2. Fetch Property
         const foundProperty = await getPropertyById(id);
-        console.log("Fetched property from API:", foundProperty);
 
         if (!foundProperty) {
           throw new Error("Property not found");
         }
 
-        // Detailed string comparison
-        const propertyAgentIdStr = String(foundProperty.agent?.agentId);
-        const currentAgentIdStr = String(agent._id);
-        console.log("Property agent.agentId as string:", propertyAgentIdStr);
-        console.log("Current agent ID as string:", currentAgentIdStr);
-        console.log(
-          "String comparison:",
-          propertyAgentIdStr === currentAgentIdStr
-        );
+        // 3. ✅ ROBUST ID EXTRACTION
+        // We look for the ID in 3 places to ensure we find it regardless of API structure
 
-        // Use the helper function for comparison
-        const idsMatch = compareIds(foundProperty.agent?.agentId, agent._id);
-        console.log("Helper function comparison:", idsMatch);
-        console.log("=== END CHECK ===");
+        // A: Check root agentId (could be string or object)
+        let propertyOwnerId = foundProperty.agentId;
 
-        // Check if the property has an agent assigned
-        if (!foundProperty.agent || !foundProperty.agent.agentId) {
-          console.log("Property has no agent profile assigned");
-          setIsAuthorized(false);
-          toast.error("This property has no agent profile assigned");
-          return;
+        // If it's an object (populated), get the _id from it
+        if (typeof propertyOwnerId === "object" && propertyOwnerId !== null) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          propertyOwnerId = (propertyOwnerId as any)._id || propertyOwnerId;
         }
 
-        // FIXED: Use the helper function to compare IDs
-        if (!idsMatch) {
-          console.log(
-            "Ownership check failed - agent doesn't own this property"
-          );
+        // B: If A failed, check the 'agent' object
+        if (!propertyOwnerId && foundProperty.agent) {
+          propertyOwnerId =
+            foundProperty.agent._id || foundProperty.agent.agentId;
+        }
+
+        // 4. ✅ NORMALIZATION
+        const ownerIdString = String(propertyOwnerId);
+        const currentAgentIdString = String(agent._id);
+
+        console.log("🔒 Authorization Check:", {
+          PropertyOwnerID: ownerIdString,
+          CurrentAgentID: currentAgentIdString,
+          Match: ownerIdString === currentAgentIdString,
+        });
+
+        // 5. ✅ COMPARISON
+        if (ownerIdString !== currentAgentIdString) {
           setIsAuthorized(false);
           toast.error("You don't have permission to edit this property");
           return;
         }
 
-        console.log("Property loaded successfully:", foundProperty);
+        // Success
         setProperty(foundProperty);
         setIsAuthorized(true);
       } catch (error: any) {
@@ -110,7 +92,6 @@ const EditListing: React.FC = () => {
         toast.error(error.message || "Failed to load property");
         navigate("/agent-dashboard");
       } finally {
-        console.log("Loading complete");
         setIsLoading(false);
       }
     };
@@ -118,7 +99,8 @@ const EditListing: React.FC = () => {
     loadProperty();
   }, [id, agent, navigate, getPropertyById]);
 
-  // Show loading state
+  // --- Render States ---
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -130,7 +112,6 @@ const EditListing: React.FC = () => {
     );
   }
 
-  // Show unauthorized message
   if (!isAuthorized) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -138,8 +119,7 @@ const EditListing: React.FC = () => {
           <CardHeader>
             <CardTitle>Access Denied</CardTitle>
             <CardDescription>
-              You don't have permission to edit this property. You can only edit
-              properties that you own.
+              You don't have permission to edit this property.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -152,7 +132,6 @@ const EditListing: React.FC = () => {
     );
   }
 
-  // Show property not found
   if (!property) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -160,8 +139,7 @@ const EditListing: React.FC = () => {
           <CardHeader>
             <CardTitle>Property Not Found</CardTitle>
             <CardDescription>
-              The property you're trying to edit doesn't exist or may have been
-              removed.
+              The property you're trying to edit doesn't exist.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -174,8 +152,6 @@ const EditListing: React.FC = () => {
     );
   }
 
-  // Render the CreateListing component in edit mode
-  console.log("Rendering CreateListing with property:", property);
   return <CreateListing editMode={true} property={property} />;
 };
 

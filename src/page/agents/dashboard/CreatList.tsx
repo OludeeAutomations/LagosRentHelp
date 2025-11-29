@@ -45,13 +45,15 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 
-// Schema definition with proper amenities array validation
-// Update your schema
+// Schema definition
 const createListingSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
   description: z.string().min(20, "Description must be at least 20 characters"),
   price: z.number().min(10000, "Price must be at least ₦10,000"),
-  totalPackagePrice: z.number().min(10000, "Package price cannot be negative"),
+  totalPackagePrice: z
+    .number()
+    .min(0, "Package price cannot be negative")
+    .optional(),
   location: z.string().min(3, "Location is required"),
   type: z.enum([
     "1-bedroom",
@@ -88,7 +90,7 @@ const CreateListing: React.FC<CreateListingProps> = ({
   const { addProperty, updateProperty } = usePropertyStore();
   const navigate = useNavigate();
 
-  // Initialize form with proper pricing defaults
+  // Initialize form
   const form = useForm<CreateListingForm>({
     resolver: zodResolver(createListingSchema) as never,
     defaultValues:
@@ -97,7 +99,7 @@ const CreateListing: React.FC<CreateListingProps> = ({
             title: property.title,
             description: property.description,
             price: property.price,
-            totalPackagePrice: property.totalPackagePrice,
+            totalPackagePrice: property.totalPackagePrice || 0,
             location: property.location,
             type: property.type,
             listingType: property.listingType,
@@ -121,10 +123,11 @@ const CreateListing: React.FC<CreateListingProps> = ({
           },
   });
 
-  // Watch listing type to update price labels
   const listingType = form.watch("listingType");
 
-  // Enhanced onSubmit with proper service integration
+  // ==========================================
+  // 👇 FIXED ONSUBMIT FUNCTION IS HERE 👇
+  // ==========================================
   const onSubmit = async (data: CreateListingForm) => {
     if (!agent) return;
 
@@ -133,11 +136,10 @@ const CreateListing: React.FC<CreateListingProps> = ({
     try {
       const formData = new FormData();
 
-      // Append all fields
+      // 1. Append Text Fields
       formData.append("title", data.title);
       formData.append("description", data.description);
       formData.append("price", data.price.toString());
-      formData.append("totalPackagePrice", data.totalPackagePrice.toString());
       formData.append("location", data.location);
       formData.append("type", data.type);
       formData.append("listingType", data.listingType);
@@ -145,27 +147,37 @@ const CreateListing: React.FC<CreateListingProps> = ({
       formData.append("bathrooms", data.bathrooms.toString());
       formData.append("area", data.area.toString());
 
-      // Append totalPackagePrice if it exists
-      if (data.totalPackagePrice) {
-        formData.append("totalPackagePrice", data.totalPackagePrice.toString());
-      }
+      // Handle optional totalPackagePrice
+      const packagePrice = data.totalPackagePrice
+        ? data.totalPackagePrice.toString()
+        : "0";
+      formData.append("totalPackagePrice", packagePrice);
 
+      // Stringify amenities array for backend parsing
       formData.append("amenities", JSON.stringify(data.amenities));
 
+      // 2. ✅ FIXED: Append Images
+      // This matches upload.array("images") on the backend
+      if (selectedImages && selectedImages.length > 0) {
+        selectedImages.forEach((file) => {
+          formData.append("images", file);
+        });
+      } else if (!editMode) {
+        // Prevent submission if no images in Create Mode
+        toast.error("Please select at least one image");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 3. Send to Backend
       if (editMode && property) {
-        // Update existing property using service
         if (property._id) {
           await updateProperty(property._id, formData);
+          toast.success("Listing updated successfully!");
         } else {
           throw new Error("Property ID is missing for update.");
         }
-        // Also update in local store
-        await updateProperty(property._id, formData);
-        toast.success("Listing updated successfully!");
       } else {
-        // Create new property using service
-        const newProperty = await addProperty(formData);
-        // Also add to local store
         await addProperty(formData);
         toast.success("Listing created successfully!");
       }
@@ -184,8 +196,8 @@ const CreateListing: React.FC<CreateListingProps> = ({
       setIsSubmitting(false);
     }
   };
+  // ==========================================
 
-  // Format price for display
   const formatPrice = (price: number): string => {
     return new Intl.NumberFormat("en-NG", {
       style: "currency",
@@ -195,7 +207,6 @@ const CreateListing: React.FC<CreateListingProps> = ({
     }).format(price);
   };
 
-  // Price suggestions based on listing type
   const getPriceSuggestions = () => {
     if (listingType === "rent") {
       return [
@@ -259,20 +270,13 @@ const CreateListing: React.FC<CreateListingProps> = ({
       currentAmenities.filter((amenity) => amenity !== amenityToRemove)
     );
   };
+
   useEffect(() => {
-    console.log("---------------------------------------");
-    console.log(agent);
     if (agent) {
       if (agent.verificationStatus !== "verified") {
         toast.error("Please verify your agent account first");
         navigate("/agent-dashboard");
       }
-      //  else {
-      //   toast.error(
-      //     "Your subscription has expired. Please subscribe to create listings"
-      //   );
-      //   navigate("/agent-dashboard/subscription");
-      // }
     }
   }, [agent, navigate]);
 
@@ -302,32 +306,9 @@ const CreateListing: React.FC<CreateListingProps> = ({
     );
   }
 
-  // In your CreateListing component, modify the onSubmit function:
-
-  if (!agent) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Agent Access Required</CardTitle>
-            <CardDescription>
-              You need to be a verified agent to create listings.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild>
-              <a href="/agent-onboarding">Become an Agent</a>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div>
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Verification Status */}
         {agent.verificationStatus === "pending" && (
           <Alert variant="default" className="bg-yellow-100 border-yellow-300">
             <AlertTitle>Verification Pending</AlertTitle>
@@ -338,7 +319,6 @@ const CreateListing: React.FC<CreateListingProps> = ({
           </Alert>
         )}
 
-        {/* Free Listings Remaining */}
         {agent.freeListingsUsed < 2 && (
           <Alert variant="default">
             <AlertTitle>Free Listings Available</AlertTitle>
@@ -362,9 +342,7 @@ const CreateListing: React.FC<CreateListingProps> = ({
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-6">
-                {/* Basic Information */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Title Field */}
                   <FormField
                     control={form.control}
                     name="title"
@@ -383,7 +361,6 @@ const CreateListing: React.FC<CreateListingProps> = ({
                     )}
                   />
 
-                  {/* Type Field */}
                   <FormField
                     control={form.control}
                     name="type"
@@ -439,7 +416,6 @@ const CreateListing: React.FC<CreateListingProps> = ({
                   />
                 </div>
 
-                {/* Description Field */}
                 <FormField
                   control={form.control}
                   name="description"
@@ -459,7 +435,6 @@ const CreateListing: React.FC<CreateListingProps> = ({
                   )}
                 />
 
-                {/* Location Field */}
                 <FormField
                   control={form.control}
                   name="location"
@@ -482,10 +457,8 @@ const CreateListing: React.FC<CreateListingProps> = ({
                   )}
                 />
 
-                {/* Price and Details */}
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Dynamic Price Field */}
                     <FormField
                       control={form.control}
                       name="price"
@@ -533,7 +506,6 @@ const CreateListing: React.FC<CreateListingProps> = ({
                       )}
                     />
 
-                    {/* Total Package Price Field */}
                     <FormField
                       control={form.control}
                       name="totalPackagePrice"
@@ -570,7 +542,6 @@ const CreateListing: React.FC<CreateListingProps> = ({
                     />
                   </div>
 
-                  {/* Price Suggestions */}
                   <div className="space-y-2">
                     <Label className="text-sm">Quick Price Suggestions:</Label>
                     <div className="flex flex-wrap gap-2">
@@ -590,51 +561,6 @@ const CreateListing: React.FC<CreateListingProps> = ({
                     </div>
                   </div>
 
-                  {/* Enhanced Listing Type with Better Descriptions */}
-                  <FormField
-                    control={form.control}
-                    name="listingType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Listing Type *</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          disabled={isSubmitting}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select listing type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="rent">
-                              <div className="flex flex-col">
-                                <span className="font-medium">Rent</span>
-                                <span className="text-xs text-muted-foreground">
-                                  Long-term rental (per year)
-                                </span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="short-let">
-                              <div className="flex flex-col">
-                                <span className="font-medium">Short Let</span>
-                                <span className="text-xs text-muted-foreground">
-                                  Temporary rental (per day)
-                                </span>
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          {field.value === "rent"
-                            ? "Perfect for long-term tenants (minimum 1 year)"
-                            : "Ideal for vacations, business trips, and temporary stays"}
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  {/* Bedrooms Field */}
                   <FormField
                     control={form.control}
                     name="bedrooms"
@@ -661,7 +587,6 @@ const CreateListing: React.FC<CreateListingProps> = ({
                     )}
                   />
 
-                  {/* Bathrooms Field */}
                   <FormField
                     control={form.control}
                     name="bathrooms"
@@ -688,7 +613,6 @@ const CreateListing: React.FC<CreateListingProps> = ({
                     )}
                   />
 
-                  {/* Area Field */}
                   <FormField
                     control={form.control}
                     name="area"
@@ -716,7 +640,6 @@ const CreateListing: React.FC<CreateListingProps> = ({
                   />
                 </div>
 
-                {/* Amenities Field */}
                 <FormField
                   control={form.control}
                   name="amenities"
@@ -768,7 +691,6 @@ const CreateListing: React.FC<CreateListingProps> = ({
                   )}
                 />
 
-                {/* Images Upload */}
                 <div className="space-y-2">
                   <Label htmlFor="images">Property Images *</Label>
                   <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center">
@@ -820,7 +742,6 @@ const CreateListing: React.FC<CreateListingProps> = ({
                   )}
                 </div>
 
-                {/* Submit Button */}
                 <Button
                   type="submit"
                   className="w-full"

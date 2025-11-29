@@ -23,57 +23,42 @@ export interface FrontendAgent {
 /**
  * Determines whether an agent can list properties
  */
-export const canAgentListProperties = (
-  agent: FrontendAgent | null | undefined
-): boolean => {
-  if (!agent || agent.verificationStatus !== "verified") {
+// src/utils/agentUtils.ts
+
+export const canAgentListProperties = (agent: Agent | null): boolean => {
+  if (!agent) return false;
+
+  // 1. Must be verified
+  if (agent.verificationStatus !== "verified") {
     return false;
   }
 
   const now = new Date();
 
-  // ✅ 1. Free listing weeks from referrals
-  if (agent.freeListingWeeks && agent.freeListingWeeks > 0) {
-    return true;
-  }
-
-  // ✅ 2. Active trial period
-  if (
-    agent.subscription?.status === "trial" &&
-    agent.subscription.trialStartsAt &&
-    agent.subscription.trialEndsAt
-  ) {
-    const trialStarts = new Date(agent.subscription.trialStartsAt);
-    const trialEnds = new Date(agent.subscription.trialEndsAt);
-    return now >= trialStarts && now <= trialEnds;
-  }
-
-  // ✅ 3. Active paid subscription
-  if (
-    agent.subscription?.status === "active" &&
-    agent.subscription.currentPeriodEnd
-  ) {
-    const periodEnd = new Date(agent.subscription.currentPeriodEnd);
-    return now <= periodEnd;
-  }
-
-  // ✅ 4. Grace period: 7 days after verification
-  // FIX: Check both possible locations for verifiedAt
-  const verifiedAt =
-    agent.verifiedAt || (agent as any).verificationData?.verifiedAt;
-  if (verifiedAt) {
-    const verifiedDate = new Date(verifiedAt);
-    const sevenDaysLater = new Date(
-      verifiedDate.getTime() + 7 * 24 * 60 * 60 * 1000
-    );
-
-    // Allow listing if within 7 days of verification
-    if (now <= sevenDaysLater) {
+  // 2. Check Trial Expiry (Handles the 6 months + 1 week referral extension)
+  if (agent.subscription?.trialEndsAt) {
+    const expiryDate = new Date(agent.subscription.trialEndsAt);
+    if (now <= expiryDate) {
       return true;
     }
   }
 
-  // ❌ Otherwise, not allowed
+  // 3. Check Active Paid Subscription
+  if (
+    agent.subscription?.status === "active" &&
+    agent.subscription?.currentPeriodEnd
+  ) {
+    const periodEnd = new Date(agent.subscription.currentPeriodEnd);
+    if (now <= periodEnd) {
+      return true;
+    }
+  }
+
+  // 4. Fallback for manual credits (optional)
+  if (agent.freeListingWeeks && agent.freeListingWeeks > 0) {
+    return true;
+  }
+
   return false;
 };
 

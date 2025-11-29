@@ -1,7 +1,7 @@
 // src/pages/agent/MyListingsPage.tsx
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Eye, Edit, Trash2, Plus, Home } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Eye, Edit, Trash2, Plus, Home, Lock } from "lucide-react";
 import { usePropertyStore } from "@/stores/propertyStore";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
@@ -18,25 +18,58 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Property } from "@/types";
+import { canAgentListProperties } from "@/utils/agentUtils";
 
 const MyListingsPage: React.FC = () => {
   const { properties, fetchProperties, deleteProperty, loading } =
     usePropertyStore();
-  const { user } = useAuthStore();
+  const { user, agent } = useAuthStore();
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const navigate = useNavigate();
+
+  // Permission Check
+  const canCreateListing = agent ? canAgentListProperties(agent) : false;
 
   useEffect(() => {
     if (user?._id) {
+      // Ensure we fetch the latest properties
       fetchProperties();
     }
   }, [user?._id, fetchProperties]);
 
+  // ✅ HELPER: Safe ID Comparison
+  const compareIds = (id1: any, id2: any) => {
+    if (!id1 || !id2) return false;
+    const str1 = typeof id1 === "object" ? id1.toString() : String(id1);
+    const str2 = typeof id2 === "object" ? id2.toString() : String(id2);
+    return str1 === str2;
+  };
+
   useEffect(() => {
-    let filtered = properties.filter(
-      (property) => property.agentId?._id === user?._id
-    );
+    if (!agent) return;
+
+    // DEBUGGING LOGS (Check your console to see what's happening)
+    // console.log("My Agent ID:", agent._id);
+    // console.log("Total Properties in Store:", properties.length);
+
+    // ✅ FIX: Robust Filtering Logic
+    let filtered = properties.filter((property) => {
+      // 1. Get the raw ID from the property
+      const propAgentId = property.agentId;
+
+      // 2. Extract the string ID (handle population { _id: "..." } vs string "...")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const propAgentIdString = (propAgentId as any)?._id
+        ? (propAgentId as any)._id.toString()
+        : String(propAgentId);
+
+      // 3. Compare with logged-in Agent ID
+      return propAgentIdString === String(agent._id);
+    });
+
+    // console.log("Filtered Properties found:", filtered.length);
 
     // Apply search filter
     if (searchTerm) {
@@ -55,7 +88,7 @@ const MyListingsPage: React.FC = () => {
     }
 
     setFilteredProperties(filtered);
-  }, [properties, searchTerm, statusFilter, user?._id]);
+  }, [properties, searchTerm, statusFilter, agent]);
 
   const handleDeleteProperty = async (propertyId: string) => {
     if (window.confirm("Are you sure you want to delete this property?")) {
@@ -68,16 +101,18 @@ const MyListingsPage: React.FC = () => {
     }
   };
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case "available":
-        return "default";
-      case "rented":
-        return "secondary";
-      case "pending":
-        return "outline";
-      default:
-        return "outline";
+  const handleCreateClick = () => {
+    if (!canCreateListing) {
+      if (agent?.verificationStatus !== "verified") {
+        toast.error("Account Not Verified", {
+          description: "Please verify your account first.",
+        });
+        navigate("/agent-dashboard/settings");
+      } else {
+        toast.error("Subscription Expired", {
+          description: "Please subscribe to create listings.",
+        });
+      }
     }
   };
 
@@ -96,10 +131,7 @@ const MyListingsPage: React.FC = () => {
             <Card key={index}>
               <CardContent className="p-6">
                 <Skeleton className="h-48 w-full mb-4" />
-                <Skeleton className="h-6 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-1/2 mb-4" />
-                <Skeleton className="h-4 w-full mb-1" />
-                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-4 w-full" />
               </CardContent>
             </Card>
           ))}
@@ -118,12 +150,20 @@ const MyListingsPage: React.FC = () => {
             Manage your property listings ({filteredProperties.length} total)
           </p>
         </div>
-        <Button asChild>
-          <Link to="/create-listing">
-            <Plus className="h-4 w-4 mr-2" />
+
+        {canCreateListing ? (
+          <Button asChild>
+            <Link to="/create-listing">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Listing
+            </Link>
+          </Button>
+        ) : (
+          <Button variant="secondary" onClick={handleCreateClick}>
+            <Lock className="h-4 w-4 mr-2" />
             Create Listing
-          </Link>
-        </Button>
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -181,21 +221,31 @@ const MyListingsPage: React.FC = () => {
                 ? "You haven't created any listings yet."
                 : "No properties match your search criteria."}
             </p>
-            <Button asChild>
-              <Link to="/create-listing">Create Your First Listing</Link>
-            </Button>
+
+            {canCreateListing ? (
+              <Button asChild>
+                <Link to="/create-listing">Create Your First Listing</Link>
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={handleCreateClick}>
+                <Lock className="h-4 w-4 mr-2" />
+                Create Your First Listing
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProperties.map((property) => (
-            <Card key={property._id} className="overflow-hidden">
+            <Card
+              key={property._id}
+              className="overflow-hidden hover:shadow-lg transition-shadow">
               <div className="relative h-48 overflow-hidden">
                 {property.images && property.images.length > 0 ? (
                   <img
                     src={property.images[0]}
                     alt={property.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform hover:scale-105"
                   />
                 ) : (
                   <div className="w-full h-full bg-muted flex items-center justify-center">
@@ -203,7 +253,7 @@ const MyListingsPage: React.FC = () => {
                   </div>
                 )}
                 <Badge
-                  className={`absolute top-3 left-3 ${
+                  className={`absolute top-3 left-3 capitalize ${
                     property.status === "available"
                       ? "bg-green-500"
                       : property.status === "rented"
@@ -223,18 +273,16 @@ const MyListingsPage: React.FC = () => {
                 <h3 className="font-semibold text-lg mb-1 truncate">
                   {property.title}
                 </h3>
-                <p className="text-muted-foreground text-sm mb-3">
+                <p className="text-muted-foreground text-sm mb-3 truncate">
                   {property.location}
                 </p>
 
                 <div className="flex justify-between items-center mb-3">
                   <div className="text-xl font-bold text-primary">
                     ₦{property.price.toLocaleString()}
-                    {property.listingType === "rent" && (
-                      <span className="text-sm font-normal text-muted-foreground">
-                        /month
-                      </span>
-                    )}
+                    <span className="text-sm font-normal text-muted-foreground ml-1">
+                      /{property.listingType === "rent" ? "year" : "day"}
+                    </span>
                   </div>
                   <div className="flex items-center text-sm text-muted-foreground">
                     <Eye className="h-3 w-3 mr-1" />
@@ -243,10 +291,9 @@ const MyListingsPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between text-sm mb-4">
-                  <div className="flex items-center space-x-4 text-muted-foreground">
-                    <span>{property.bedrooms} bed</span>
-                    <span>{property.bathrooms} bath</span>
-                    <span>{property.area} sq ft</span>
+                  <div className="flex items-center space-x-3 text-muted-foreground">
+                    <span>{property.bedrooms} beds</span>
+                    <span>{property.bathrooms} baths</span>
                   </div>
                 </div>
 
@@ -256,10 +303,7 @@ const MyListingsPage: React.FC = () => {
                     size="sm"
                     asChild
                     className="flex-1">
-                    <Link to={`/properties/${property._id}`}>
-                      <Eye className="h-4 w-4 mr-1" />
-                      View
-                    </Link>
+                    <Link to={`/properties/${property._id}`}>View</Link>
                   </Button>
                   <Button
                     variant="outline"
@@ -275,9 +319,8 @@ const MyListingsPage: React.FC = () => {
                     variant="destructive"
                     size="sm"
                     onClick={() => handleDeleteProperty(property._id)}
-                    className="flex-1">
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Delete
+                    className="px-3">
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>

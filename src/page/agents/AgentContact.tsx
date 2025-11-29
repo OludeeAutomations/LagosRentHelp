@@ -180,7 +180,7 @@ const AgentProfile: React.FC = () => {
       // Only create lead if it doesn't exist
       if (!hasContacted) {
         await createLead({
-          agentId,
+          agentId: agentId,
           type: "whatsapp",
         });
         toast.success("Contact initiated successfully!");
@@ -206,7 +206,7 @@ const AgentProfile: React.FC = () => {
       return;
     }
 
-    const phoneNumber = agent?.phone || agent?.whatsappNumber;
+    const phoneNumber = agent?.phone;
     if (!phoneNumber) {
       toast.error("Agent phone number not available");
       return;
@@ -378,7 +378,7 @@ const AgentProfile: React.FC = () => {
                 <Button
                   className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
                   onClick={handleWhatsAppClick}
-                  disabled={!agent.whatsappNumber || !user || leadLoading}>
+                  disabled={!agent?.whatsappNumber || leadLoading}>
                   <MessageCircle className="h-4 w-4" />
                   {leadLoading ? "Processing..." : "WhatsApp"}
                 </Button>
@@ -386,7 +386,7 @@ const AgentProfile: React.FC = () => {
                   variant="outline"
                   className="flex items-center gap-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
                   onClick={handlePhoneClick}
-                  disabled={!agent.whatsappNumber || !user || leadLoading}>
+                  disabled={!agent?.whatsappNumber || leadLoading}>
                   <Phone className="h-4 w-4" />
                   {leadLoading ? "Processing..." : "Call"}
                 </Button>

@@ -18,7 +18,7 @@ import {
 import { useAuthStore } from "@/stores/authStore";
 import { useAgentStore } from "@/stores/agentStore";
 import { useLeadStore } from "@/stores/leadStore";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -41,15 +41,32 @@ const AgentDashboard: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState("overview");
   const [agentProperties, setAgentProperties] = useState<any[]>([]);
+  // Local state to prevent premature redirection during hydration
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
 
   const canCreateListing = agent && canAgentListProperties(agent);
+  const navigate = useNavigate();
 
+  // ✅ FIX 1: Dedicated Auth Check Effect
+  // This runs immediately on mount/refresh
+  useEffect(() => {
+    // If we have a user, mark checked.
+    // If no user, redirect immediately.
+    if (!user) {
+      navigate("/login");
+    } else {
+      setIsAuthChecked(true);
+    }
+  }, [user, navigate]);
+
+  // ✅ FIX 2: Fetch Agent Profile only if User exists
   useEffect(() => {
     if (user?._id && !agent) {
       fetchAgentProfile();
     }
-  }, [user?._id, agent]);
+  }, [user?._id, agent, fetchAgentProfile]);
 
+  // ✅ FIX 3: Load Data
   useEffect(() => {
     if (user?._id) {
       loadRecentLeads(user._id);
@@ -69,11 +86,6 @@ const AgentDashboard: React.FC = () => {
 
   const loadAgentProperties = async (agentId: string) => {
     try {
-      // TODO: Replace with actual property service call
-      // const propertiesResponse = await propertyService.getByAgentId(agentId);
-      // setAgentProperties(propertiesResponse.data || []);
-
-      // For now, use agent's listings if available
       if (agent?.listings) {
         setAgentProperties(agent.listings);
       }
@@ -96,7 +108,6 @@ const AgentDashboard: React.FC = () => {
     }
   };
 
-  // Calculate days left in trial or grace period
   const getDaysLeft = () => {
     if (
       agent?.subscription?.status === "trial" &&
@@ -108,7 +119,6 @@ const AgentDashboard: React.FC = () => {
       );
     }
 
-    // Check grace period
     const verifiedAt =
       agent?.verifiedAt || (agent as any)?.dojahResponse?.verifiedAt;
     if (verifiedAt) {
@@ -126,11 +136,19 @@ const AgentDashboard: React.FC = () => {
 
   const daysLeft = getDaysLeft();
 
-  // Handle loading and empty states
-  if (isLoading) {
+  // ✅ FIX 4: Protect against rendering if user is not logged in
+  if (!user) {
+    return null; // Don't render anything while redirecting
+  }
+
+  // ✅ FIX 5: Show simple loading state while checking agent profile
+  if (!isAuthChecked || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading agent data...</p>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -138,28 +156,9 @@ const AgentDashboard: React.FC = () => {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-red-500">{error}</p>
-      </div>
-    );
-  }
-
-  if (!agent) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Agent Access Required</h1>
-          <p className="text-muted-foreground mb-4">
-            {error
-              ? "Failed to load agent profile. Please try again."
-              : "Please complete your agent registration to access the dashboard."}
-          </p>
-          {error ? (
-            <Button onClick={() => fetchAgentProfile()}>Retry</Button>
-          ) : (
-            <Button asChild>
-              <Link to="/agent-onboarding">Complete Registration</Link>
-            </Button>
-          )}
+        <div className="text-center space-y-4">
+          <p className="text-red-500">{error}</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
         </div>
       </div>
     );
@@ -168,7 +167,7 @@ const AgentDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Verification Status Alert */}
-      {agent.verificationStatus && (
+      {agent && agent.verificationStatus && (
         <Alert
           className={`mb-6 ${
             agent.verificationStatus === "verified"
@@ -178,9 +177,9 @@ const AgentDashboard: React.FC = () => {
               : "bg-red-100 border-red-300"
           }`}>
           {agent.verificationStatus === "verified" ? (
-            <CheckCircle className="h-4 w-4" />
+            <CheckCircle className="h-4 w-4 text-green-700" />
           ) : (
-            <AlertCircle className="h-4 w-4" />
+            <AlertCircle className="h-4 w-4 text-yellow-700" />
           )}
           <AlertTitle>
             {agent.verificationStatus === "verified"
@@ -221,80 +220,66 @@ const AgentDashboard: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-        {isLoading ? (
-          Array.from({ length: 5 }).map((_, index) => (
-            <Card key={index}>
-              <CardContent className="p-6">
-                <Skeleton className="h-8 w-8 mb-4" />
-                <Skeleton className="h-8 w-16 mb-2" />
-                <Skeleton className="h-4 w-24" />
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <>
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <Home className="h-8 w-8 text-primary" />
-                  <TrendingUp className="h-5 w-5 text-green-500" />
-                </div>
-                <div className="text-2xl font-bold">
-                  {agentProperties.length}
-                </div>
-                <div className="text-muted-foreground">Total Listings</div>
-              </CardContent>
-            </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <Home className="h-8 w-8 text-primary" />
+              <TrendingUp className="h-5 w-5 text-green-500" />
+            </div>
+            <div className="text-2xl font-bold">{agentProperties.length}</div>
+            <div className="text-muted-foreground">Total Listings</div>
+          </CardContent>
+        </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <Eye className="h-8 w-8 text-blue-500" />
-                  <TrendingUp className="h-5 w-5 text-green-500" />
-                </div>
-                <div className="text-2xl font-bold">{agent.totalViews}</div>
-                <div className="text-muted-foreground">Total Views</div>
-              </CardContent>
-            </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <Eye className="h-8 w-8 text-blue-500" />
+              <TrendingUp className="h-5 w-5 text-green-500" />
+            </div>
+            <div className="text-2xl font-bold">{agent?.totalViews || 0}</div>
+            <div className="text-muted-foreground">Total Views</div>
+          </CardContent>
+        </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <Users className="h-8 w-8 text-purple-500" />
-                  <TrendingUp className="h-5 w-5 text-green-500" />
-                </div>
-                <div className="text-2xl font-bold">{agent?.totalLeads}</div>
-                <div className="text-muted-foreground">Total Leads</div>
-              </CardContent>
-            </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <Users className="h-8 w-8 text-purple-500" />
+              <TrendingUp className="h-5 w-5 text-green-500" />
+            </div>
+            <div className="text-2xl font-bold">{agent?.totalLeads || 0}</div>
+            <div className="text-muted-foreground">Total Leads</div>
+          </CardContent>
+        </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <BarChart3 className="h-8 w-8 text-orange-500" />
-                  <TrendingUp className="h-5 w-5 text-green-500" />
-                </div>
-                <div className="text-2xl font-bold">0%</div>
-                <div className="text-muted-foreground">Conversion Rate</div>
-              </CardContent>
-            </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <BarChart3 className="h-8 w-8 text-orange-500" />
+              <TrendingUp className="h-5 w-5 text-green-500" />
+            </div>
+            <div className="text-2xl font-bold">
+              {agent?.responseRate || 0}%
+            </div>
+            <div className="text-muted-foreground">Response Rate</div>
+          </CardContent>
+        </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <Calendar className="h-8 w-8 text-red-500" />
-                  <Clock className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div className="text-2xl font-bold">{daysLeft}</div>
-                <div className="text-muted-foreground">
-                  {agent?.subscription?.status === "trial"
-                    ? "Trial Days Left"
-                    : "Grace Period Days"}
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <Calendar className="h-8 w-8 text-red-500" />
+              <Clock className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div className="text-2xl font-bold">{daysLeft}</div>
+            <div className="text-muted-foreground">
+              {agent?.subscription?.status === "trial"
+                ? "Trial Days Left"
+                : "Grace Period Days"}
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
 
       {/* Refresh Button */}
@@ -409,7 +394,7 @@ const AgentDashboard: React.FC = () => {
                     <span>Create Listing</span>
                     {!canCreateListing && (
                       <span className="text-xs text-muted-foreground mt-1">
-                        {agent.verificationStatus !== "verified"
+                        {agent && agent.verificationStatus !== "verified"
                           ? "Verify your account first"
                           : "Subscription required"}
                       </span>
@@ -430,6 +415,7 @@ const AgentDashboard: React.FC = () => {
           </Card>
         </TabsContent>
 
+        {/* ... Listings and other tabs remain same ... */}
         <TabsContent value="listings">
           <Card>
             <CardHeader>
@@ -437,13 +423,7 @@ const AgentDashboard: React.FC = () => {
               <CardDescription>Manage your property listings</CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
-                <div className="space-y-4">
-                  {Array.from({ length: 3 }).map((_, index) => (
-                    <Skeleton key={index} className="h-20 w-full" />
-                  ))}
-                </div>
-              ) : agentProperties.length === 0 ? (
+              {agentProperties.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Home className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No listings yet</p>
@@ -517,22 +497,24 @@ const AgentDashboard: React.FC = () => {
       </Tabs>
 
       {/* Subscription Required Alert */}
-      {agent.verificationStatus === "verified" && !canCreateListing && (
-        <Alert className="mb-6 bg-orange-100 border-orange-300">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Subscription Required</AlertTitle>
-          <AlertDescription>
-            Your free trial has ended. Please subscribe to continue creating
-            listings.
-            {agent.freeListingWeeks > 0 && (
-              <span className="block mt-1">
-                You have {agent.freeListingWeeks} free week(s) from referrals
-                available.
-              </span>
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
+      {agent &&
+        agent.verificationStatus === "verified" &&
+        !canCreateListing && (
+          <Alert className="mb-6 bg-orange-100 border-orange-300">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Subscription Required</AlertTitle>
+            <AlertDescription>
+              Your free trial has ended. Please subscribe to continue creating
+              listings.
+              {agent.freeListingWeeks > 0 && (
+                <span className="block mt-1">
+                  You have {agent.freeListingWeeks} free week(s) from referrals
+                  available.
+                </span>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
     </div>
   );
 };

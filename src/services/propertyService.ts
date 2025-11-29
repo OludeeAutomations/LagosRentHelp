@@ -40,7 +40,11 @@ export const propertyService = {
     }
   },
   create: async (propertyData: FormData): Promise<ApiResponse<Property>> => {
-    return api.post<Property>("/properties", propertyData);
+    return api.post<Property>("/properties", propertyData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
   },
 
   update: async (

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
   Plus,
@@ -11,6 +11,7 @@ import {
   Bell,
   Building,
   HomeIcon,
+  Lock,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useAgentStore } from "@/stores/agentStore";
@@ -38,12 +39,13 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
   const { user, agent } = useAuthStore();
   const { fetchAgentProfile, loading, error } = useAgentStore();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (user?._id) {
+    if (user?._id && !agent) {
       fetchAgentProfile();
     }
-  }, [user?._id, fetchAgentProfile]);
+  }, [user?._id, agent, fetchAgentProfile]);
 
   const getSubscriptionStatus = () => {
     if (!agent) return "Loading...";
@@ -71,7 +73,8 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
       return "Active Subscription";
     }
 
-    // ✅ Grace period display - FIXED: Check both verifiedAt locations
+    // Grace period display
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const verifiedAt =
       agent.verifiedAt || (agent as any).dojahResponse?.verifiedAt;
     if (verifiedAt) {
@@ -89,18 +92,18 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
     return "Subscription Required";
   };
 
-  const canCreateListing = agent && canAgentListProperties(agent);
+  // ✅ CALCULATE PERMISSION
+  const canCreateListing = agent ? canAgentListProperties(agent) : false;
 
   const agentNavigationItems = [
     { icon: Home, label: "Overview", href: "/agent-dashboard" },
     { icon: Plus, label: "Create Listing", href: "/create-listing" },
     { icon: Building, label: "My Listings", href: "/agent-dashboard/listings" },
     { icon: Users, label: "Leads", href: "/agent-dashboard/leads" },
-    { icon: BarChart3, label: "Analytics", href: "#" },
+    { icon: BarChart3, label: "Analytics", href: "/agent-dashboard/analytics" },
     { icon: Settings, label: "Settings", href: "/agent-dashboard/settings" },
   ];
 
-  // Navigation item component with consistent restrictions
   interface NavigationItemProps {
     item: {
       icon: React.ElementType;
@@ -116,19 +119,29 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
   }) => {
     const Icon = item.icon;
     const isActive = location.pathname === item.href;
-    const isDisabled = item.href === "/create-listing" && !canCreateListing;
+
+    // ✅ CHECK RESTRICTION SPECIFICALLY FOR CREATE LISTING
+    const isRestricted = item.href === "/create-listing" && !canCreateListing;
 
     const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-      if (isDisabled) {
+      if (isRestricted) {
         e.preventDefault();
-        toast.info(
-          agent?.verificationStatus !== "verified"
-            ? "Please verify your account first"
-            : "Please subscribe to create listings"
-        );
-        if (isMobile) {
-          setIsSidebarOpen(false);
+
+        // Specific error messages
+        if (agent?.verificationStatus !== "verified") {
+          toast.error("Account Not Verified", {
+            description:
+              "Please verify your identity in Settings to list properties.",
+          });
+          navigate("/agent-dashboard/settings");
+        } else {
+          toast.error("Subscription Expired", {
+            description:
+              "Please subscribe or refer a friend to continue listing properties.",
+          });
         }
+
+        if (isMobile) setIsSidebarOpen(false);
       } else if (isMobile) {
         setIsSidebarOpen(false);
       }
@@ -136,23 +149,25 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
 
     return (
       <Link
-        to={isDisabled ? "#" : item.href}
+        to={isRestricted ? "#" : item.href}
         onClick={handleClick}
-        className={`flex items-center space-x-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-200 ${
+        className={`flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-200 ${
           isActive
             ? "bg-primary text-primary-foreground"
-            : isDisabled
-            ? "text-muted-foreground opacity-50 cursor-not-allowed"
+            : isRestricted
+            ? "text-muted-foreground opacity-50 cursor-not-allowed bg-muted/50"
             : "text-muted-foreground hover:text-foreground hover:bg-muted"
         }`}>
-        <Icon className="h-5 w-5" />
-        <span>{item.label}</span>
-        {isDisabled && <span className="text-xs ml-2">🔒</span>}
+        <div className="flex items-center space-x-3">
+          <Icon className="h-5 w-5" />
+          <span>{item.label}</span>
+        </div>
+        {isRestricted && <Lock className="h-3 w-3" />}
       </Link>
     );
   };
 
-  // 🔄 Handle Loading State
+  // Loading State
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -164,7 +179,7 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
     );
   }
 
-  // Handle error state
+  // Error State
   if (error && !agent) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -212,7 +227,7 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
                 <p className="text-sm text-muted-foreground truncate">
                   {user?.email}
                 </p>
-                <p className="text-xs text-muted-foreground capitalize">
+                <p className="text-xs text-muted-foreground capitalize mt-1">
                   {getSubscriptionStatus()}
                 </p>
               </div>
@@ -254,7 +269,7 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
               variant="ghost"
               size="icon"
               asChild
-              className="w-full justify-start text-destructive">
+              className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10">
               <Link to="/">
                 <HomeIcon className="h-5 w-5 mr-3" />
                 Back to Home
@@ -316,9 +331,6 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
                   }>
                   {agent?.verificationStatus?.toUpperCase() || "UNKNOWN"}
                 </Badge>
-                {agent?.verificationStatus === "verified" && (
-                  <Shield className="h-4 w-4 text-green-500" />
-                )}
               </div>
             </div>
 
@@ -344,7 +356,7 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
                 variant="ghost"
                 size="icon"
                 asChild
-                className="w-full justify-start text-destructive">
+                className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10">
                 <Link to="/" onClick={() => setIsSidebarOpen(false)}>
                   <HomeIcon className="h-5 w-5 mr-3" />
                   Back to Home
