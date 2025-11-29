@@ -26,22 +26,29 @@ const FavoritesPage: React.FC = () => {
   });
 
   // Fetch favorites from backend
-  useEffect(() => {
-   const loadFavorites = async () => {
-        setLoading(true);
-        try {
-            const data = await userService.fetchFavorites();
-            setFavorites(data || []); // <-- fallback to empty array
-        } catch (error) {
-            console.error(error);
-            setFavorites([]); // <-- fallback if API fails
-        } finally {
-            setLoading(false);
-        }
-    };
+useEffect(() => {
+  const loadFavorites = async () => {
+    setLoading(true);
+    try {
+      const response = await userService.fetchFavorites();
 
-    loadFavorites();
-  }, []);
+      // Extract the actual array from `response.data`
+      const favoritesArray = Array.isArray(response?.data)
+        ? response.data
+        : [];
+
+      setFavorites(favoritesArray);
+    } catch (error) {
+      console.error(error);
+      setFavorites([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadFavorites();
+}, []);
+
 
   const handleFilterChange = (newFilters: any) => {
     setFilters(newFilters);

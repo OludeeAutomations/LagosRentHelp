@@ -307,13 +307,13 @@ const AgentDashboard: React.FC = () => {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="listings">Listings</TabsTrigger>
-          <TabsTrigger value="leads">Leads</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          {/* <TabsTrigger value="leads">Leads</TabsTrigger> */}
+          {/* <TabsTrigger value="analytics">Analytics</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           {/* Recent Leads */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Recent Leads</CardTitle>
@@ -375,7 +375,7 @@ const AgentDashboard: React.FC = () => {
                 </div>
               )}
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Quick Actions */}
           <Card>

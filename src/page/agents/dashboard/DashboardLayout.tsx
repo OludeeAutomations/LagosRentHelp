@@ -73,8 +73,6 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
       return "Active Subscription";
     }
 
-    // Grace period display
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const verifiedAt =
       agent.verifiedAt || (agent as any).dojahResponse?.verifiedAt;
     if (verifiedAt) {
@@ -100,7 +98,7 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
     { icon: Plus, label: "Create Listing", href: "/create-listing" },
     { icon: Building, label: "My Listings", href: "/agent-dashboard/listings" },
     { icon: Users, label: "Leads", href: "/agent-dashboard/leads" },
-    { icon: BarChart3, label: "Analytics", href: "/agent-dashboard/analytics" },
+    { icon: BarChart3, label: "Analytics", href: "#" },
     { icon: Settings, label: "Settings", href: "/agent-dashboard/settings" },
   ];
 

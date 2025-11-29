@@ -47,8 +47,11 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
     agentId,
   } = property;
 
-  const mainImage = images?.[0] || "/placeholder-property.jpg";
-  const amenities = useAmenities(rawAmenities);
+const mainImage = images?.[0] 
+const amenities = useAmenities(rawAmenities);
+
+console.log("--------------------------")
+console.log(images)
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("en-NG", {
