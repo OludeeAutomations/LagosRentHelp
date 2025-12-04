@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect, useRef } from "react";
 import {
   MapPin,
   Bed,
@@ -16,23 +15,23 @@ import {
   Home,
   Car,
   Wifi,
-  Utensils,
-  Snowflake,
-  Tv,
   ShowerHead,
+  X,
+  ZoomIn,
+  ZoomOut,
+  RotateCw,
+  Download,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { usePropertyStore } from "@/stores/propertyStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useLeadStore } from "@/stores/leadStore";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
@@ -46,20 +45,21 @@ const PropertyDetails: React.FC = () => {
   const navigate = useNavigate();
   const { userFavorites, toggleFavorite, getPropertyById } = usePropertyStore();
   const { user } = useAuthStore();
-  const {
-    createLead,
-    checkContactStatus,
-    loading: leadLoading,
-  } = useLeadStore();
+  const { createLead, checkContactStatus } = useLeadStore();
 
   const [property, setProperty] = useState<Property | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showAgentModal, setShowAgentModal] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [rotation, setRotation] = useState(0);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
   const amenities = useAmenities(property?.amenities);
 
   // ✅ FIX: Get Agent Info directly from the property object
-  // Your API returns property.agent, so we use that.
   const agent =
     property?.agent ||
     (typeof property?.agentId === "object" ? property.agentId : null);
@@ -90,6 +90,51 @@ const PropertyDetails: React.FC = () => {
     }
   }, [user, agentId, checkContactStatus]);
 
+  // Handle keyboard shortcuts for image modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!showImageModal) return;
+
+      switch (e.key) {
+        case "Escape":
+          closeImageModal();
+          break;
+        case "ArrowLeft":
+          showPreviousImage();
+          break;
+        case "ArrowRight":
+          showNextImage();
+          break;
+        case "+":
+        case "=":
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            handleZoomIn();
+          }
+          break;
+        case "-":
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            handleZoomOut();
+          }
+          break;
+        case "0":
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            resetImage();
+          }
+          break;
+        case "f":
+        case "F":
+          toggleFullscreen();
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showImageModal]);
+
   const isFavorite = userFavorites.includes(property?._id || "");
 
   const handleWhatsAppClick = async () => {
@@ -99,9 +144,7 @@ const PropertyDetails: React.FC = () => {
       return;
     }
 
-    // Use whatsapp property from your API response
     const whatsapp = agent?.whatsapp || agent?.whatsappNumber;
-
     if (!whatsapp) {
       toast.error("Agent WhatsApp number not available");
       return;
@@ -164,6 +207,81 @@ const PropertyDetails: React.FC = () => {
       navigator.clipboard.writeText(window.location.href);
       toast.success("Link copied to clipboard");
     }
+  };
+
+  // Image Modal Functions
+  const openImageModal = (index: number) => {
+    setActiveImageIndex(index);
+    setShowImageModal(true);
+    setZoomLevel(1);
+    setRotation(0);
+    setIsFullscreen(false);
+    document.body.style.overflow = "hidden"; // Prevent background scrolling
+  };
+
+  const closeImageModal = () => {
+    setShowImageModal(false);
+    document.body.style.overflow = "auto"; // Restore scrolling
+  };
+
+  const showNextImage = () => {
+    if (!property?.images) return;
+    setActiveImageIndex((prev) =>
+      prev === property.images.length - 1 ? 0 : prev + 1
+    );
+    resetImage();
+  };
+
+  const showPreviousImage = () => {
+    if (!property?.images) return;
+    setActiveImageIndex((prev) =>
+      prev === 0 ? property.images.length - 1 : prev - 1
+    );
+    resetImage();
+  };
+
+  const handleZoomIn = () => {
+    setZoomLevel((prev) => Math.min(prev + 0.25, 5));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel((prev) => Math.max(prev - 0.25, 0.5));
+  };
+
+  const resetImage = () => {
+    setZoomLevel(1);
+    setRotation(0);
+  };
+
+  const rotateImage = () => {
+    setRotation((prev) => (prev + 90) % 360);
+  };
+
+  const toggleFullscreen = () => {
+    if (!modalRef.current) return;
+
+    if (!isFullscreen) {
+      if (modalRef.current.requestFullscreen) {
+        modalRef.current.requestFullscreen();
+      }
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+      setIsFullscreen(false);
+    }
+  };
+
+  const downloadImage = () => {
+    if (!property?.images?.[activeImageIndex]) return;
+
+    const link = document.createElement("a");
+    link.href = property.images[activeImageIndex];
+    link.download = `property-${property.title}-${activeImageIndex + 1}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (isLoading) {
@@ -229,12 +347,14 @@ const PropertyDetails: React.FC = () => {
       <div className="container mx-auto px-4 py-6 max-w-6xl">
         {/* Images */}
         <div className="mb-8">
-          <div className="relative h-80 md:h-96 rounded-xl overflow-hidden mb-4 border border-gray-200 bg-black">
+          <div
+            className="relative h-80 md:h-96 rounded-xl overflow-hidden mb-4 border border-gray-200 bg-black cursor-zoom-in"
+            onClick={() => openImageModal(activeImageIndex)}>
             {property.images?.length > 0 ? (
               <img
                 src={property.images[activeImageIndex]}
                 alt={property.title}
-                className="w-full h-full object-contain md:object-cover"
+                className="w-full h-full object-contain md:object-cover transition-transform duration-300 hover:scale-105"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gray-100">
@@ -246,6 +366,19 @@ const PropertyDetails: React.FC = () => {
                 <Eye className="h-3 w-3 mr-1" /> {property.views} views
               </Badge>
             </div>
+            <div className="absolute top-4 right-4">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="bg-black/50 text-white hover:bg-black/70 backdrop-blur-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openImageModal(activeImageIndex);
+                }}>
+                <Maximize2 className="h-4 w-4 mr-2" />
+                Full View
+              </Button>
+            </div>
           </div>
 
           {property.images?.length > 1 && (
@@ -254,22 +387,31 @@ const PropertyDetails: React.FC = () => {
                 <button
                   key={idx}
                   onClick={() => setActiveImageIndex(idx)}
-                  className={`h-16 rounded-md overflow-hidden border-2 transition-all ${
+                  className={`h-16 rounded-md overflow-hidden border-2 transition-all group cursor-pointer ${
                     idx === activeImageIndex
                       ? "border-green-500 opacity-100"
-                      : "border-transparent opacity-70 hover:opacity-100"
+                      : "border-transparent opacity-70 hover:opacity-100 hover:border-gray-300"
                   }`}>
                   <img
                     src={img}
                     alt=""
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   />
+                  <div
+                    className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openImageModal(idx);
+                    }}>
+                    <Maximize2 className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
                 </button>
               ))}
             </div>
           )}
         </div>
 
+        {/* Rest of your existing content remains the same */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
@@ -511,6 +653,194 @@ const PropertyDetails: React.FC = () => {
                   Call
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full-screen Image Modal */}
+      {showImageModal && property.images && property.images.length > 0 && (
+        <div
+          ref={modalRef}
+          className="fixed inset-0 z-[100] bg-black flex flex-col"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeImageModal();
+          }}>
+          {/* Header with controls */}
+          <div className="flex items-center justify-between p-4 bg-black/90 text-white">
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={closeImageModal}
+                className="text-white hover:bg-white/20">
+                <X className="h-6 w-6" />
+              </Button>
+              <span className="text-sm font-medium">
+                {activeImageIndex + 1} / {property.images.length}
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={downloadImage}
+                className="text-white hover:bg-white/20"
+                title="Download image (Ctrl+S)">
+                <Download className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleFullscreen}
+                className="text-white hover:bg-white/20"
+                title="Toggle fullscreen (F)">
+                {isFullscreen ? (
+                  <Minimize2 className="h-5 w-5" />
+                ) : (
+                  <Maximize2 className="h-5 w-5" />
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Main image area */}
+          <div className="flex-1 flex items-center justify-center overflow-hidden relative">
+            {/* Navigation buttons */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={showPreviousImage}
+              className="absolute left-4 text-white hover:bg-white/20 z-10"
+              title="Previous image (←)">
+              <ChevronLeft className="h-8 w-8" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={showNextImage}
+              className="absolute right-4 text-white hover:bg-white/20 z-10"
+              title="Next image (→)">
+              <ChevronRight className="h-8 w-8" />
+            </Button>
+
+            {/* Image container */}
+            <div className="relative w-full h-full flex items-center justify-center">
+              <img
+                ref={imageRef}
+                src={property.images[activeImageIndex]}
+                alt={`Property image ${activeImageIndex + 1}`}
+                className="max-w-full max-h-full transition-transform duration-200 cursor-zoom-out"
+                style={{
+                  transform: `scale(${zoomLevel}) rotate(${rotation}deg)`,
+                  transformOrigin: "center center",
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Toggle zoom on click
+                  setZoomLevel((prev) => (prev === 1 ? 2 : 1));
+                }}
+                onWheel={(e) => {
+                  e.preventDefault();
+                  if (e.deltaY < 0) {
+                    handleZoomIn();
+                  } else {
+                    handleZoomOut();
+                  }
+                }}
+              />
+
+              {/* Zoom level indicator */}
+              {zoomLevel !== 1 && (
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
+                  {Math.round(zoomLevel * 100)}%
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Bottom controls */}
+          <div className="p-4 bg-black/90 text-white">
+            <div className="flex items-center justify-center space-x-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleZoomOut}
+                className="text-white border-white/30 hover:bg-white/20"
+                title="Zoom out (Ctrl+-)"
+                disabled={zoomLevel <= 0.5}>
+                <ZoomOut className="h-4 w-4 mr-2" />
+                Zoom Out
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={resetImage}
+                className="text-white border-white/30 hover:bg-white/20"
+                title="Reset (Ctrl+0)"
+                disabled={zoomLevel === 1 && rotation === 0}>
+                <RotateCw className="h-4 w-4 mr-2" />
+                Reset
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={rotateImage}
+                className="text-white border-white/30 hover:bg-white/20"
+                title="Rotate 90°">
+                <RotateCw className="h-4 w-4 mr-2" />
+                Rotate
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleZoomIn}
+                className="text-white border-white/30 hover:bg-white/20"
+                title="Zoom in (Ctrl++)"
+                disabled={zoomLevel >= 5}>
+                <ZoomIn className="h-4 w-4 mr-2" />
+                Zoom In
+              </Button>
+            </div>
+
+            {/* Thumbnail strip */}
+            {property.images.length > 1 && (
+              <div className="mt-4 flex items-center justify-center space-x-2 overflow-x-auto py-2">
+                {property.images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setActiveImageIndex(idx);
+                      resetImage();
+                    }}
+                    className={`flex-shrink-0 w-16 h-16 rounded overflow-hidden border-2 transition-all ${
+                      idx === activeImageIndex
+                        ? "border-green-500"
+                        : "border-transparent opacity-60 hover:opacity-100"
+                    }`}>
+                    <img
+                      src={img}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Keyboard shortcuts help */}
+            <div className="mt-2 text-center text-xs text-white/60">
+              <span className="hidden md:inline">
+                Use ← → to navigate, + - to zoom, F for fullscreen, ESC to close
+              </span>
+              <span className="md:hidden">
+                Pinch to zoom, swipe to navigate
+              </span>
             </div>
           </div>
         </div>

@@ -5,7 +5,6 @@ import {
   Plus,
   Users,
   Eye,
-  BarChart3,
   Calendar,
   TrendingUp,
   Clock,
@@ -13,7 +12,7 @@ import {
   RefreshCw,
   CheckCircle,
   AlertCircle,
-  FileText,
+  Heart,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useAgentStore } from "@/stores/agentStore";
@@ -256,13 +255,13 @@ const AgentDashboard: React.FC = () => {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <BarChart3 className="h-8 w-8 text-orange-500" />
+              <Heart className="h-8 w-8 text-orange-500" />
               <TrendingUp className="h-5 w-5 text-green-500" />
             </div>
             <div className="text-2xl font-bold">
-              {agent?.responseRate || 0}%
+              {agent?.responseRate || 50}
             </div>
-            <div className="text-muted-foreground">Response Rate</div>
+            <div className="text-muted-foreground">Likes</div>
           </CardContent>
         </Card>
 
