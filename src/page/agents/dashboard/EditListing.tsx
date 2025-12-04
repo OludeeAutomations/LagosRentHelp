@@ -23,6 +23,7 @@ const EditListing: React.FC = () => {
   const [property, setProperty] = useState<Property | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(true);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
 
   useEffect(() => {
     const loadProperty = async () => {
@@ -49,10 +50,21 @@ const EditListing: React.FC = () => {
           throw new Error("Property not found");
         }
 
-        // 3. ✅ ROBUST ID EXTRACTION
-        // We look for the ID in 3 places to ensure we find it regardless of API structure
+        // 3. ✅ Extract existing images
+        if (foundProperty.images && foundProperty.images.length > 0) {
+          // If images are URLs, use them directly
+          // If they're file paths, you might need to prepend a base URL
+          const images = foundProperty.images.map((img) => {
+            if (typeof img === "string" && img.startsWith("http")) {
+              return img;
+            }
+            // Assuming images are stored as relative paths
+            return `${import.meta.env.VITE_API_BASE_URL || ""}/uploads/${img}`;
+          });
+          setExistingImages(images);
+        }
 
-        // A: Check root agentId (could be string or object)
+        // 4. ✅ ROBUST ID EXTRACTION
         let propertyOwnerId = foundProperty.agentId;
 
         // If it's an object (populated), get the _id from it
@@ -67,7 +79,7 @@ const EditListing: React.FC = () => {
             foundProperty.agent._id || foundProperty.agent.agentId;
         }
 
-        // 4. ✅ NORMALIZATION
+        // 5. ✅ NORMALIZATION
         const ownerIdString = String(propertyOwnerId);
         const currentAgentIdString = String(agent._id);
 
@@ -77,7 +89,7 @@ const EditListing: React.FC = () => {
           Match: ownerIdString === currentAgentIdString,
         });
 
-        // 5. ✅ COMPARISON
+        // 6. ✅ COMPARISON
         if (ownerIdString !== currentAgentIdString) {
           setIsAuthorized(false);
           toast.error("You don't have permission to edit this property");
@@ -152,7 +164,17 @@ const EditListing: React.FC = () => {
     );
   }
 
-  return <CreateListing editMode={true} property={property} />;
+  return (
+    <CreateListing
+      editMode={true}
+      property={{
+        ...property,
+        totalPackagePrice: property.totalPackagePrice || 0,
+        amenities: property.amenities || [],
+      }}
+      existingImages={existingImages}
+    />
+  );
 };
 
 export default EditListing;

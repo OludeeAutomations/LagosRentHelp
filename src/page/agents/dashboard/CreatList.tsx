@@ -8,6 +8,7 @@ import {
   Plus,
   X,
   Image,
+  AlertCircle,
 } from "lucide-react";
 import { usePropertyStore } from "@/stores/propertyStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -39,6 +40,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -76,15 +78,18 @@ type CreateListingForm = z.infer<typeof createListingSchema>;
 type CreateListingProps = {
   editMode?: boolean;
   property?: (CreateListingForm & { _id?: string }) | null;
+  existingImages?: string[];
 };
 
 const CreateListing: React.FC<CreateListingProps> = ({
   editMode = false,
   property,
+  existingImages = [],
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>(existingImages);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagesToRemove, setImagesToRemove] = useState<string[]>([]);
   const [amenityInput, setAmenityInput] = useState("");
   const { agent } = useAuthStore();
   const { addProperty, updateProperty } = usePropertyStore();
@@ -125,9 +130,15 @@ const CreateListing: React.FC<CreateListingProps> = ({
 
   const listingType = form.watch("listingType");
 
-  // ==========================================
-  // 👇 FIXED ONSUBMIT FUNCTION IS HERE 👇
-  // ==========================================
+  // Reset imagePreviews when existingImages changes
+  useEffect(() => {
+    if (editMode) {
+      setImagePreviews(existingImages);
+      setImagesToRemove([]);
+      setSelectedImages([]);
+    }
+  }, [existingImages, editMode]);
+
   const onSubmit = async (data: CreateListingForm) => {
     if (!agent) return;
 
@@ -156,17 +167,40 @@ const CreateListing: React.FC<CreateListingProps> = ({
       // Stringify amenities array for backend parsing
       formData.append("amenities", JSON.stringify(data.amenities));
 
-      // 2. ✅ FIXED: Append Images
-      // This matches upload.array("images") on the backend
-      if (selectedImages && selectedImages.length > 0) {
+      // 2. Handle images for edit mode
+      if (editMode && property) {
+        // Append images to remove
+        if (imagesToRemove.length > 0) {
+          formData.append("imagesToRemove", JSON.stringify(imagesToRemove));
+        }
+
+        // Append new images
+        if (selectedImages.length > 0) {
+          selectedImages.forEach((file) => {
+            formData.append("images", file); // Use 'images' for backend
+          });
+        }
+
+        // If no images will remain after removal and no new images added
+        const remainingImages = existingImages.filter(
+          (img) => !imagesToRemove.includes(img)
+        );
+        if (remainingImages.length === 0 && selectedImages.length === 0) {
+          toast.error("At least one image is required");
+          setIsSubmitting(false);
+          return;
+        }
+      } else {
+        // For creation mode
+        if (selectedImages.length === 0) {
+          toast.error("Please select at least one image");
+          setIsSubmitting(false);
+          return;
+        }
+
         selectedImages.forEach((file) => {
           formData.append("images", file);
         });
-      } else if (!editMode) {
-        // Prevent submission if no images in Create Mode
-        toast.error("Please select at least one image");
-        setIsSubmitting(false);
-        return;
       }
 
       // 3. Send to Backend
@@ -196,7 +230,6 @@ const CreateListing: React.FC<CreateListingProps> = ({
       setIsSubmitting(false);
     }
   };
-  // ==========================================
 
   const formatPrice = (price: number): string => {
     return new Intl.NumberFormat("en-NG", {
@@ -240,15 +273,65 @@ const CreateListing: React.FC<CreateListingProps> = ({
       }
     }
 
+    // Check total images limit
+    const totalAfterAddition =
+      imagePreviews.length + newPreviews.length - imagesToRemove.length;
+    if (totalAfterAddition > 10) {
+      toast.error("Maximum 10 images allowed");
+      return;
+    }
+
     setSelectedImages((prev) => [...prev, ...newImages]);
     setImagePreviews((prev) => [...prev, ...newPreviews]);
   };
 
   const removeImage = (index: number) => {
-    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
-    if (imagePreviews[index]) {
-      URL.revokeObjectURL(imagePreviews[index]);
+    const preview = imagePreviews[index];
+
+    // Check if it's an existing image or a new one
+    const isExistingImage = existingImages.includes(preview);
+
+    if (isExistingImage) {
+      // Mark existing image for removal
+      setImagesToRemove((prev) => [...prev, preview]);
+    } else {
+      // Remove newly added image file and preview
+      const newImageIndex =
+        index - existingImages.length + imagesToRemove.length;
+      setSelectedImages((prev) => prev.filter((_, i) => i !== newImageIndex));
+    }
+
+    // Remove from previews
+    setImagePreviews((prev) => {
+      const newPreviews = prev.filter((_, i) => i !== index);
+      // Revoke object URL for new images to prevent memory leaks
+      if (!isExistingImage) {
+        URL.revokeObjectURL(preview);
+      }
+      return newPreviews;
+    });
+  };
+
+  const restoreImage = (imageUrl: string) => {
+    // Remove from imagesToRemove
+    setImagesToRemove((prev) => prev.filter((img) => img !== imageUrl));
+
+    // Find where to insert it back (maintain original order if possible)
+    const originalIndex = existingImages.findIndex((img) => img === imageUrl);
+    if (originalIndex >= 0) {
+      // Insert back into the correct position
+      setImagePreviews((prev) => {
+        const newPreviews = [...prev];
+        newPreviews.splice(originalIndex, 0, imageUrl);
+        return newPreviews.sort((a, b) => {
+          const aIndex = existingImages.indexOf(a);
+          const bIndex = existingImages.indexOf(b);
+          return (
+            (aIndex >= 0 ? aIndex : Infinity) -
+            (bIndex >= 0 ? bIndex : Infinity)
+          );
+        });
+      });
     }
   };
 
@@ -331,10 +414,15 @@ const CreateListing: React.FC<CreateListingProps> = ({
 
         <Card>
           <CardHeader>
-            <CardTitle>Create New Property Listing</CardTitle>
+            <CardTitle>
+              {editMode
+                ? "Edit Property Listing"
+                : "Create New Property Listing"}
+            </CardTitle>
             <CardDescription>
-              Fill out all the details about your property to attract potential
-              tenants.
+              {editMode
+                ? "Update your property details. You can add new images, remove existing ones, or update all information."
+                : "Fill out all the details about your property to attract potential tenants."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -390,6 +478,7 @@ const CreateListing: React.FC<CreateListingProps> = ({
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="listingType"
@@ -691,71 +780,215 @@ const CreateListing: React.FC<CreateListingProps> = ({
                   )}
                 />
 
-                <div className="space-y-2">
-                  <Label htmlFor="images">Property Images *</Label>
-                  <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      id="images"
-                      className="hidden"
-                      onChange={handleImageChange}
-                      disabled={isSubmitting}
-                    />
-                    <label htmlFor="images" className="cursor-pointer">
-                      <Image className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-foreground font-medium mb-2">
-                        Upload Property Images
-                      </p>
-                      <p className="text-muted-foreground text-sm">
-                        Click to upload (max 10 images)
-                      </p>
-                      {imagePreviews.length > 0 && (
-                        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2">
-                          {imagePreviews.map((preview, index) => (
-                            <div key={index} className="relative">
-                              <img
-                                src={preview}
-                                alt={`Preview ${index + 1}`}
-                                className="h-20 w-full object-cover rounded-lg"
-                              />
+                {/* Image Upload Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="images" className="text-base">
+                      Property Images *
+                    </Label>
+                    <span className="text-sm text-muted-foreground">
+                      {imagePreviews.length - imagesToRemove.length} / 10 images
+                    </span>
+                  </div>
+
+                  {/* Images marked for removal notification */}
+                  {imagesToRemove.length > 0 && (
+                    <Alert
+                      variant="destructive"
+                      className="bg-red-50 border-red-200">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>
+                        {imagesToRemove.length} image(s) marked for removal
+                      </AlertTitle>
+                      <AlertDescription>
+                        <div className="space-y-2 mt-2">
+                          {imagesToRemove.map((img, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between text-sm">
+                              <span className="truncate flex-1 mr-2">
+                                Image {idx + 1}: {img.split("/").pop()}
+                              </span>
                               <Button
                                 type="button"
-                                variant="destructive"
+                                variant="outline"
                                 size="sm"
-                                className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
-                                onClick={() => removeImage(index)}
-                                disabled={isSubmitting}>
-                                <X className="h-3 w-3" />
+                                onClick={() => restoreImage(img)}
+                                className="text-xs">
+                                Restore
                               </Button>
                             </div>
                           ))}
                         </div>
-                      )}
-                    </label>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  <div className="border-2 border-dashed border-muted rounded-lg p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Upload Area */}
+                      <div className="space-y-4">
+                        <div className="text-center p-8 border-2 border-dashed border-muted-foreground/30 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            id="images"
+                            className="hidden"
+                            onChange={handleImageChange}
+                            disabled={isSubmitting}
+                          />
+                          <label
+                            htmlFor="images"
+                            className="cursor-pointer block">
+                            <Image className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                            <p className="text-foreground font-medium mb-2">
+                              {editMode ? "Add New Images" : "Upload Images"}
+                            </p>
+                            <p className="text-muted-foreground text-sm">
+                              Click to select images (max 10 total)
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Supported: JPG, PNG, WebP
+                            </p>
+                          </label>
+                        </div>
+
+                        {editMode && existingImages.length > 0 && (
+                          <div className="text-sm text-muted-foreground">
+                            <p>
+                              • You have {existingImages.length} existing
+                              image(s)
+                            </p>
+                            <p>
+                              • Click the ❌ on an image to mark it for removal
+                            </p>
+                            <p>• Upload new images to add to the listing</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Image Previews */}
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-sm">Image Previews:</h4>
+                        {imagePreviews.length === 0 ? (
+                          <div className="text-center py-8 border border-dashed rounded-lg">
+                            <p className="text-muted-foreground">
+                              No images yet
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[300px] overflow-y-auto p-2">
+                            {imagePreviews.map((preview, index) => {
+                              const isMarkedForRemoval =
+                                imagesToRemove.includes(preview);
+                              const isExisting =
+                                existingImages.includes(preview);
+
+                              return (
+                                <div
+                                  key={index}
+                                  className={`relative group rounded-lg overflow-hidden border ${
+                                    isMarkedForRemoval
+                                      ? "border-red-300 opacity-60"
+                                      : "border-muted"
+                                  }`}>
+                                  <img
+                                    src={preview}
+                                    alt={`Preview ${index + 1}`}
+                                    className="h-32 w-full object-cover"
+                                  />
+                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+
+                                  {/* Badge for existing images */}
+                                  {isExisting && !isMarkedForRemoval && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="absolute top-1 left-1 text-xs">
+                                      Existing
+                                    </Badge>
+                                  )}
+
+                                  {/* Remove button */}
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="sm"
+                                    className="absolute top-1 right-1 h-6 w-6 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={() => removeImage(index)}
+                                    disabled={isSubmitting}>
+                                    <X className="h-3 w-3" />
+                                  </Button>
+
+                                  {/* Removal overlay */}
+                                  {isMarkedForRemoval && (
+                                    <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
+                                      <span className="text-xs font-bold text-red-600 bg-white/90 px-2 py-1 rounded">
+                                        Will be removed
+                                      </span>
+                                    </div>
+                                  )}
+
+                                  {/* Image number */}
+                                  <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-1 rounded">
+                                    {index + 1}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  {selectedImages.length === 0 && (
+
+                  {/* Validation messages */}
+                  {!editMode && imagePreviews.length === 0 && (
                     <p className="text-sm text-destructive">
                       At least one image is required
                     </p>
                   )}
+                  {editMode &&
+                    imagePreviews.length - imagesToRemove.length === 0 && (
+                      <p className="text-sm text-destructive">
+                        At least one image must remain after removal
+                      </p>
+                    )}
+                  {imagePreviews.length - imagesToRemove.length > 10 && (
+                    <p className="text-sm text-destructive">
+                      Maximum 10 images allowed
+                    </p>
+                  )}
                 </div>
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={
-                    isSubmitting || (!editMode && selectedImages.length === 0)
-                  }>
-                  {isSubmitting
-                    ? editMode
-                      ? "Updating Listing..."
-                      : "Creating Listing..."
-                    : editMode
-                    ? "Update Listing"
-                    : "Create Listing"}
-                </Button>
+                <div className="flex gap-4 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate("/agent-dashboard")}
+                    disabled={isSubmitting}
+                    className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={
+                      isSubmitting ||
+                      (!editMode && imagePreviews.length === 0) ||
+                      (editMode &&
+                        imagePreviews.length - imagesToRemove.length === 0) ||
+                      imagePreviews.length - imagesToRemove.length > 10
+                    }
+                    className="flex-1">
+                    {isSubmitting
+                      ? editMode
+                        ? "Updating Listing..."
+                        : "Creating Listing..."
+                      : editMode
+                      ? "Update Listing"
+                      : "Create Listing"}
+                  </Button>
+                </div>
               </form>
             </Form>
           </CardContent>

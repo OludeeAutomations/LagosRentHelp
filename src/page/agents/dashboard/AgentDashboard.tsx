@@ -313,7 +313,7 @@ const AgentDashboard: React.FC = () => {
 
         <TabsContent value="overview" className="space-y-6">
           {/* Recent Leads */}
-          {/* <Card>
+          <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Recent Leads</CardTitle>
@@ -375,7 +375,7 @@ const AgentDashboard: React.FC = () => {
                 </div>
               )}
             </CardContent>
-          </Card> */}
+          </Card>
 
           {/* Quick Actions */}
           <Card>
@@ -401,7 +401,7 @@ const AgentDashboard: React.FC = () => {
                     )}
                   </Link>
                 </Button>
-                <Button
+                {/* <Button
                   asChild
                   variant="outline"
                   className="h-auto py-6 flex-col gap-2">
@@ -409,7 +409,7 @@ const AgentDashboard: React.FC = () => {
                     <FileText className="h-8 w-8 text-purple-500" />
                     <span>View Analytics</span>
                   </Link>
-                </Button>
+                </Button> */}
               </div>
             </CardContent>
           </Card>

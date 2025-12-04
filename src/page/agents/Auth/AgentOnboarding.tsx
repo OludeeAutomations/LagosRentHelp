@@ -915,9 +915,37 @@ const AgentOnboarding: React.FC = () => {
   // Navigation buttons
   const renderNavigationButtons = () => {
     if (currentStep === 4) {
-      // Step 4 has its own navigation within VerificationForm
       return null;
     }
+
+    const handleStepValidation = async (): Promise<boolean> => {
+      const stepFields = {
+        1: ["fullName", "email", "phone", "gender", "dateOfBirth"],
+        2: ["residentialAddress", "state", "city"],
+        3: [
+          "bio",
+          "motivation",
+          "hearAboutUs",
+          "preferredCommunication",
+          "whatsappNumber",
+        ],
+      }[currentStep] as (keyof OnboardingForm)[];
+
+      return await form.trigger(stepFields);
+    };
+
+    const handleNextStep = async () => {
+      const isValid = await handleStepValidation();
+      if (isValid) {
+        setCurrentStep(currentStep + 1);
+      } else {
+        const errors = form.formState.errors;
+        const firstErrorKey = Object.keys(errors)[0] as keyof OnboardingForm;
+        if (firstErrorKey && errors[firstErrorKey]) {
+          toast.error(`Please fix: ${errors[firstErrorKey]?.message}`);
+        }
+      }
+    };
 
     return (
       <div className="flex justify-between pt-6 border-t">
@@ -936,7 +964,7 @@ const AgentOnboarding: React.FC = () => {
         {currentStep < 3 ? (
           <Button
             type="button"
-            onClick={() => setCurrentStep(currentStep + 1)}
+            onClick={handleNextStep}
             disabled={isSubmitting}>
             Next Step
           </Button>
@@ -1105,7 +1133,7 @@ const AgentOnboarding: React.FC = () => {
               </CardHeader>
               <CardContent className="p-6">
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(handleStep3Submit)}>
+                  <form onSubmit={(e) => e.preventDefault()}>
                     {renderStepContent()}
                     {renderNavigationButtons()}
                   </form>

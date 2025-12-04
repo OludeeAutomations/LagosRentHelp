@@ -153,16 +153,19 @@ export interface Notification {
   type:
     | "referral_earned"
     | "listing_approved"
+    | "appointment"
     | "trial_expiring"
-    | "system_update"
-    | "new_message"
+    | "system"
+    | "message"
     | "property_match"
-    | "lead_received";
+    | "lead";
   title: string;
   message: string;
   isRead: boolean;
   createdAt: string;
   link?: string;
+  metadata?: any;
+  actionUrl?: string;
   // Backend fields
   priority?: "low" | "medium" | "high";
   actionRequired?: boolean;
