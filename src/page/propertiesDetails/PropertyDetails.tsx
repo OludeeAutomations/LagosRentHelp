@@ -768,7 +768,7 @@ const PropertyDetails: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleZoomOut}
-                className="text-white border-white/30 hover:bg-white/20"
+                className="text-white  bg-primary border-white/30 hover:bg-white/20"
                 title="Zoom out (Ctrl+-)"
                 disabled={zoomLevel <= 0.5}>
                 <ZoomOut className="h-4 w-4 mr-2" />
@@ -779,7 +779,7 @@ const PropertyDetails: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={resetImage}
-                className="text-white border-white/30 hover:bg-white/20"
+                className="text-white bg-primary  border-white/30 hover:bg-white/20"
                 title="Reset (Ctrl+0)"
                 disabled={zoomLevel === 1 && rotation === 0}>
                 <RotateCw className="h-4 w-4 mr-2" />
@@ -790,7 +790,7 @@ const PropertyDetails: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={rotateImage}
-                className="text-white border-white/30 hover:bg-white/20"
+                className="text-white bg-primary border-white/30 hover:bg-white/20"
                 title="Rotate 90°">
                 <RotateCw className="h-4 w-4 mr-2" />
                 Rotate
@@ -800,7 +800,7 @@ const PropertyDetails: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleZoomIn}
-                className="text-white border-white/30 hover:bg-white/20"
+                className="text-white bg-primary border-white/30 hover:bg-white/20"
                 title="Zoom in (Ctrl++)"
                 disabled={zoomLevel >= 5}>
                 <ZoomIn className="h-4 w-4 mr-2" />
