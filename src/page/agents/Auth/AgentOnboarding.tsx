@@ -78,7 +78,6 @@ const onboardingSchema = z.object({
   state: z.string().min(1, "State is required"),
   city: z.string().min(1, "City is required"),
   institutionName: z.string().optional(),
-  campusCode: z.string().optional(),
 
   // Professional Information
   bio: z
@@ -201,7 +200,6 @@ const AgentOnboarding: React.FC = () => {
       state: "",
       city: "",
       institutionName: "",
-      campusCode: "",
       bio: "",
       experience: "",
       motivation: "",
@@ -595,20 +593,6 @@ const AgentOnboarding: React.FC = () => {
                           {...field}
                         />
                       </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="campusCode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company/Organization Code</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Company acronym or code" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
