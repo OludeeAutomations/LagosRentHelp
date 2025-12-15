@@ -390,7 +390,6 @@ const VerificationForm: React.FC<VerificationFormProps> = ({
                     accept="image/*"
                     className="hidden"
                     onChange={handleFileUpload}
-                    capture="user" // Hint for mobile devices to use front camera
                   />
                   <p className="text-xs text-muted-foreground mt-3">
                     Supported formats: JPG, PNG • Max size: 5MB
