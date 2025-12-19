@@ -253,7 +253,7 @@ const AgentDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        {/* <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <Heart className="h-8 w-8 text-orange-500" />
@@ -262,7 +262,7 @@ const AgentDashboard: React.FC = () => {
             <div className="text-2xl font-bold">{agent?.responseRate || 0}</div>
             <div className="text-muted-foreground">Likes</div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         <Card>
           <CardContent className="p-6">
