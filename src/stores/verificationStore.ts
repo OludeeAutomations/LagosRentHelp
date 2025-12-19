@@ -22,6 +22,7 @@ interface VerificationState {
   // Async Actions
   submitVerification: (verificationData: VerificationData) => Promise<void>;
   checkVerificationStatus: () => Promise<void>;
+  resendVerification: () => Promise<void>; // ✅ Added this
   fetchVerificationHistory: () => Promise<void>;
   clearError: () => void;
   reset: () => void;
@@ -98,6 +99,38 @@ export const useVerificationStore = create<VerificationState>((set, get) => ({
       set({
         loading: false,
         error: error.message || "Failed to check verification status",
+      });
+      throw error;
+    }
+  },
+
+  // ✅ ADDED: Resend/Reset Verification Action
+  resendVerification: async () => {
+    set({ loading: true, error: null });
+
+    try {
+      const response = await verificationService.resendVerification();
+
+      if (response.success) {
+        set({
+          loading: false,
+          error: null,
+          // Update status to unverified so the UI knows to show the form again
+          verificationStatus: {
+            ...get().verificationStatus,
+            verificationStatus: "not_verified",
+          } as VerificationStatus,
+        });
+
+        // Optional: Fetch fresh status
+        await get().checkVerificationStatus();
+      } else {
+        throw new Error(response.message || "Failed to reset verification");
+      }
+    } catch (error: any) {
+      set({
+        loading: false,
+        error: error.message || "Failed to reset verification",
       });
       throw error;
     }

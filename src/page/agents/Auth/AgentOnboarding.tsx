@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useRef } from "react";
 import {
   Upload,
   User,
@@ -16,6 +17,8 @@ import {
   Calendar,
   School,
   MessageCircle,
+  X,
+  Aperture,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useAgentStore } from "@/stores/agentStore";
@@ -82,16 +85,22 @@ const onboardingSchema = z.object({
   // Professional Information
   bio: z
     .string()
-    .min(50, "Bio should be at least 50 characters")
+    .min(150, "Bio should be at least 150 characters")
     .max(500, "Bio must be less than 500 characters"),
-  experience: z.string().optional(),
-  motivation: z.string().min(10, "Please share your motivation"),
+  experience: z
+    .string()
+    .max(150, "Experience must be less than 150 characters")
+    .optional(),
+  motivation: z
+    .string()
+    .min(10, "Please share your motivation")
+    .max(150, "Motivation must be less than 150 characters"),
   hearAboutUs: z.string().min(1, "Please select how you heard about us"),
   preferredCommunication: z.enum(["whatsapp", "email", "phone"], {
     required_error: "Please select preferred communication method",
   }),
   socialMedia: z.string().optional(),
-  referredBy: z.string().optional(), // ✅ Change to referredBy
+  referredBy: z.string().optional(),
 
   // Contact
   whatsappNumber: z.string().min(10, "WhatsApp number is required"),
@@ -184,6 +193,11 @@ const AgentOnboarding: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
 
+  // Camera States
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
   const { user, agent } = useAuthStore();
   const { fetchAgentProfile } = useAgentStore();
   const navigate = useNavigate();
@@ -207,7 +221,7 @@ const AgentOnboarding: React.FC = () => {
       preferredCommunication: "whatsapp",
       socialMedia: "",
       whatsappNumber: "",
-      referredBy: "", // ✅ Change to referredBy
+      referredBy: "",
     },
   });
 
@@ -247,10 +261,77 @@ const AgentOnboarding: React.FC = () => {
     }
   };
 
+  // --- CAMERA LOGIC START ---
+  const startCamera = async () => {
+    setIsCameraOpen(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" }, // Prefer back camera
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+      });
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
+    } catch (err) {
+      console.error("Camera access error:", err);
+      toast.error(
+        "Could not access the camera. Please ensure permissions are granted or try uploading a file."
+      );
+      setIsCameraOpen(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      const tracks = stream.getTracks();
+      tracks.forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraOpen(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const context = canvas.getContext("2d");
+
+      if (context) {
+        // Set canvas dimensions to match video
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        // Draw image
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert to file
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], "proof_of_address_cam.jpg", {
+              type: "image/jpeg",
+              lastModified: Date.now(),
+            });
+
+            setProofOfAddressFile(file);
+            setProofOfAddressPreview(URL.createObjectURL(file));
+            toast.success("Document captured successfully");
+            stopCamera();
+          }
+        }, "image/jpeg");
+      }
+    }
+  };
+  // --- CAMERA LOGIC END ---
+
   const handleVerificationComplete = async () => {
     try {
       await fetchAgentProfile();
-      // Navigate to dashboard after successful verification
       toast.success("Verification completed successfully!");
       setTimeout(() => {
         navigate("/agent-dashboard");
@@ -284,8 +365,6 @@ const AgentOnboarding: React.FC = () => {
     setIsSubmitting(true);
     try {
       const formData = new FormData();
-
-      // Append all form data
       Object.entries(data).forEach(([key, value]) => {
         if (value) formData.append(key, value.toString());
       });
@@ -315,7 +394,7 @@ const AgentOnboarding: React.FC = () => {
   const handleStep3Submit = async (data: OnboardingForm) => {
     const success = await submitApplication(data);
     if (success) {
-      setCurrentStep(4); // Move to verification step
+      setCurrentStep(4);
     }
   };
 
@@ -324,9 +403,8 @@ const AgentOnboarding: React.FC = () => {
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-6">
+          <div key="step-1" className="space-y-6">
             <h3 className="text-xl font-semibold">Personal Information</h3>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -432,7 +510,6 @@ const AgentOnboarding: React.FC = () => {
               />
             </div>
 
-            {/* Professional Photo Upload */}
             <div className="space-y-3">
               <Label htmlFor="idPhoto" className="flex items-center gap-2">
                 Professional Photo *
@@ -465,7 +542,11 @@ const AgentOnboarding: React.FC = () => {
                       <p className="text-foreground font-semibold mb-2">
                         Upload Professional Photo
                       </p>
-                      <Button type="button" variant="outline" size="sm">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="pointer-events-none">
                         Choose File
                       </Button>
                     </>
@@ -482,13 +563,14 @@ const AgentOnboarding: React.FC = () => {
                           variant="destructive"
                           size="sm"
                           className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
-                          onClick={() =>
+                          onClick={(e) => {
+                            e.preventDefault();
                             removeFile(
                               setIdPhotoFile,
                               setIdPhotoPreview,
                               idPhotoPreview
-                            )
-                          }>
+                            );
+                          }}>
                           <AlertCircle className="h-3 w-3" />
                         </Button>
                       </div>
@@ -505,10 +587,50 @@ const AgentOnboarding: React.FC = () => {
 
       case 2:
         return (
-          <div className="space-y-6">
+          <div key="step-2" className="space-y-6">
             <h3 className="text-xl font-semibold">
               Address & Location Details
             </h3>
+
+            {/* Camera Overlay Modal/Section */}
+            {isCameraOpen && (
+              <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center">
+                <div className="absolute top-4 right-4 z-50">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:bg-white/20"
+                    onClick={stopCamera}>
+                    <X className="h-8 w-8" />
+                  </Button>
+                </div>
+
+                <div className="relative w-full max-w-lg h-[80vh] flex items-center justify-center overflow-hidden bg-black">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  {/* A4 Overlay with Yellow Border */}
+                  <div className="relative z-10 w-[70%] aspect-[210/297] border-4 border-yellow-400 rounded-lg shadow-[0_0_0_1000px_rgba(0,0,0,0.6)]">
+                    <div className="absolute top-2 left-0 w-full text-center text-yellow-400 text-sm font-semibold bg-black/50 py-1">
+                      Align document here (A4)
+                    </div>
+                  </div>
+                  <canvas ref={canvasRef} className="hidden" />
+                </div>
+
+                <div className="absolute bottom-10 z-50">
+                  <Button
+                    size="lg"
+                    className="rounded-full h-16 w-16 bg-white border-4 border-gray-300 hover:bg-gray-100 p-0"
+                    onClick={capturePhoto}>
+                    <Aperture className="h-8 w-8 text-black" />
+                  </Button>
+                </div>
+              </div>
+            )}
 
             <FormField
               control={form.control}
@@ -600,7 +722,7 @@ const AgentOnboarding: React.FC = () => {
               />
             </div>
 
-            {/* Proof of Address Upload */}
+            {/* Proof of Address Upload with Camera Support */}
             <div className="space-y-3">
               <Label
                 htmlFor="proofOfAddress"
@@ -636,60 +758,76 @@ const AgentOnboarding: React.FC = () => {
                     )
                   }
                 />
-                <label
-                  htmlFor="proofOfAddress"
-                  className="cursor-pointer block">
-                  {!proofOfAddressPreview ? (
-                    <>
-                      <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-foreground font-semibold mb-2">
-                        Upload Proof of Address
-                      </p>
-                      <p className="text-muted-foreground text-sm mb-2">
-                        Utility bill, tenancy receipt, etc. (PDF, JPG, PNG)
-                      </p>
-                      <Button type="button" variant="outline" size="sm">
-                        Choose File
+
+                {!proofOfAddressPreview ? (
+                  <div className="space-y-4">
+                    <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-foreground font-semibold">
+                      Upload Proof of Address
+                    </p>
+                    <p className="text-muted-foreground text-sm mb-4">
+                      Utility bill, tenancy receipt, etc.
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      {/* Choose File Button */}
+                      <label htmlFor="proofOfAddress">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="pointer-events-none w-full sm:w-auto">
+                          Choose File
+                        </Button>
+                      </label>
+
+                      <span className="text-muted-foreground self-center">
+                        or
+                      </span>
+
+                      {/* Take Photo Button */}
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={startCamera}
+                        className="bg-black text-white hover:bg-gray-800 gap-2 w-full sm:w-auto">
+                        <Camera className="h-4 w-4" />
+                        Take Photo (A4)
                       </Button>
-                    </>
-                  ) : (
-                    <div className="space-y-4">
-                      {proofOfAddressPreview ? (
-                        <div className="relative inline-block">
-                          <img
-                            src={proofOfAddressPreview}
-                            alt="Preview"
-                            className="w-32 h-32 rounded-lg object-cover shadow-md"
-                          />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
-                            onClick={() =>
-                              removeFile(
-                                setProofOfAddressFile,
-                                setProofOfAddressPreview,
-                                proofOfAddressPreview
-                              )
-                            }>
-                            <AlertCircle className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="bg-green-100 p-3 rounded-lg">
-                          <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                          <p className="text-green-700 font-medium">
-                            Document uploaded successfully
-                          </p>
-                        </div>
-                      )}
-                      <p className="text-sm text-green-600 font-medium">
-                        ✓ Document uploaded successfully
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="relative inline-block">
+                      <img
+                        src={proofOfAddressPreview}
+                        alt="Preview"
+                        className="w-32 h-32 rounded-lg object-cover shadow-md"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          removeFile(
+                            setProofOfAddressFile,
+                            setProofOfAddressPreview,
+                            proofOfAddressPreview
+                          );
+                        }}>
+                        <AlertCircle className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <div className="bg-green-100 p-2 rounded-lg inline-block">
+                      <p className="text-green-700 text-sm font-medium flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4" />
+                        Document ready
                       </p>
                     </div>
-                  )}
-                </label>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -697,7 +835,7 @@ const AgentOnboarding: React.FC = () => {
 
       case 3:
         return (
-          <div className="space-y-6">
+          <div key="step-3" className="space-y-6">
             <h3 className="text-xl font-semibold">
               Professional & Verification Details
             </h3>
@@ -843,10 +981,10 @@ const AgentOnboarding: React.FC = () => {
             />
             <ReferralCodeInput
               onReferralValidated={(name, code) => {
-                form.setValue("referredBy", code); // ✅ Update referredBy field
+                form.setValue("referredBy", code);
               }}
               onReferralRemoved={() => {
-                form.setValue("referredBy", ""); // ✅ Clear referredBy field
+                form.setValue("referredBy", "");
               }}
             />
           </div>
@@ -854,7 +992,7 @@ const AgentOnboarding: React.FC = () => {
 
       case 4:
         return (
-          <div className="space-y-6">
+          <div key="step-4" className="space-y-6">
             <h3 className="text-xl font-semibold">Identity Verification</h3>
 
             <Alert className="bg-blue-50 border-blue-200">
@@ -972,7 +1110,6 @@ const AgentOnboarding: React.FC = () => {
     );
   };
 
-  // Update progress steps to include step 4
   const totalSteps = 4;
   const progressSteps = [1, 2, 3, 4];
 

@@ -6,7 +6,7 @@ import { authService, type RegisterData } from "@/services/authService";
 import { userService } from "@/services/userService";
 
 interface AuthState {
-  validateAuth: any;
+  validateAuth: () => Promise<boolean>;
   user: User | null;
   agent: Agent | null;
   accessToken: string | null;
@@ -23,7 +23,7 @@ interface AuthState {
 
   // Auth Actions
   login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: (userData:object) => Promise<void>;
+  loginWithGoogle: (userData: any) => Promise<void>;
   register: (
     userData: RegisterData
   ) => Promise<{ success: boolean; requiresVerification?: boolean }>;
@@ -31,6 +31,7 @@ interface AuthState {
   updateProfile: (updates: Partial<User>) => Promise<void>;
 
   verifyEmail: (userId: string, token: string) => Promise<any>;
+  resendVerificationEmail: (userId: string) => Promise<void>; // ✅ Added this
   fetchUserData: () => Promise<void>;
 }
 
@@ -49,6 +50,7 @@ export const useAuthStore = create<AuthState>()(
       setLoading: (loading) => set({ loading }),
       setError: (error) => set({ error }),
       setAccessToken: (accessToken) => set({ accessToken }),
+
       validateAuth: async (): Promise<boolean> => {
         const { user, accessToken, isAuthenticated } = get();
 
@@ -72,29 +74,27 @@ export const useAuthStore = create<AuthState>()(
         } catch (error) {
           // User deleted or token expired - LOGOUT
           console.log("🔴 User deleted or token expired, logging out...");
-          get().logout(); // Call your existing logout function
+          get().logout();
           return false;
         }
       },
+
       register: async (userData: RegisterData) => {
         set({ loading: true, error: null });
 
         try {
           const response = await authService.register(userData);
 
-          const { user = null } = response.data || {};
+          // Check if response.data exists, otherwise use response directly
+          const data = response.data || response;
+          const { user } = data;
 
-          console.log("Registration response:", response.data);
+          console.log("Registration response:", data);
 
-          if (!user) {
-            if (response.data?.success) {
-              console.warn("Backend returned success but no user data");
-              throw new Error(
-                "Registration completed but user data is missing"
-              );
-            }
-            throw new Error("User data not received after registration");
+          if (!user && !data.success) {
+            throw new Error("Registration failed: No user data returned");
           }
+
           return { success: true };
         } catch (error: unknown) {
           const errorMessage =
@@ -102,8 +102,11 @@ export const useAuthStore = create<AuthState>()(
 
           set({
             error: errorMessage,
+            loading: false, // Ensure loading is turned off
           });
           throw error;
+        } finally {
+          set({ loading: false });
         }
       },
 
@@ -118,7 +121,7 @@ export const useAuthStore = create<AuthState>()(
 
           console.log("🔍 Using data:", data);
 
-          const { user, accessToken, agentData } = data; // ✅ Changed from 'agent' to 'agentData'
+          const { user, accessToken, agentData } = data;
 
           if (!user || !accessToken) {
             console.error("❌ Missing data in:", data);
@@ -128,7 +131,7 @@ export const useAuthStore = create<AuthState>()(
           set({
             user,
             accessToken,
-            agent: agentData || null, // ✅ Store agentData as agent (or null if not an agent)
+            agent: agentData || null,
             isAuthenticated: true,
             loading: false,
             error: null,
@@ -151,7 +154,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      loginWithGoogle: async (userData) => {
+      loginWithGoogle: async (userData: any) => {
         set({ loading: true, error: null });
 
         try {
@@ -162,7 +165,7 @@ export const useAuthStore = create<AuthState>()(
 
           console.log("🔍 Using data:", data);
 
-          const { user, accessToken, agentData } = data; // ✅ Changed from 'agent' to 'agentData'
+          const { user, accessToken, agentData } = data;
 
           if (!user || !accessToken) {
             console.error("❌ Missing data in:", data);
@@ -172,7 +175,7 @@ export const useAuthStore = create<AuthState>()(
           set({
             user,
             accessToken,
-            agent: agentData || null, // ✅ Store agentData as agent (or null if not an agent)
+            agent: agentData || null,
             isAuthenticated: true,
             loading: false,
             error: null,
@@ -212,7 +215,7 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const response = await authService.updateProfile(updates);
-          const updatedUser = response.data;
+          const updatedUser = response.data || response; // Handle both response structures
 
           set((state) => ({
             user: state.user ? { ...state.user, ...updatedUser } : null,
@@ -224,6 +227,7 @@ export const useAuthStore = create<AuthState>()(
           throw error;
         }
       },
+
       verifyEmail: async (userId: string, token: string) => {
         try {
           console.log("🔄 AuthStore: Starting email verification...");
@@ -245,16 +249,30 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+      // ✅ ADDED: Resend Email Verification Logic (Not Identity Verification)
+      resendVerificationEmail: async (userId: string) => {
+        set({ loading: true, error: null });
+        try {
+          await authService.resendVerificationEmail(userId);
+          set({ loading: false });
+        } catch (error: any) {
+          const errorMessage =
+            error instanceof Error ? error.message : "Failed to resend email";
+          set({ error: errorMessage, loading: false });
+          throw error;
+        }
+      },
+
       fetchUserData: async () => {
         set({ loading: true, error: null });
 
         try {
-          const [userResponse, favoritesResponse] = await Promise.all([
-            userService.getProfile(),
-            userService.getFavorites(),
-          ]);
+          // Assuming userService.getProfile returns the user object directly or { data: user }
+          const userResponse = await userService.getProfile();
 
-          const { data: user, agentData } = userResponse;
+          // Normalize response
+          const user = userResponse.data || userResponse;
+          const agentData = userResponse.agentData || null;
 
           set({
             user,
@@ -273,7 +291,11 @@ export const useAuthStore = create<AuthState>()(
             loading: false,
           });
 
-          if (error instanceof Error && error.message.includes("401")) {
+          // Only logout on auth errors, not network errors
+          if (
+            error instanceof Error &&
+            (error.message.includes("401") || error.message.includes("403"))
+          ) {
             get().logout();
           }
         }
@@ -282,7 +304,6 @@ export const useAuthStore = create<AuthState>()(
     {
       name: "auth-storage",
       storage: createJSONStorage(() => localStorage),
-      // ✅ Persist everything needed for auth
       onRehydrateStorage: () => (state) => {
         if (state) {
           // Wait for app to load, then validate token

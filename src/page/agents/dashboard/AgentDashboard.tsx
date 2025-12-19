@@ -158,6 +158,7 @@ const AgentDashboard: React.FC = () => {
         <div className="text-center space-y-4">
           <p className="text-red-500">{error}</p>
           <Button onClick={() => window.location.reload()}>Retry</Button>
+          <Button onClick={() => navigate("./login")}>Login Again</Button>
         </div>
       </div>
     );
@@ -258,9 +259,7 @@ const AgentDashboard: React.FC = () => {
               <Heart className="h-8 w-8 text-orange-500" />
               <TrendingUp className="h-5 w-5 text-green-500" />
             </div>
-            <div className="text-2xl font-bold">
-              {agent?.responseRate || 50}
-            </div>
+            <div className="text-2xl font-bold">{agent?.responseRate || 0}</div>
             <div className="text-muted-foreground">Likes</div>
           </CardContent>
         </Card>

@@ -28,9 +28,8 @@ export const authService = {
     }
   },
 
-
   loginWithGoogle: async (
-    userData: object,
+    userData: object
   ): Promise<ApiResponse<LoginResponse>> => {
     try {
       const response = await api.post<LoginResponse>("/auth/google", userData);
@@ -95,7 +94,10 @@ export const authService = {
       );
     }
   },
-
+  resendVerificationEmail: async (userId: string) => {
+    const response = await api.post("/auth/resend-verification", { userId });
+    return response.data;
+  },
   sendPasswordResetEmail: async (email: string) => {
     return api.post(`/auth/forgot-password`, { email: email });
   },

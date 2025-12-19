@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/common/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/authStore";
+import { toast } from "sonner"; // Assuming you use sonner for toasts
 
 const VerifyEmailResult: React.FC = () => {
   const { userId, token } = useParams<{ userId: string; token: string }>();
@@ -12,10 +13,12 @@ const VerifyEmailResult: React.FC = () => {
     "loading"
   );
   const [message, setMessage] = useState("");
+  const [isResending, setIsResending] = useState(false);
 
-  const { verifyEmail } = useAuthStore();
+  // Assuming verifyEmail and resendVerificationEmail exist in authStore
+  const { verifyEmail, resendVerificationEmail } = useAuthStore();
 
-  const calledRef = React.useRef(false);
+  const calledRef = useRef(false);
 
   useEffect(() => {
     if (calledRef.current || !userId || !token) return;
@@ -28,7 +31,6 @@ const VerifyEmailResult: React.FC = () => {
 
         console.log("✅ Verification response:", response);
 
-        // ✅ Your backend returns { success: true, message: "..." }
         if (response && response.success === true) {
           setStatus("success");
           setMessage(response.message || "Email verified successfully!");
@@ -47,6 +49,26 @@ const VerifyEmailResult: React.FC = () => {
 
     verify();
   }, [userId, token, verifyEmail]);
+
+  const handleResendEmail = async () => {
+    if (!userId) return;
+    setIsResending(true);
+    try {
+      // ✅ Call the auth store action to resend email
+      // If you don't have this action yet, you'll need to add it to authStore
+      if (resendVerificationEmail) {
+        await resendVerificationEmail(userId);
+        toast.success("Verification email resent successfully!");
+      } else {
+        console.warn("resendVerificationEmail action is missing in authStore");
+        toast.error("Functionality not available");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to resend email");
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const variants = {
     hidden: { opacity: 0, y: 20 },
@@ -74,7 +96,7 @@ const VerifyEmailResult: React.FC = () => {
           <>
             <div className="flex justify-center">
               <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center">
-                <div className="h-8 w-8 border-4 border-[#129B36] border-t-transparent rounded-full animate-spin"></div>
+                <Loader2 className="h-8 w-8 text-[#129B36] animate-spin" />
               </div>
             </div>
             <p className="text-lg text-grey">
@@ -113,8 +135,21 @@ const VerifyEmailResult: React.FC = () => {
                 className="w-full bg-[#129B36] hover:bg-[#41614F] text-white">
                 <Link to="/register">Back to Register</Link>
               </Button>
-              <Button asChild variant="outline" className="w-full">
-                <Link to="/resend-verification">Resend Verification Email</Link>
+
+              {/* ✅ Updated Resend Button */}
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleResendEmail}
+                disabled={isResending}>
+                {isResending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Resending...
+                  </>
+                ) : (
+                  "Resend Verification Email"
+                )}
               </Button>
             </div>
           </>

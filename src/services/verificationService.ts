@@ -21,7 +21,12 @@ export interface VerificationResponse {
 }
 
 export interface VerificationStatus {
-  verificationStatus: "not_verified" | "pending" | "verified" | "rejected";
+  verificationStatus:
+    | "not_verified"
+    | "pending"
+    | "verified"
+    | "rejected"
+    | "unverified";
   idType?: string;
   submittedAt?: string;
   verifiedAt?: string;
@@ -80,6 +85,25 @@ export const verificationService = {
         error.response?.data?.message ||
           error.response?.data?.error ||
           "Failed to check verification status"
+      );
+    }
+  },
+
+  /**
+   * Resend/Reset Verification Status
+   * Allows the user to try submitting documents again
+   */
+  resendVerification: async (): Promise<VerificationResponse> => {
+    try {
+      // Calls the /resend endpoint we created in the backend controller
+      const response = await api.post("/verification/resend");
+      return response.data;
+    } catch (error: any) {
+      console.error("Resend verification error:", error);
+      throw new Error(
+        error.response?.data?.message ||
+          error.response?.data?.error ||
+          "Failed to reset verification status"
       );
     }
   },
