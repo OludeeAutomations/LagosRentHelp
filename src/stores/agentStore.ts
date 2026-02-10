@@ -33,6 +33,7 @@ interface AgentState {
   ) => Promise<ApiResponse<{ agentName: string }>>;
   submitAgentApplication: (formData: FormData) => Promise<ApiResponse<any>>;
   fetchAgentProfile: () => Promise<void>;
+  updateAgentProfile: (data: Partial<Agent>) => Promise<void>;
 }
 
 export const useAgentStore = create<AgentState>()((set, get) => ({
@@ -92,30 +93,50 @@ export const useAgentStore = create<AgentState>()((set, get) => ({
         console.log("🏠 Properties data:", response.data);
         console.log("📈 Stats data:", response.data.stats);
 
-        // Update both stores
+        // Update local store
         set({
-          agent: response.data,
-          user: response.data.userId, // This is in 'userId' field
-          success: true,
+          agentProfile: response, // Store the full response which matches AgentProfileResponse
         });
 
         // Also update auth store
         const { useAuthStore } = await import("@/stores/authStore");
 
-        if (response.data) {
-          console.log("✅ Updating auth store with agent:", response.data);
-          useAuthStore.getState().setAgent(response.data);
+        if (response.data && response.data.agent) {
+          console.log("✅ Updating auth store with agent:", response.data.agent);
+          useAuthStore.getState().setAgent(response.data.agent);
         } else {
           console.warn("⚠️ No agent data found in response");
         }
       } else {
-        throw new Error(response.error || "Failed to fetch agent profile");
+        throw new Error("Failed to fetch agent profile");
       }
     } catch (error: any) {
       console.error("❌ Error in fetchAgentProfile:", error);
+      if (error.response) {
+        console.error("Backend Error Data:", error.response.data);
+        console.error("Backend Status:", error.response.status);
+      }
       set({ error: error.message });
     } finally {
       set({ loading: false });
+    }
+  },
+
+  updateAgentProfile: async (data: Partial<Agent>) => {
+    set({ loading: true, error: null });
+    try {
+      const { useAuthStore } = await import("@/stores/authStore");
+      const currentAgent = useAuthStore.getState().agent;
+
+      if (!currentAgent?._id) throw new Error("No active agent found");
+
+      await agentService.updateProfile(currentAgent._id, data);
+
+      // Refresh profile to get latest data
+      await get().fetchAgentProfile();
+    } catch (error: any) {
+      set({ error: error.message || "Failed to update profile", loading: false });
+      throw error;
     }
   },
 
@@ -128,8 +149,8 @@ export const useAgentStore = create<AgentState>()((set, get) => ({
 
       set((state) => {
         const updatedAgents = state.agents.map((agent) =>
-          (agent.id || agent._id) === agentId
-            ? { ...agent, verificationStatus: "verified" }
+          (agent._id) === agentId
+            ? { ...agent, verificationStatus: "verified" as const }
             : agent
         );
         return {
@@ -158,8 +179,8 @@ export const useAgentStore = create<AgentState>()((set, get) => ({
 
       set((state) => {
         const updatedAgents = state.agents.map((agent) =>
-          (agent.id || agent._id) === agentId
-            ? { ...agent, verificationStatus: "rejected" }
+          (agent._id) === agentId
+            ? { ...agent, verificationStatus: "rejected" as const }
             : agent
         );
         return {

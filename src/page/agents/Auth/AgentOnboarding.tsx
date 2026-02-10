@@ -69,9 +69,7 @@ const onboardingSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(10, "Phone number is required"),
-  gender: z.enum(["male", "female", "other"], {
-    required_error: "Please select your gender",
-  }),
+  gender: z.enum(["male", "female", "other"]),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
 
   // Address & Location
@@ -96,9 +94,7 @@ const onboardingSchema = z.object({
     .min(10, "Please share your motivation")
     .max(150, "Motivation must be less than 150 characters"),
   hearAboutUs: z.string().min(1, "Please select how you heard about us"),
-  preferredCommunication: z.enum(["whatsapp", "email", "phone"], {
-    required_error: "Please select preferred communication method",
-  }),
+  preferredCommunication: z.enum(["whatsapp", "email", "phone"]),
   socialMedia: z.string().optional(),
   referredBy: z.string().optional(),
 
@@ -980,7 +976,7 @@ const AgentOnboarding: React.FC = () => {
               )}
             />
             <ReferralCodeInput
-              onReferralValidated={(name, code) => {
+              onReferralValidated={(_name, code) => {
                 form.setValue("referredBy", code);
               }}
               onReferralRemoved={() => {
@@ -1156,9 +1152,8 @@ const AgentOnboarding: React.FC = () => {
                 <p className="text-gray-600">
                   {applicationSubmitted
                     ? "Complete Verification"
-                    : `Complete your profile in ${
-                        totalSteps - currentStep
-                      } step${totalSteps - currentStep !== 1 ? "s" : ""}`}
+                    : `Complete your profile in ${totalSteps - currentStep
+                    } step${totalSteps - currentStep !== 1 ? "s" : ""}`}
                 </p>
               </div>
             </div>
@@ -1172,11 +1167,10 @@ const AgentOnboarding: React.FC = () => {
             {progressSteps.map((step, index) => (
               <div key={step} className="flex items-center">
                 <div
-                  className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                    currentStep >= step
-                      ? "bg-primary border-primary text-white"
-                      : "border-gray-300 bg-white text-gray-400"
-                  }`}>
+                  className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${currentStep >= step
+                    ? "bg-primary border-primary text-white"
+                    : "border-gray-300 bg-white text-gray-400"
+                    }`}>
                   {currentStep > step ? (
                     <CheckCircle className="h-5 w-5" />
                   ) : (
@@ -1185,9 +1179,8 @@ const AgentOnboarding: React.FC = () => {
                 </div>
                 {index < progressSteps.length - 1 && (
                   <div
-                    className={`w-16 h-1 ${
-                      currentStep > step ? "bg-primary" : "bg-gray-300"
-                    }`}
+                    className={`w-16 h-1 ${currentStep > step ? "bg-primary" : "bg-gray-300"
+                      }`}
                   />
                 )}
               </div>

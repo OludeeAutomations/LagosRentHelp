@@ -1,7 +1,7 @@
 import axios, {
   AxiosError,
   AxiosInstance,
-  AxiosRequestConfig,
+  InternalAxiosRequestConfig,
   AxiosResponse,
 } from "axios";
 
@@ -27,8 +27,13 @@ const getAccessToken = () => {
     return null;
   }
 };
-const setAccessToken = (token: string) =>
+const setAccessToken = (token: string) => {
   localStorage.setItem("accessToken", token);
+  // Dispatch event so authStore can update its state and persistence
+  window.dispatchEvent(
+    new CustomEvent("auth-token-refresh", { detail: token })
+  );
+};
 
 const removeTokens = () => {
   localStorage.removeItem("accessToken");
@@ -78,10 +83,13 @@ async function refreshAccessToken(): Promise<string> {
 }
 
 api.interceptors.request.use(
-  (config: AxiosRequestConfig) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = getAccessToken();
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (token) {
+      if (!config.headers) {
+        config.headers = new axios.AxiosHeaders();
+      }
+      config.headers.set("Authorization", `Bearer ${token}`);
     }
     return config;
   },

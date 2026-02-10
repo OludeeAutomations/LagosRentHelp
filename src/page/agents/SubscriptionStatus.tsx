@@ -12,11 +12,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 const SubscriptionStatus: React.FC = () => {
-  const { agentProfile, fetchSubscriptionStatus } = useAgentStore();
+  const { agentProfile } = useAgentStore();
 
-  if (!agentProfile) return null;
+  const agent = agentProfile?.data?.agent;
 
-  const { subscription, freeListingWeeks, canListProperties } = agentProfile;
+  if (!agent) return null;
+
+  const { subscription, freeListingWeeks, canListProperties } = agent;
 
   return (
     <Card className="border-gray-200">
@@ -40,7 +42,7 @@ const SubscriptionStatus: React.FC = () => {
             </Badge>
           </div>
 
-          {subscription.status === "trial" && (
+          {subscription?.status === "trial" && subscription.trialEndsAt && (
             <div className="flex justify-between items-center">
               <span className="font-medium">Trial Ends</span>
               <span className="text-gray-600">

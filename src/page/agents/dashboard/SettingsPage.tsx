@@ -74,8 +74,15 @@ const SettingsPage: React.FC = () => {
 
   // Handle verification completion
   const handleVerificationComplete = async () => {
-    await fetchAgentProfile();
-    await checkVerificationStatus();
+    try {
+      // Attempt to refresh data, but don't block UI if it fails (endpoint 500s)
+      await fetchAgentProfile();
+      await checkVerificationStatus();
+    } catch (error) {
+      console.warn("Profile refresh failed after verification (expected if 500):", error);
+      // Suppress the error so the user doesn't see a crash. 
+      // The verification submission was successful just before this callback.
+    }
   };
 
   const [notificationSettings, setNotificationSettings] = useState({
@@ -134,7 +141,7 @@ const SettingsPage: React.FC = () => {
 
       await updateAgentProfile({
         bio: data.bio,
-        address: data.address,
+        residentialAddress: data.address,
         whatsappNumber: data.whatsappNumber,
       });
       await fetchAgentProfile();
@@ -147,7 +154,7 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const onPasswordSubmit = async (data: PasswordForm) => {
+  const onPasswordSubmit = async (_data: PasswordForm) => {
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
@@ -339,15 +346,15 @@ const SettingsPage: React.FC = () => {
                       {agent?.verificationStatus === "verified"
                         ? "Verified Agent"
                         : agent?.verificationStatus === "pending"
-                        ? "Verification in Progress"
-                        : "Verification Required"}
+                          ? "Verification in Progress"
+                          : "Verification Required"}
                     </h3>
                     <p className="text-sm text-muted-foreground">
                       {agent?.verificationStatus === "verified"
                         ? "Your account has been verified successfully"
                         : agent?.verificationStatus === "pending"
-                        ? "Your verification is under review. This usually takes 24-48 hours."
-                        : "Complete verification to create listings and access all features"}
+                          ? "Your verification is under review. This usually takes 24-48 hours."
+                          : "Complete verification to create listings and access all features"}
                     </p>
                   </div>
                 </div>
@@ -356,14 +363,14 @@ const SettingsPage: React.FC = () => {
                     agent?.verificationStatus === "verified"
                       ? "default"
                       : agent?.verificationStatus === "pending"
-                      ? "secondary"
-                      : "outline"
+                        ? "secondary"
+                        : "outline"
                   }>
                   {agent?.verificationStatus === "verified"
                     ? "Verified"
                     : agent?.verificationStatus === "pending"
-                    ? "Pending"
-                    : "Not Verified"}
+                      ? "Pending"
+                      : "Not Verified"}
                 </Badge>
               </div>
 

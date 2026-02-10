@@ -207,7 +207,7 @@ export const useAuthStore = create<AuthState>()(
           loading: false,
           error: null,
         });
-        authService.logout().catch(console.error);
+        authService.logout();
       },
 
       updateProfile: async (updates: Partial<User>) => {
@@ -321,3 +321,20 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
+
+// Listen for token updates from api.ts (e.g. after refresh)
+if (typeof window !== "undefined") {
+  window.addEventListener("auth-token-refresh", (event: any) => {
+    const token = event.detail;
+    if (token) {
+      console.log("🔄 Syncing token from api.ts event");
+      useAuthStore.getState().setAccessToken(token);
+    }
+  });
+
+  // Listen for logout events from api.ts
+  window.addEventListener("auth-logout", () => {
+    console.log("👋 Syncing logout from api.ts event");
+    useAuthStore.getState().logout();
+  });
+}

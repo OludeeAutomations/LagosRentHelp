@@ -64,7 +64,7 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
     ) {
       const daysLeft = Math.ceil(
         (new Date(agent.subscription.trialEndsAt).getTime() - Date.now()) /
-          (1000 * 60 * 60 * 24)
+        (1000 * 60 * 60 * 24)
       );
       return `Trial: ${daysLeft} days left`;
     }
@@ -149,13 +149,12 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
       <Link
         to={isRestricted ? "#" : item.href}
         onClick={handleClick}
-        className={`flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-200 ${
-          isActive
+        className={`flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-200 ${isActive
             ? "bg-primary text-primary-foreground"
             : isRestricted
-            ? "text-muted-foreground opacity-50 cursor-not-allowed bg-muted/50"
-            : "text-muted-foreground hover:text-foreground hover:bg-muted"
-        }`}>
+              ? "text-muted-foreground opacity-50 cursor-not-allowed bg-muted/50"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+          }`}>
         <div className="flex items-center space-x-3">
           <Icon className="h-5 w-5" />
           <span>{item.label}</span>
@@ -182,8 +181,15 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-destructive mb-4">Error loading agent profile</p>
-          <Button onClick={() => fetchAgentProfile()}>Retry</Button>
+          <p className="text-destructive mb-4">
+            Error loading agent profile. Please try again later.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Button onClick={() => fetchAgentProfile()}>Retry</Button>
+            <Button variant="outline" asChild>
+              <Link to="/">Back to Home</Link>
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -237,8 +243,8 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
                   agent?.verificationStatus === "verified"
                     ? "default"
                     : agent?.verificationStatus === "pending"
-                    ? "secondary"
-                    : "destructive"
+                      ? "secondary"
+                      : "destructive"
                 }>
                 {agent?.verificationStatus?.toUpperCase() || "UNKNOWN"}
               </Badge>
@@ -324,8 +330,8 @@ const AgentDashboardLayout: React.FC<AgentDashboardLayoutProps> = ({
                     agent?.verificationStatus === "verified"
                       ? "default"
                       : agent?.verificationStatus === "pending"
-                      ? "secondary"
-                      : "destructive"
+                        ? "secondary"
+                        : "destructive"
                   }>
                   {agent?.verificationStatus?.toUpperCase() || "UNKNOWN"}
                 </Badge>
