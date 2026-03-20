@@ -27,6 +27,11 @@ const StreetViewModal: React.FC<StreetViewModalProps> = ({
     if (!isOpen) return;
 
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    if (!apiKey) {
+      setStatus("error");
+      setError("Google Maps API key missing. Street View is unavailable.");
+      return;
+    }
 
     if (window.google && window.google.maps) {
       initializeStreetView();
@@ -34,7 +39,7 @@ const StreetViewModal: React.FC<StreetViewModalProps> = ({
     }
 
     const existingScript = document.querySelector(
-      'script[src*="maps.googleapis.com"]'
+      'script[src*=\"maps.googleapis.com\"]'
     );
     if (existingScript) {
       existingScript.addEventListener("load", initializeStreetView);

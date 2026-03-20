@@ -1,4 +1,4 @@
-import React from "motion/react";
+import React from "react";
 import { motion } from "framer-motion";
 
 interface PropertyCategoriesProps {

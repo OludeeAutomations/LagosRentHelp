@@ -223,7 +223,7 @@ const loginWithGoogleHandler = async (token : any) => {
           </motion.div>
 
           {/* Google Login */}
-       <motion.div variants={itemVariants} className="flex justify-center">
+       {/* <motion.div variants={itemVariants} className="flex justify-center">
             <GoogleLogin
       onSuccess={async (credentialResponse) => {
         const idToken = credentialResponse.credential;
@@ -233,7 +233,7 @@ const loginWithGoogleHandler = async (token : any) => {
         console.log("Login Failed");
       }}
     />
-      </motion.div>
+      </motion.div> */}
 
 
 

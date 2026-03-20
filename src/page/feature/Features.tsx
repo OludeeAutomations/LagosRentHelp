@@ -15,12 +15,14 @@ import { Link } from "react-router-dom";
 
 const Features: React.FC = () => {
   const features = [
+    /*
     {
       icon: Shield,
       title: "Verified Agents & Properties",
       description:
         "Every agent and property undergoes rigorous verification to ensure authenticity and quality standards.",
     },
+    */
     {
       icon: Search,
       title: "Advanced Search Filters",
@@ -175,6 +177,7 @@ const Features: React.FC = () => {
                   </div>
                 </div>
 
+                {/*
                 <div className="flex items-start space-x-4">
                   <div className="w-12 h-12 bg-[#129B36] rounded-lg flex items-center justify-center flex-shrink-0">
                     <Users className="h-6 w-6 text-white" />
@@ -189,6 +192,7 @@ const Features: React.FC = () => {
                     </p>
                   </div>
                 </div>
+                */}
               </div>
             </motion.div>
 
