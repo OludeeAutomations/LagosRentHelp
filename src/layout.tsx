@@ -13,15 +13,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
 
   // Don't show header/footer on auth pages
-  const isAuthPage = [
-    "/login",
-    "/register",
-    "/agent-signup",
-    "/agent-dashboard",
-    "/forgot-password",
-    "/reset-password",
-    "/verify-email",
-  ].includes(location.pathname) || location.pathname.startsWith("/reset-password/") || location.pathname.startsWith("/verify-email/");
+  const isAuthPage = ["/login", "/register"].includes(location.pathname);
 
   return (
     <div className="min-h-screen flex flex-col">

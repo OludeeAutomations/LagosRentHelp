@@ -18,9 +18,9 @@ const Features: React.FC = () => {
     /*
     {
       icon: Shield,
-      title: "Verified Agents & Properties",
+      title: "Verified Listings",
       description:
-        "Every agent and property undergoes rigorous verification to ensure authenticity and quality standards.",
+        "Listings go through review checks to help improve authenticity and quality across the platform.",
     },
     */
     {
@@ -39,13 +39,13 @@ const Features: React.FC = () => {
       icon: MessageCircle,
       title: "Direct Messaging",
       description:
-        "Communicate directly with property owners and agents through our secure messaging platform.",
+        "Communicate directly with listing contacts through our streamlined messaging experience.",
     },
     {
       icon: CheckCircle,
       title: "Secure Identity Verification",
       description:
-        "Comprehensive background checks and ID verification for all agents and property owners.",
+        "Identity and listing checks help create a more trustworthy rental experience.",
     },
     {
       icon: Star,
@@ -184,11 +184,11 @@ const Features: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-[#0E0E0E] mb-2">
-                      For Agents
+                      For Families
                     </h3>
                     <p className="text-[#7F8080]">
-                      Grow your business with our platform, access premium
-                      listings, and build your reputation.
+                      Compare neighborhoods, shortlist homes faster, and make
+                      better decisions with trusted information.
                     </p>
                   </div>
                 </div>
@@ -208,7 +208,7 @@ const Features: React.FC = () => {
               <ul className="space-y-4">
                 <li className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-green-300" />
-                  <span>100% verified properties and agents</span>
+                  <span>Verified listings with clearer property details</span>
                 </li>
                 <li className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-green-300" />

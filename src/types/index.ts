@@ -34,13 +34,14 @@ export interface User {
   email: string;
   phone: string;
   avatar?: string;
-  role: "user" | "agent" | "admin";
+  role: "user" | "agent" | "admin" | "super_admin";
   favorites: string[];
   searchHistory: SearchFilters[];
   createdAt: string;
   // Backend fields
   emailVerified?: boolean;
   phoneVerified?: boolean;
+  restricted?: boolean;
   lastLogin?: string;
 }
 
@@ -65,7 +66,13 @@ export interface Property {
   area: number;
   amenities: string[];
   images: string[];
-  agentId: Agent;
+  agent?: Agent;
+  agentId?: Agent | string;
+  ownerId?: User | string;
+  contactUserId?: User | string;
+  createdBy?: User | string;
+  approvalStatus?: "pending" | "approved" | "rejected";
+  approvalNote?: string;
   isFeatured: boolean;
   createdAt: string;
 
@@ -174,9 +181,12 @@ export interface Notification {
 export interface SearchFilters {
   location: string;
   type: string;
+  listingType?: "rent" | "short-let";
   minPrice: number;
   maxPrice: number;
   bedrooms: number;
+  bathrooms?: number;
+  category?: string;
   amenities: string[];
   sortBy: "price_asc" | "price_desc" | "newest" | "oldest" | "most_viewed";
   // Backend fields
@@ -325,4 +335,17 @@ export interface Lead {
     email?: string;
     phone?: string;
   }; // Add userId property here
+}
+
+export interface ManageableUser {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: User["role"];
+}
+
+export interface ManagedPropertyListResponse {
+  success: boolean;
+  data: Property[];
 }

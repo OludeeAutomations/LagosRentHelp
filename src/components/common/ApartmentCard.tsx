@@ -12,7 +12,7 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { Property } from "@/types"; // Import Agent type
+import { Property } from "@/types";
 import { useAmenities } from "@/hooks/useAmenities";
 
 interface ApartmentCardProps {
@@ -21,8 +21,6 @@ interface ApartmentCardProps {
   onFavorite?: (propertyId: string) => void;
   isFavorite?: boolean;
 }
-
-// Define a type for possible agentId structures
 
 const ApartmentCard: React.FC<ApartmentCardProps> = ({
   property,
@@ -44,7 +42,6 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
     isFeatured,
     status,
     views,
-    agentId,
   } = property;
 
 const mainImage = images?.[0] 
@@ -70,18 +67,6 @@ console.log(images)
       default:
         return "";
     }
-  };
-
-  const getAgentId = (): string => {
-    if (typeof agentId === "string") return agentId;
-
-    // Handle object types safely without 'any'
-    if (agentId && typeof agentId === "object") {
-      const agentObj = agentId as { id?: string; _id?: string };
-      return agentObj.id || agentObj._id || "unknown-agent";
-    }
-
-    return "unknown-agent";
   };
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
@@ -228,7 +213,7 @@ console.log(images)
           <Button
             asChild
             className="flex-1 ml-2 bg-green-600 hover:bg-green-700 text-white">
-            <Link to={`/agents/${getAgentId()}`}>Contact Agent</Link>
+            <Link to={`/properties/${_id}`}>View Contact</Link>
           </Button>
         </CardFooter>
       )}
