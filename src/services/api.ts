@@ -5,15 +5,18 @@ import axios, {
   AxiosResponse,
 } from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const DEFAULT_API_BASE_URL = window.location.origin;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL;
 
-if (!API_BASE_URL) {
-  throw new Error("VITE_API_BASE_URL is not defined in environment variables");
+if (!import.meta.env.VITE_API_BASE_URL) {
+  console.warn(
+    "VITE_API_BASE_URL is not defined. Falling back to window.location.origin for local development."
+  );
 }
 
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: false, // ❌ Turn off cookies
+  withCredentials: false,
   headers: {
     "Content-Type": "application/json",
   },

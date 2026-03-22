@@ -13,7 +13,7 @@ import { usePropertyStore } from "@/stores/propertyStore";
 import { useAuthStore } from "@/stores/authStore";
 import { toast } from "sonner";
 import PropertySections from "@/components/common/PropertySections";
-import TopAgentsCarousel from "@/components/common/TopAgentsCarousel";
+// import TopAgentsCarousel from "@/components/common/TopAgentsCarousel";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -301,7 +301,7 @@ const Home: React.FC = () => {
       {/* Stats Section */}
       <section className="bg-white py-12">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <motion.div
               className="text-center p-6 bg-gray-50 rounded-lg"
               initial={{ opacity: 0, y: 20 }}
@@ -316,6 +316,7 @@ const Home: React.FC = () => {
               <div className="text-sm text-[#7F8080]">Active Properties</div>
             </motion.div>
 
+            {/*
             <motion.div
               className="text-center p-6 bg-gray-50 rounded-lg"
               initial={{ opacity: 0, y: 20 }}
@@ -327,6 +328,7 @@ const Home: React.FC = () => {
               <div className="text-2xl font-bold text-[#0E0E0E] mb-1">50+</div>
               <div className="text-sm text-[#7F8080]">Verified Agents</div>
             </motion.div>
+            */}
 
             <motion.div
               className="text-center p-6 bg-gray-50 rounded-lg"
@@ -406,7 +408,8 @@ const Home: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 justify-items-center">
+            {/*
             <motion.div
               className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100"
               initial={{ opacity: 0, y: 20 }}
@@ -424,6 +427,7 @@ const Home: React.FC = () => {
                 and background screening
               </p>
             </motion.div>
+            */}
 
             <motion.div
               className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100"
@@ -464,7 +468,9 @@ const Home: React.FC = () => {
         </div>
       </section>
 
+      {/*
       <TopAgentsCarousel />
+      */}
 
       {/* CTA Section */}
       <section className="py-20 bg-[#129B36] text-white">

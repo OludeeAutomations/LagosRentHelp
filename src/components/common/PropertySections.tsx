@@ -158,19 +158,19 @@ const PropertySections: React.FC<PropertySectionsProps> = ({
           Browse our complete collection of properties. With thousands of
           listings across Lagos, we'll help you find the perfect match.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full max-w-2xl mx-auto">
           <Button
             asChild
             size="lg"
-            className="bg-green-600 hover:bg-green-700 text-white">
+            className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white">
             <Link to="/search">Browse All Properties</Link>
           </Button>
           <Button
             variant="outline"
             asChild
             size="lg"
-            className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white">
-            <Link to="/contact">Contact an Agent</Link>
+            className="w-full sm:w-auto border-green-600 text-green-600 hover:bg-green-600 hover:text-white">
+            <Link to="/contact">Contact Us</Link>
           </Button>
         </div>
       </section>

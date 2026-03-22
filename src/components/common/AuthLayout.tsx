@@ -1,6 +1,6 @@
 // src/layouts/AuthLayout.tsx
 import React from "react";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -84,10 +84,9 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.3 }}
-                className="grid grid-cols-3 gap-6 mt-16">
+                className="grid grid-cols-2 gap-6 mt-16 justify-center">
                 {[
                   { number: "500+", label: "Properties" },
-                  { number: "100+", label: "Agents" },
                   { number: "1000+", label: "Happy Users" },
                 ].map((stat, index) => (
                   <div key={index} className="text-center">

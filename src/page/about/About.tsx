@@ -19,7 +19,8 @@ const About: React.FC = () => {
       title: "Verified Agents & Properties",
       description:
         "All our agents and properties undergo thorough verification to ensure genuine listings and professional service.",
-    },
+      hidden: true,
+      },
     {
       icon: MapPin,
       title: "Lagos Coverage",
@@ -121,8 +122,8 @@ const About: React.FC = () => {
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
               viewport={{ once: true }}
-              className="grid grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-2xl shadow-lg">
+              className="grid grid-cols-2 gap-6 justify-items-center text-center">
+              <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-[260px]">
                 <div className="text-3xl font-bold text-[#129B36] mb-2">
                   500+
                 </div>
@@ -134,13 +135,13 @@ const About: React.FC = () => {
                 </div>
                 <div className="text-[#7F8080]">Verified Agents</div>
               </div>
-              <div className="bg-white p-6 rounded-2xl shadow-lg">
+              <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-[260px]">
                 <div className="text-3xl font-bold text-[#129B36] mb-2">
                   20+
                 </div>
                 <div className="text-[#7F8080]">Lagos Areas</div>
               </div>
-              <div className="bg-white p-6 rounded-2xl shadow-lg">
+              <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-[260px]">
                 <div className="text-3xl font-bold text-[#129B36] mb-2">
                   1000+
                 </div>
@@ -314,7 +315,7 @@ const About: React.FC = () => {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             {stats.map((stat, index) => (
               <motion.div
                 key={index}

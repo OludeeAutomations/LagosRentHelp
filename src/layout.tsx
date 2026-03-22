@@ -1,6 +1,6 @@
 // src/layouts/Layout.tsx
 import React from "react";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
 import { useLocation } from "react-router-dom";
@@ -18,19 +18,26 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     "/register",
     "/agent-signup",
     "/agent-dashboard",
-  ].includes(location.pathname);
+    "/forgot-password",
+    "/reset-password",
+    "/verify-email",
+  ].includes(location.pathname) || location.pathname.startsWith("/reset-password/") || location.pathname.startsWith("/verify-email/");
 
   return (
     <div className="min-h-screen flex flex-col">
       {!isAuthPage && <Header />}
-      <motion.main
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3 }}
-        className="flex-grow">
-        {children}
-      </motion.main>
+      {isAuthPage ? (
+        children
+      ) : (
+        <motion.main
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="flex-grow">
+          {children}
+        </motion.main>
+      )}
       {!isAuthPage && <Footer />}
     </div>
   );
