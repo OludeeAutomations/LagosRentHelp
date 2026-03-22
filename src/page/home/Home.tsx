@@ -13,7 +13,6 @@ import { usePropertyStore } from "@/stores/propertyStore";
 import { useAuthStore } from "@/stores/authStore";
 import { toast } from "sonner";
 import PropertySections from "@/components/common/PropertySections";
-// import TopAgentsCarousel from "@/components/common/TopAgentsCarousel";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -72,11 +71,11 @@ const Home: React.FC = () => {
 
   // Filter properties by type
   const rentProperties = properties.filter(
-    (property) => property.listingType === "rent"
+    (property) => property.listingType === "rent",
   );
 
   const shortLetProperties = properties.filter(
-    (property) => property.listingType === "short-let"
+    (property) => property.listingType === "short-let",
   );
 
   const handleFavorite = async (propertyId: string) => {
@@ -257,7 +256,7 @@ const Home: React.FC = () => {
                           .split("-")
                           .map(
                             (word) =>
-                              word.charAt(0).toUpperCase() + word.slice(1)
+                              word.charAt(0).toUpperCase() + word.slice(1),
                           )
                           .join(" ")}
                       </option>
@@ -326,7 +325,7 @@ const Home: React.FC = () => {
                 <Shield className="h-6 w-6 text-[#129B36]" />
               </div>
               <div className="text-2xl font-bold text-[#0E0E0E] mb-1">50+</div>
-              <div className="text-sm text-[#7F8080]">Verified Agents</div>
+              <div className="text-sm text-[#7F8080]">Verified Listings</div>
             </motion.div>
             */}
 
@@ -420,11 +419,11 @@ const Home: React.FC = () => {
                 <Shield className="h-8 w-8 text-[#129B36]" />
               </div>
               <h3 className="text-xl font-bold text-[#0E0E0E] mb-4 text-center">
-                Verified Agents
+                Verified Listings
               </h3>
               <p className="text-[#7F8080] text-center">
-                Every agent undergoes rigorous verification including ID checks
-                and background screening
+                We review listings carefully to help you browse with more
+                confidence and less noise
               </p>
             </motion.div>
             */}
@@ -460,17 +459,13 @@ const Home: React.FC = () => {
                 Secure Communication
               </h3>
               <p className="text-[#7F8080] text-center">
-                Direct communication with verified agents through our secure
-                messaging platform
+                Reach listing contacts quickly through clear, direct
+                communication channels
               </p>
             </motion.div>
           </div>
         </div>
       </section>
-
-      {/*
-      <TopAgentsCarousel />
-      */}
 
       {/* CTA Section */}
       <section className="py-20 bg-[#129B36] text-white">

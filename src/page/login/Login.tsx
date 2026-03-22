@@ -31,8 +31,9 @@ type LoginForm = z.infer<typeof loginSchema>;
 const Login: React.FC = () => {
   const [showPassword, setShowPassword] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
-  const { login,loginWithGoogle, setError, setUser } = useAuthStore();
+  const { login, loginWithGoogle, setError } = useAuthStore();
   const navigate = useNavigate();
+  const googleClientId = import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID;
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -83,28 +84,22 @@ const Login: React.FC = () => {
       },
     },
   };
-
-
-const loginWithGoogleHandler = async (token : any) => {
-  try {
-    setIsLoading(true);
-    setError(null);
-    const userData = {
-     idToken : token
-    };
-    // Call the store action, not the function itself
-    await loginWithGoogle(userData);
-    toast.success("Welcome back!");
-    navigate("/");
-  } catch (error: any) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Failed to login";
-    toast.error(errorMessage);
-    setError(errorMessage);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  const loginWithGoogleHandler = async (token: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      await loginWithGoogle({ idToken: token });
+      toast.success("Welcome back!");
+      navigate("/");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to login";
+      toast.error(errorMessage);
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <AuthLayout title="Welcome Back" subtitle="Sign in to your account">
@@ -115,7 +110,6 @@ const loginWithGoogleHandler = async (token : any) => {
           variants={containerVariants}
           initial="hidden"
           animate="visible">
-
           {/* Email */}
           <motion.div variants={itemVariants}>
             <FormField
@@ -215,15 +209,16 @@ const loginWithGoogleHandler = async (token : any) => {
             </Button>
           </motion.div>
 
-
-          <motion.div variants={itemVariants} className="flex items-center my-4">
+          <motion.div
+            variants={itemVariants}
+            className="flex items-center my-4">
             <div className="flex-grow border-t border-gray-300"></div>
             <span className="mx-3 text-gray-500 text-sm">OR</span>
             <div className="flex-grow border-t border-gray-300"></div>
           </motion.div>
 
           {/* Google Login */}
-       {/* <motion.div variants={itemVariants} className="flex justify-center">
+          {/* <motion.div variants={itemVariants} className="flex justify-center">
             <GoogleLogin
       onSuccess={async (credentialResponse) => {
         const idToken = credentialResponse.credential;
@@ -234,9 +229,32 @@ const loginWithGoogleHandler = async (token : any) => {
       }}
     />
       </motion.div> */}
+          {googleClientId ? (
+            <motion.div variants={itemVariants} className="flex justify-center">
+              <GoogleLogin
+                onSuccess={async (credentialResponse) => {
+                  const idToken = credentialResponse.credential;
 
+                  if (!idToken) {
+                    toast.error("Google sign-in did not return a token.");
+                    return;
+                  }
 
-
+                  await loginWithGoogleHandler(idToken);
+                }}
+                onError={() => {
+                  toast.error("Google sign-in failed.");
+                }}
+              />
+            </motion.div>
+          ) : (
+            <motion.p
+              variants={itemVariants}
+              className="text-center text-sm text-[#7F8080]">
+              Google sign-in is unavailable until{" "}
+              <code>VITE_GOOGLE_OAUTH_CLIENT_ID</code> is set.
+            </motion.p>
+          )}
 
           {/* Register Link */}
           <motion.div variants={itemVariants}>

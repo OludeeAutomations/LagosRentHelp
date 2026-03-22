@@ -7,6 +7,11 @@ export interface PropertyFilters extends Partial<SearchFilters> {
   limit?: number;
 }
 
+export interface PropertyApprovalPayload {
+  approvalStatus: "approved" | "rejected";
+  approvalNote?: string;
+}
+
 export const propertyService = {
   getAll: async (
     filters: PropertyFilters = {}
@@ -39,6 +44,15 @@ export const propertyService = {
       throw new Error(`Failed to fetch property: ${error.message}`);
     }
   },
+
+  getManageAll: async (): Promise<ApiResponse<Property[]>> => {
+    return api.get<Property[]>("/properties/manage");
+  },
+
+  getManageById: async (id: string): Promise<ApiResponse<Property>> => {
+    return api.get<Property>(`/properties/manage/${id}`);
+  },
+
   create: async (propertyData: FormData): Promise<ApiResponse<Property>> => {
     return api.post<Property>("/properties", propertyData, {
       headers: {
@@ -57,6 +71,17 @@ export const propertyService = {
         : {};
 
     return api.put<Property>(`/properties/${id}`, updates, config);
+  },
+
+  updateApproval: async (
+    id: string,
+    payload: PropertyApprovalPayload
+  ): Promise<ApiResponse<Property>> => {
+    return api.patch<Property>(`/properties/${id}/approval`, payload);
+  },
+
+  deactivate: async (id: string): Promise<ApiResponse<Property>> => {
+    return api.put<Property>(`/properties/${id}/deactivate`, {});
   },
 
   delete: async (id: string): Promise<ApiResponse<{ message: string }>> => {

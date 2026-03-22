@@ -76,7 +76,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
                   Find Your Perfect Home
                 </h2>
                 <p className="text-xl opacity-90">
-                  Join thousands of happy tenants and agents in Lagos
+                  Join thousands of happy renters across Lagos
                 </p>
               </motion.div>
 
@@ -87,6 +87,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
                 className="grid grid-cols-2 gap-6 mt-16 justify-center">
                 {[
                   { number: "500+", label: "Properties" },
+                  { number: "100+", label: "Listings" },
                   { number: "1000+", label: "Happy Users" },
                 ].map((stat, index) => (
                   <div key={index} className="text-center">

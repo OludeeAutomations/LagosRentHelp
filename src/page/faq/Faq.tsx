@@ -28,46 +28,46 @@ const FAQPage: React.FC = () => {
       {
         question: "What is LagosHomes?",
         answer:
-          "LagosHomes is a platform connecting property owners and verified agents with tenants looking for both short-term stays and long-term rentals in Lagos. We focus on providing quality, affordable housing options across all areas of Lagos State.",
+          "LagosHomes is a platform connecting property owners with tenants looking for both short-term stays and long-term rentals in Lagos. We focus on providing quality, affordable housing options across all areas of Lagos State.",
       },
       {
         question: "Is LagosHomes free to use?",
         answer:
-          "For tenants: Yes, searching for properties and contacting agents is completely free. For agents: We offer a free trial with 2 listings, after which subscription plans are available for additional listings and features.",
+          "Yes. Searching for properties, browsing listings, and contacting listing owners through the platform is free for renters.",
       },
       {
         question: "How do I create an account?",
         answer:
-          "Click on the 'Sign Up' button in the top navigation. You'll need to provide your basic information and verify your email address. For agents, additional verification steps are required.",
+          "Click on the 'Sign Up' button in the top navigation. You'll need to provide your basic information and verify your email address before signing in.",
       },
     ],
-    agents: [
+    safety: [
       {
-        question: "How do I become a verified agent?",
+        question: "How are listings reviewed?",
         answer:
-          "To become a verified agent, you need to complete our registration process which includes ID verification, phone number confirmation, and background checks. Once verified, you'll receive a verification badge on your profile.",
+          "We review listing information and encourage users to report anything inaccurate or suspicious so our team can investigate quickly.",
       },
       {
-        question: "What are the benefits of being a verified agent?",
+        question: "How can I stay safe while renting?",
         answer:
-          "Verified agents get priority listing placement, access to premium features, increased trust from tenants, higher conversion rates, and dedicated support from our team.",
+          "We recommend verifying listing details, inspecting properties in person, and avoiding upfront payments until you are comfortable with the property and terms.",
       },
       {
-        question: "How many properties can I list?",
+        question: "What should I do if a listing looks suspicious?",
         answer:
-          "New agents get 2 free listings during their trial period. After that, you can choose from our Basic or Premium subscription plans which offer 5 and 15 listings respectively, with additional features.",
+          "Use the report option on the listing page or contact our support team directly by WhatsApp or email. We investigate reported issues as quickly as possible.",
       },
     ],
     tenants: [
       {
-        question: "How do I know if an agent is verified?",
+        question: "How do I know if a listing is trustworthy?",
         answer:
-          "Verified agents have a green verification badge (checkmark) next to their name on their profile and property listings. You can also view their verification status in the agent details section.",
+          "Check the listing details carefully, confirm location and pricing information, and contact support if anything looks incomplete or inconsistent.",
       },
       {
-        question: "Is it safe to contact agents directly?",
+        question: "Is it safe to contact listing owners directly?",
         answer:
-          "Yes, all our agents undergo thorough verification. However, we always recommend meeting in public places for property viewings, not sharing sensitive financial information upfront, and using our platform for initial communications.",
+          "Yes, but we still recommend meeting in safe public places for first contact when appropriate, not sharing sensitive financial information too early, and inspecting the property before making commitments.",
       },
       {
         question: "What should I do if I encounter a suspicious listing?",
@@ -96,7 +96,7 @@ const FAQPage: React.FC = () => {
 
   const categoryIcons = {
     general: HelpCircle,
-    agents: Shield,
+    safety: Shield,
     tenants: Home,
     technical: CreditCard,
   };

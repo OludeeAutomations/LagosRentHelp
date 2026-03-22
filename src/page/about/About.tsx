@@ -16,11 +16,10 @@ const About: React.FC = () => {
   const features = [
     {
       icon: Shield,
-      title: "Verified Agents & Properties",
+      title: "Verified Listings",
       description:
-        "All our agents and properties undergo thorough verification to ensure genuine listings and professional service.",
-      hidden: true,
-      },
+        "Listings go through review checks to help promote genuine details and a better rental experience.",
+    },
     {
       icon: MapPin,
       title: "Lagos Coverage",
@@ -31,7 +30,7 @@ const About: React.FC = () => {
       icon: Phone,
       title: "Direct WhatsApp Contact",
       description:
-        "Connect directly with property agents via WhatsApp for immediate response and seamless communication.",
+        "Connect directly with listing contacts via WhatsApp for immediate response and seamless communication.",
     },
     {
       icon: Home,
@@ -55,7 +54,7 @@ const About: React.FC = () => {
 
   const stats = [
     { number: "500+", label: "Properties Listed" },
-    { number: "100+", label: "Verified Agents" },
+    { number: "100+", label: "Verified Listings" },
     { number: "20+", label: "Lagos Areas" },
     { number: "1000+", label: "Happy Tenants" },
   ];
@@ -77,8 +76,8 @@ const About: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-xl md:text-2xl max-w-3xl mx-auto">
-            Connecting Lagos residents with verified agents and quality
-            affordable housing
+            Connecting Lagos residents with quality, trusted, and affordable
+            housing
           </motion.p>
         </div>
       </section>
@@ -97,10 +96,10 @@ const About: React.FC = () => {
               </h2>
               <p className="text-[#7F8080] text-lg mb-6">
                 We're on a mission to make finding affordable, quality housing
-                in Lagos State as easy as possible. Our platform connects
-                genuine property seekers with verified agents, ensuring
-                transparent transactions and reducing the stress of house
-                hunting in Nigeria's commercial capital.
+                in Lagos State as easy as possible. Our platform helps genuine
+                property seekers discover trusted listings with clearer
+                information, reducing the stress of house hunting in Nigeria's
+                commercial capital.
               </p>
               <p className="text-[#7F8080] text-lg mb-8">
                 To revolutionize the real estate rental market in Lagos by
@@ -133,7 +132,7 @@ const About: React.FC = () => {
                 <div className="text-3xl font-bold text-[#129B36] mb-2">
                   100+
                 </div>
-                <div className="text-[#7F8080]">Verified Agents</div>
+                <div className="text-[#7F8080]">Verified Listings</div>
               </div>
               <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-[260px]">
                 <div className="text-3xl font-bold text-[#129B36] mb-2">
@@ -267,32 +266,30 @@ const About: React.FC = () => {
               viewport={{ once: true }}
               className="bg-white rounded-2xl p-8 shadow-lg">
               <h3 className="text-2xl font-bold text-[#0E0E0E] mb-6">
-                Free Trial for Agents
+                Better Renting Experience
               </h3>
               <p className="text-[#7F8080] mb-6">
-                New agents get 2 free listings to test our platform before
-                subscribing to a plan. Experience the benefits of our verified
-                platform risk-free.
+                We focus on making discovery simpler for renters with trusted
+                listings, clear contact paths, and practical safety guidance at
+                every step.
               </p>
 
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-[#129B36]" />
-                  <span className="text-[#0E0E0E]">No upfront costs</span>
+                  <span className="text-[#0E0E0E]">Clear property details</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-[#129B36]" />
-                  <span className="text-[#0E0E0E]">Full platform access</span>
+                  <span className="text-[#0E0E0E]">Fast contact options</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-[#129B36]" />
-                  <span className="text-[#0E0E0E]">Priority verification</span>
+                  <span className="text-[#0E0E0E]">Safety-first guidance</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-[#129B36]" />
-                  <span className="text-[#0E0E0E]">
-                    Direct tenant connections
-                  </span>
+                  <span className="text-[#0E0E0E]">Mobile-friendly search</span>
                 </div>
               </div>
             </motion.div>
