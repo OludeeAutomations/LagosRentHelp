@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import Layout from "./layout";
@@ -13,33 +13,18 @@ import ScrollToTop from "./components/common/ScrollToTop";
 import FAQPage from "./page/faq/Faq";
 import Register from "./page/register/Register";
 import Login from "./page/login/Login";
-import AgentDashboard from "./page/agents/dashboard/AgentDashboard";
-import AgentOnboarding from "./page/agents/Auth/AgentOnboarding";
-import CreateListing from "./page/agents/dashboard/CreatList";
-import AgentDashboardLayout from "./page/agents/dashboard/DashboardLayout";
 import PropertyDetails from "./page/propertiesDetails/PropertyDetails";
-import AgentProfile from "./page/agents/AgentContact";
 import ComingSoonPage from "./page/ComingSoonPage";
-import MyListingsPage from "./page/agents/dashboard/MyListingsPage";
-import LeadsPage from "./page/agents/dashboard/LeadsPage";
-import SettingsPage from "./page/agents/dashboard/SettingsPage";
 import UserSettingsPage from "./page/settings/SettingsPage";
-import NotificationsPage from "./page/agents/dashboard/NotificationsPage";
 import EmailVerificationNotice from "./page/register/EmailVerificationNotice";
 import VerifyEmailResult from "./page/register/VerifyEmailResult";
 import ForgotPassword from "./page/login/ForgotPassword";
 import ResetPassword from "./page/login/ResetPassword";
 import { Toaster } from "sonner";
 import Favorites from "./page/user/Favorites";
-import { useAuthStore } from "./stores/authStore";
-import EditListing from "./page/agents/dashboard/EditListing";
-//import AgentListings from "./page/agents/dashboard/AgentListings";
-//import AgentLeads from "./page/agents/dashboard/AgentLeads";
-//import AgentMessages from "./page/agents/dashboard/AgentMessages";
-//import AgentAnalytics from "./page/agents/dashboard/AgentAnalytics";
-//import AgentSettings from "./page/agents/dashboard/AgentSettings";
-//import AgentAppointments from "./page/agents/dashboard/AgentAppointments";
-//import AgentCommissions from "./page/agents/dashboard/AgentCommissions";
+import PropertyManagementPage from "./page/admin/PropertyManagementPage";
+import PropertyEditorPage from "./page/admin/PropertyEditorPage";
+import AdminAccountsPage from "./page/admin/AdminAccountsPage";
 
 
 const App: React.FC = () => {
@@ -188,110 +173,35 @@ const App: React.FC = () => {
             }
           />
           <Route
-            path="/agents/:agentId"
+            path="/admin/properties"
             element={
               <Layout>
-                <AgentProfile />
+                <PropertyManagementPage />
               </Layout>
             }
           />
           <Route
-            path="/agent-signup"
+            path="/admin/properties/new"
             element={
               <Layout>
-                <AgentOnboarding />
+                <PropertyEditorPage />
               </Layout>
             }
           />
-          {/* Agent Dashboard Routes with Agent Layout */}
           <Route
-            path="/agent-dashboard"
+            path="/admin/properties/:id/edit"
             element={
-              <AgentDashboardLayout title="Dashboard">
-                <AgentDashboard />
-              </AgentDashboardLayout>
+              <Layout>
+                <PropertyEditorPage />
+              </Layout>
             }
           />
           <Route
-            path="/agent-dashboard/listings"
+            path="/admin/accounts"
             element={
-              <AgentDashboardLayout title="My Listings">
-                <MyListingsPage />
-              </AgentDashboardLayout>
-            }
-          />
-          <Route
-            path="/agent-dashboard/leads"
-            element={
-              <AgentDashboardLayout title="Leads">
-                <LeadsPage />
-              </AgentDashboardLayout>
-            }
-          />
-          {/*  <Route
-            path="/agent-dashboard/messages"
-            element={
-              <AgentDashboardLayout title="Messages">
-                <AgentMessages />
-              </AgentDashboardLayout>
-            }
-          />
-          <Route
-            path="/agent-dashboard/analytics"
-            element={
-              <AgentDashboardLayout title="Analytics">
-                <AgentAnalytics />
-              </AgentDashboardLayout>
-            }
-          />
-          <Route
-            path="/agent-dashboard/appointments"
-            element={
-              <AgentDashboardLayout title="Appointments">
-                <AgentAppointments />
-              </AgentDashboardLayout>
-            }
-          />
-          <Route
-            path="/agent-dashboard/commissions"
-            element={
-              <AgentDashboardLayout title="Commissions">
-                <AgentCommissions />
-              </AgentDashboardLayout>
-            }
-          />*/}
-          <Route
-            path="/agent-dashboard/settings"
-            element={
-              <AgentDashboardLayout title="Settings">
-                <SettingsPage />
-              </AgentDashboardLayout>
-            }
-          />
-          <Route
-            path="/agent-dashboard/notifications"
-            element={
-              <AgentDashboardLayout title="notifications">
-                <NotificationsPage />
-              </AgentDashboardLayout>
-            }
-          />
-          {/* Create Listing - This could be in either layout depending on your design */}
-          <Route
-            path="/create-listing"
-            element={
-              <AgentDashboardLayout title="Create Listing">
-                <CreateListing />
-              </AgentDashboardLayout>
-            }
-          />
-          // In your App.tsx or routing file
-          <Route
-            path="/edit-listing/:id"
-            element={
-              <AgentDashboardLayout title="Edit Listing">
-                <EditListing />{" "}
-              </AgentDashboardLayout>
+              <Layout>
+                <AdminAccountsPage />
+              </Layout>
             }
           />
           {/* 404 Page - Keep this at the end */}

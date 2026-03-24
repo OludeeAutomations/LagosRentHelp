@@ -123,7 +123,7 @@ const Contact: React.FC = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#129B36] focus:border-transparent">
                     <option value="">Select a subject</option>
                     <option value="general">General Inquiry</option>
-                    <option value="agent">Agent Registration</option>
+                    <option value="listing">Listing Support</option>
                     <option value="technical">Technical Support</option>
                     <option value="billing">Billing & Subscriptions</option>
                     <option value="report">Report a Problem</option>
@@ -278,11 +278,11 @@ const Contact: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <h4 className="font-medium text-[#0E0E0E] mb-1">
-                      How do I verify an agent?
+                      How do I verify a listing?
                     </h4>
                     <p className="text-sm text-[#7F8080]">
-                      All our agents are pre-verified. Look for the verified
-                      badge on their profiles.
+                      Review the listing details carefully and contact support
+                      if anything appears incomplete or suspicious.
                     </p>
                   </div>
                   <div>
@@ -290,8 +290,8 @@ const Contact: React.FC = () => {
                       Is the platform free for renters?
                     </h4>
                     <p className="text-sm text-[#7F8080]">
-                      Yes! Searching and contacting agents is completely free
-                      for property seekers.
+                      Yes. Searching and contacting listing owners is free for
+                      property seekers.
                     </p>
                   </div>
                   <div>

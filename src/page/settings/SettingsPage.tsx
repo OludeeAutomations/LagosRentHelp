@@ -296,7 +296,13 @@ const SettingsPage: React.FC = () => {
                   <div>
                     <p className="font-semibold capitalize">{user.role}</p>
                     <p className="text-sm text-gray-600">
-                      {user.role === "agent" ? "Agent Account" : "User Account"}
+                      {user.role === "super_admin"
+                        ? "Super Admin Account"
+                        : user.role === "admin"
+                        ? "Admin Account"
+                        : user.role === "agent"
+                        ? "Agent Account"
+                        : "User Account"}
                     </p>
                   </div>
                   {/* You can display verification status if it exists on user or agent */}

@@ -102,6 +102,14 @@ export const authService = {
     return api.post(`/auth/forgot-password`, { email: email });
   },
 
+  changePassword: async (oldPassword: string, newPassword: string) => {
+    return api.post(`/auth/change-password`, {
+      oldPassword,
+      newPassword,
+      confirmPassword: newPassword,
+    });
+  },
+
   resetPassword: async (userId: string, token: string, password: string) => {
     return api.post(`/auth/reset-password`, {
       userId,

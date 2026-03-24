@@ -1,9 +1,9 @@
-// src/store/authStore.ts
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { User, Agent } from "@/types";
+import { Agent, User } from "@/types";
 import { authService, type RegisterData } from "@/services/authService";
 import { userService } from "@/services/userService";
+import { normalizeAuthPayload } from "./authStore.helpers";
 
 interface AuthState {
   validateAuth: () => Promise<boolean>;
@@ -13,27 +13,45 @@ interface AuthState {
   isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
-
-  // Actions
   setUser: (user: User | null) => void;
   setAgent: (agent: Agent | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setAccessToken: (token: string | null) => void;
-
-  // Auth Actions
   login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: (userData: any) => Promise<void>;
+  loginWithGoogle: (userData: unknown) => Promise<void>;
   register: (
     userData: RegisterData
   ) => Promise<{ success: boolean; requiresVerification?: boolean }>;
   logout: () => void;
   updateProfile: (updates: Partial<User>) => Promise<void>;
-
-  verifyEmail: (userId: string, token: string) => Promise<any>;
-  resendVerificationEmail: (userId: string) => Promise<void>; // ✅ Added this
+  changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
+  verifyEmail: (userId: string, token: string) => Promise<unknown>;
+  resendVerificationEmail: (userId: string) => Promise<void>;
   fetchUserData: () => Promise<void>;
 }
+
+const createAuthenticatedState = (
+  user: User,
+  accessToken: string,
+  agent: Agent | null
+) => ({
+  user,
+  accessToken,
+  agent,
+  isAuthenticated: true,
+  loading: false,
+  error: null,
+});
+
+const createLoggedOutState = (error: string | null = null) => ({
+  error,
+  loading: false,
+  user: null,
+  accessToken: null,
+  agent: null,
+  isAuthenticated: false,
+});
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -54,7 +72,6 @@ export const useAuthStore = create<AuthState>()(
       validateAuth: async (): Promise<boolean> => {
         const { user, accessToken, isAuthenticated } = get();
 
-        // If not supposedly authenticated, nothing to validate
         if (!isAuthenticated || !user || !accessToken) {
           return false;
         }
@@ -63,17 +80,12 @@ export const useAuthStore = create<AuthState>()(
           const result = await authService.validateToken();
 
           if (result.valid && result.user) {
-            // Token is valid AND user exists in database
-            // Update with fresh user data
             set({ user: result.user });
             return true;
-          } else {
-            // Token invalid or user deleted
-            throw new Error("Authentication failed");
           }
-        } catch (error) {
-          // User deleted or token expired - LOGOUT
-          console.log("🔴 User deleted or token expired, logging out...");
+
+          throw new Error("Authentication failed");
+        } catch {
           get().logout();
           return false;
         }
@@ -84,14 +96,9 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const response = await authService.register(userData);
-
-          // Check if response.data exists, otherwise use response directly
           const data = response.data || response;
-          const { user } = data;
 
-          console.log("Registration response:", data);
-
-          if (!user && !data.success) {
+          if (!data.user && !data.success) {
             throw new Error("Registration failed: No user data returned");
           }
 
@@ -102,7 +109,7 @@ export const useAuthStore = create<AuthState>()(
 
           set({
             error: errorMessage,
-            loading: false, // Ensure loading is turned off
+            loading: false,
           });
           throw error;
         } finally {
@@ -115,98 +122,33 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const response = await authService.login(email, password);
-
-          // ✅ Handle both cases: direct data or axios response
-          const data = response.data || response;
-
-          console.log("🔍 Using data:", data);
-
-          const { user, accessToken, agentData } = data;
-
-          if (!user || !accessToken) {
-            console.error("❌ Missing data in:", data);
-            throw new Error("Invalid response from server");
-          }
-
-          set({
-            user,
-            accessToken,
-            agent: agentData || null,
-            isAuthenticated: true,
-            loading: false,
-            error: null,
-          });
-
-          console.log("✅ Login successful - Agent data:", agentData);
+          const { user, accessToken, agent } = normalizeAuthPayload(response);
+          set(createAuthenticatedState(user, accessToken, agent));
         } catch (error: unknown) {
           const errorMessage =
             error instanceof Error ? error.message : "Failed to login";
-
-          set({
-            error: errorMessage,
-            loading: false,
-            user: null,
-            accessToken: null,
-            agent: null,
-            isAuthenticated: false,
-          });
+          set(createLoggedOutState(errorMessage));
           throw error;
         }
       },
 
-      loginWithGoogle: async (userData: any) => {
+      loginWithGoogle: async (userData: unknown) => {
         set({ loading: true, error: null });
 
         try {
-          const response = await authService.loginWithGoogle(userData);
-
-          // ✅ Handle both cases: direct data or axios response
-          const data = response.data || response;
-
-          console.log("🔍 Using data:", data);
-
-          const { user, accessToken, agentData } = data;
-
-          if (!user || !accessToken) {
-            console.error("❌ Missing data in:", data);
-            throw new Error("Invalid response from server");
-          }
-
-          set({
-            user,
-            accessToken,
-            agent: agentData || null,
-            isAuthenticated: true,
-            loading: false,
-            error: null,
-          });
-
-          console.log("✅ Login successful - Agent data:", agentData);
+          const response = await authService.loginWithGoogle(userData as object);
+          const { user, accessToken, agent } = normalizeAuthPayload(response);
+          set(createAuthenticatedState(user, accessToken, agent));
         } catch (error: unknown) {
           const errorMessage =
             error instanceof Error ? error.message : "Failed to login";
-
-          set({
-            error: errorMessage,
-            loading: false,
-            user: null,
-            accessToken: null,
-            agent: null,
-            isAuthenticated: false,
-          });
+          set(createLoggedOutState(errorMessage));
           throw error;
         }
       },
 
       logout: () => {
-        set({
-          user: null,
-          agent: null,
-          accessToken: null,
-          isAuthenticated: false,
-          loading: false,
-          error: null,
-        });
+        set(createLoggedOutState());
         authService.logout();
       },
 
@@ -215,7 +157,7 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const response = await authService.updateProfile(updates);
-          const updatedUser = response.data || response; // Handle both response structures
+          const updatedUser = response.data || response;
 
           set((state) => ({
             user: state.user ? { ...state.user, ...updatedUser } : null,
@@ -228,34 +170,42 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      verifyEmail: async (userId: string, token: string) => {
+      changePassword: async (oldPassword: string, newPassword: string) => {
+        set({ loading: true, error: null });
+
         try {
-          console.log("🔄 AuthStore: Starting email verification...");
-          set({ loading: true, error: null });
-
-          const response = await authService.verifyEmail(userId, token);
-
-          console.log("✅ AuthStore: Verification successful:", response);
-          set({ loading: false });
-          return response;
-        } catch (error: any) {
-          console.log("❌ AuthStore: Verification error:", error);
+          await authService.changePassword(oldPassword, newPassword);
+          set({ loading: false, error: null });
+        } catch (error: unknown) {
           const errorMessage =
             error instanceof Error
               ? error.message
-              : "Email verification failed";
+              : "Failed to change password";
           set({ error: errorMessage, loading: false });
           throw error;
         }
       },
 
-      // ✅ ADDED: Resend Email Verification Logic (Not Identity Verification)
+      verifyEmail: async (userId: string, token: string) => {
+        try {
+          set({ loading: true, error: null });
+          const response = await authService.verifyEmail(userId, token);
+          set({ loading: false });
+          return response;
+        } catch (error: unknown) {
+          const errorMessage =
+            error instanceof Error ? error.message : "Email verification failed";
+          set({ error: errorMessage, loading: false });
+          throw error;
+        }
+      },
+
       resendVerificationEmail: async (userId: string) => {
         set({ loading: true, error: null });
         try {
           await authService.resendVerificationEmail(userId);
           set({ loading: false });
-        } catch (error: any) {
+        } catch (error: unknown) {
           const errorMessage =
             error instanceof Error ? error.message : "Failed to resend email";
           set({ error: errorMessage, loading: false });
@@ -267,10 +217,7 @@ export const useAuthStore = create<AuthState>()(
         set({ loading: true, error: null });
 
         try {
-          // Assuming userService.getProfile returns the user object directly or { data: user }
           const userResponse = await userService.getProfile();
-
-          // Normalize response
           const user = userResponse.data || userResponse;
           const agentData = userResponse.agentData || null;
 
@@ -282,16 +229,13 @@ export const useAuthStore = create<AuthState>()(
           });
         } catch (error: unknown) {
           const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "Failed to fetch user data";
+            error instanceof Error ? error.message : "Failed to fetch user data";
 
           set({
             error: errorMessage,
             loading: false,
           });
 
-          // Only logout on auth errors, not network errors
           if (
             error instanceof Error &&
             (error.message.includes("401") || error.message.includes("403"))
@@ -306,7 +250,6 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state) => {
         if (state) {
-          // Wait for app to load, then validate token
           setTimeout(() => {
             state.validateAuth();
           }, 1000);
@@ -322,19 +265,15 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
-// Listen for token updates from api.ts (e.g. after refresh)
 if (typeof window !== "undefined") {
-  window.addEventListener("auth-token-refresh", (event: any) => {
-    const token = event.detail;
+  window.addEventListener("auth-token-refresh", (event: Event) => {
+    const token = (event as CustomEvent<string>).detail;
     if (token) {
-      console.log("🔄 Syncing token from api.ts event");
       useAuthStore.getState().setAccessToken(token);
     }
   });
 
-  // Listen for logout events from api.ts
   window.addEventListener("auth-logout", () => {
-    console.log("👋 Syncing logout from api.ts event");
     useAuthStore.getState().logout();
   });
 }
