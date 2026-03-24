@@ -207,7 +207,7 @@ console.log(images)
             <Eye className="h-3 w-3" />
             {views || 0} views
           </Badge>
-        </div>{" "}
+        </div>
         {/* Rental Period for Short-lets */}
         {listingType === "short-let" && (
           <div className="flex items-center gap-1 text-sm text-gray-600">
