@@ -16,12 +16,13 @@ export type ApiResponse<T> = {
   };
 };
 
-const DEFAULT_API_BASE_URL = window.location.origin;
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL;
+const DEFAULT_API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || window.location.origin || "http://localhost:5000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || window.location.origin || "http://localhost:5000";
 
 if (!import.meta.env.VITE_API_BASE_URL) {
   console.warn(
-    "VITE_API_BASE_URL is not defined. Falling back to window.location.origin for local development."
+    "VITE_API_BASE_URL is not defined. Falling back to default local API base URL (http://localhost:5000)."
   );
 }
 

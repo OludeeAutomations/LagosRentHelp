@@ -247,13 +247,18 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
       const response = await propertyService.getAll(filters);
       console.log("Raw API response:", response.data);
 
-      // ✅ Extract the array properly
-      const result = response.data; // { success, data, pagination }
+      // Support both payload shapes: data is either array or { data: array }
+      const rawPayload = response.data;
+      const propertyArray: Property[] = Array.isArray(rawPayload)
+        ? rawPayload
+        : Array.isArray(rawPayload?.data)
+        ? rawPayload.data
+        : [];
 
       set({
-        properties: result.data, // <-- only the array part
-        filteredProperties: result.data,
-        featuredProperties: result.data.filter(
+        properties: propertyArray,
+        filteredProperties: propertyArray,
+        featuredProperties: propertyArray.filter(
           (prop: Property) => prop.isFeatured
         ),
         loading: false,
