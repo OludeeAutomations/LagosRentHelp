@@ -1,7 +1,6 @@
 // src/pages/ComingSoonPage.tsx
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Construction } from "lucide-react";
+import { Construction } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,7 +11,6 @@ import {
 } from "@/components/ui/card";
 
 const ComingSoonPage: React.FC = () => {
-  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -28,12 +26,9 @@ const ComingSoonPage: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
-          <Button
-            onClick={() => navigate(-1)}
-            className="bg-green-600 hover:bg-green-700 text-white">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Go Back
-          </Button>
+          <p className="text-sm text-gray-500 mb-4">
+            We're currently performing maintenance. Please check back later.
+          </p>
         </CardContent>
       </Card>
     </div>

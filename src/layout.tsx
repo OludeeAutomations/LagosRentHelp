@@ -12,12 +12,13 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
 
-  // Don't show header/footer on auth pages
+  // Don't show header/footer on auth pages or maintenance mode
   const isAuthPage = ["/login", "/register"].includes(location.pathname);
+  const isMaintenanceMode = location.pathname === "/";
 
   return (
     <div className="min-h-screen flex flex-col">
-      {!isAuthPage && <Header />}
+      {!isAuthPage && !isMaintenanceMode && <Header />}
       {isAuthPage ? (
         children
       ) : (
@@ -30,7 +31,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {children}
         </motion.main>
       )}
-      {!isAuthPage && <Footer />}
+      {!isAuthPage && !isMaintenanceMode && <Footer />}
     </div>
   );
 };
