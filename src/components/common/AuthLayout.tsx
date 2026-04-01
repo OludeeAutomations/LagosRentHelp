@@ -84,7 +84,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.3 }}
-                className="grid grid-cols-2 gap-6 mt-16 justify-center">
+                className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 justify-center">
                 {[
                   { number: "500+", label: "Properties" },
                   { number: "100+", label: "Listings" },

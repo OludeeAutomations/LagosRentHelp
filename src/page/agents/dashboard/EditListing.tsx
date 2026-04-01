@@ -54,12 +54,14 @@ const EditListing: React.FC = () => {
         if (foundProperty.images && foundProperty.images.length > 0) {
           // If images are URLs, use them directly
           // If they're file paths, you might need to prepend a base URL
+          const baseApiUrl =
+            import.meta.env.VITE_API_BASE_URL || window.location.origin || "http://localhost:5000";
           const images = foundProperty.images.map((img) => {
             if (typeof img === "string" && img.startsWith("http")) {
               return img;
             }
             // Assuming images are stored as relative paths
-            return `${import.meta.env.VITE_API_BASE_URL || ""}/uploads/${img}`;
+            return `${baseApiUrl}/uploads/${img}`;
           });
           setExistingImages(images);
         }
