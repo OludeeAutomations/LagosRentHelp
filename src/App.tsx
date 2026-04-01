@@ -26,7 +26,6 @@ import PropertyManagementPage from "./page/admin/PropertyManagementPage";
 import PropertyEditorPage from "./page/admin/PropertyEditorPage";
 import AdminAccountsPage from "./page/admin/AdminAccountsPage";
 
-
 const App: React.FC = () => {
   return (
     <Router>
@@ -40,7 +39,7 @@ const App: React.FC = () => {
             path="/"
             element={
               <Layout>
-                <Home />
+                <ComingSoonPage />
               </Layout>
             }
           />
