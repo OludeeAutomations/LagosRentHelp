@@ -39,7 +39,7 @@ const App: React.FC = () => {
             path="/"
             element={
               <Layout>
-                <ComingSoonPage />
+                <Home />
               </Layout>
             }
           />
