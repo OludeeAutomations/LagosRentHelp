@@ -12,12 +12,15 @@ import { useNavigate } from "react-router-dom";
 import { usePropertyStore } from "@/stores/propertyStore";
 import { useAuthStore } from "@/stores/authStore";
 import { toast } from "sonner";
+import { propertyService } from "@/services/propertyService";
+import { Property } from "@/types";
 import PropertySections from "@/components/common/PropertySections";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const { properties, fetchProperties, loading } = usePropertyStore();
   const { user } = useAuthStore();
+  const [allProperties, setAllProperties] = useState<Property[]>([]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("");
@@ -55,11 +58,46 @@ const Home: React.FC = () => {
     "mini-flat",
     "short-let",
   ];
-  console.log("Properties in Home component:", properties);
+
+  // Fetch properties and include pending/rejected for admins
+  const fetchAndMergeProperties = async () => {
+    try {
+      // Fetch approved properties
+      await fetchProperties();
+
+      // If user is admin, also fetch managed/pending properties
+      if (user?.role === "admin" || user?.role === "super_admin") {
+        try {
+          const managedResponse = await propertyService.getManageAll();
+          const managedProperties = Array.isArray(managedResponse.data)
+            ? managedResponse.data
+            : managedResponse.data?.data || [];
+
+          // Merge approved properties with managed properties (pending/rejected)
+          const merged = [...properties];
+          managedProperties.forEach((managed: Property) => {
+            // Add if not already in approved list
+            if (!merged.find((p) => p._id === managed._id)) {
+              merged.push(managed);
+            }
+          });
+
+          setAllProperties(merged);
+        } catch (error) {
+          console.error("Failed to fetch managed properties:", error);
+          setAllProperties(properties);
+        }
+      } else {
+        setAllProperties(properties);
+      }
+    } catch (error) {
+      console.error("Error fetching properties:", error);
+    }
+  };
 
   useEffect(() => {
-    fetchProperties();
-  }, [fetchProperties]);
+    fetchAndMergeProperties();
+  }, [user, fetchProperties]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -69,12 +107,15 @@ const Home: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Use merged properties or properties from store
+  const displayProperties = allProperties.length > 0 ? allProperties : properties;
+
   // Filter properties by type
-  const rentProperties = properties.filter(
+  const rentProperties = displayProperties.filter(
     (property) => property.listingType === "rent",
   );
 
-  const shortLetProperties = properties.filter(
+  const shortLetProperties = displayProperties.filter(
     (property) => property.listingType === "short-let",
   );
 
@@ -384,7 +425,7 @@ const Home: React.FC = () => {
       <section id="featured-properties" className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <PropertySections
-            allProperties={properties}
+            allProperties={displayProperties}
             rentProperties={rentProperties}
             shortLetProperties={shortLetProperties}
             loading={loading}
