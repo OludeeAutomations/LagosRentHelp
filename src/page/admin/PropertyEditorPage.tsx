@@ -37,8 +37,6 @@ type PropertyFormState = {
   amenities: string;
   ownerId: string;
   contactUserId: string;
-  latitude: string;
-  longitude: string;
   availableFrom: string;
   minimumStay: string;
 };
@@ -57,8 +55,7 @@ const emptyForm: PropertyFormState = {
   amenities: "",
   ownerId: "",
   contactUserId: "",
-  latitude: "",
-  longitude: "",
+
   availableFrom: "",
   minimumStay: "",
 };
@@ -181,12 +178,6 @@ const PropertyEditorPage: React.FC = () => {
                 typeof property.contactUserId === "object"
                   ? property.contactUserId?._id || ""
                   : String(property.contactUserId || defaultContactId),
-              latitude: property.coordinates?.lat
-                ? String(property.coordinates.lat)
-                : "",
-              longitude: property.coordinates?.lng
-                ? String(property.coordinates.lng)
-                : "",
               availableFrom: property.availableFrom
                 ? property.availableFrom.slice(0, 10)
                 : "",
