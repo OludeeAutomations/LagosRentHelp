@@ -42,6 +42,13 @@ const PropertyDetails: React.FC = () => {
   const [showContactModal, setShowContactModal] = useState(false);
   const propertyWithContact = property as (Property & { agent?: ListingContact }) | null;
 
+  const openContactModal = () => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    setShowContactModal(true);
+  };
+
   const amenities = useAmenities(property?.amenities);
   const contact: ListingContact | null =
     (typeof property?.contactUserId === "object"
@@ -329,7 +336,7 @@ const PropertyDetails: React.FC = () => {
               contact={contact}
               onCall={handlePhoneCall}
               onChat={handleWhatsAppClick}
-              onOpen={() => setShowContactModal(true)}
+              onOpen={openContactModal}
             />
 
             <Card>

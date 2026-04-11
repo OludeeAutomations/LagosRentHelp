@@ -20,7 +20,7 @@ const HeaderUserProfileDialog: React.FC<HeaderUserProfileDialogProps> = ({
     <div className="space-y-4">
       <div className="flex items-center space-x-4">
         <Avatar className="h-16 w-16">
-          <AvatarImage src={user.avatar} alt={user.name} />
+          <AvatarImage src={user.avatar || "/icon.png"} alt={user.name} />
           <AvatarFallback className="bg-[#129B36] text-white text-lg">
             {getInitials(user.name)}
           </AvatarFallback>
