@@ -6,6 +6,7 @@ export interface CreateAdminData {
   email: string;
   phone: string;
   password: string;
+  avatar?: string;
 }
 
 export interface AdminListFilters {

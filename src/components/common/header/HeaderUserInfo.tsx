@@ -18,7 +18,7 @@ const HeaderUserInfo: React.FC<HeaderUserInfoProps> = ({
       isMobile ? "px-3 py-2" : ""
     }`}>
     <Avatar className={`${isMobile ? "h-8 w-8" : "h-10 w-10"}`}>
-      <AvatarImage src={user.avatar} alt={user.name} />
+      <AvatarImage src={user.avatar || "/icon.png"} alt={user.name} />
       <AvatarFallback className="bg-[#129B36] text-white">
         {getInitials(user.name)}
       </AvatarFallback>
