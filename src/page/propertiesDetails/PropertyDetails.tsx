@@ -22,6 +22,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useLeadStore } from "@/stores/leadStore";
 import { usePropertyStore } from "@/stores/propertyStore";
 import { Property } from "@/types";
+import { agentService } from "@/services/agentService";
 import PropertyContactCard from "./components/PropertyContactCard";
 import PropertyContactModal from "./components/PropertyContactModal";
 import PropertyFeatureIcon from "./components/PropertyFeatureIcon";
@@ -40,6 +41,7 @@ const PropertyDetails: React.FC = () => {
   const [property, setProperty] = useState<Property | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [resolvedContact, setResolvedContact] = useState<ListingContact | null>(null);
   const propertyWithContact = property as (Property & { agent?: ListingContact }) | null;
 
   const openContactModal = () => {
@@ -50,7 +52,7 @@ const PropertyDetails: React.FC = () => {
   };
 
   const amenities = useAmenities(property?.amenities);
-  const contact: ListingContact | null =
+  const rawContact: ListingContact | null =
     (typeof property?.contactUserId === "object"
       ? (property.contactUserId as ListingContact)
       : null) ||
@@ -59,10 +61,57 @@ const PropertyDetails: React.FC = () => {
       ? (property.agentId as unknown as ListingContact)
       : null);
   const contactId =
-    contact?._id ||
+    rawContact?._id ||
     (typeof property?.contactUserId === "string" ? property.contactUserId : null) ||
-    contact?.agentId ||
+    rawContact?.agentId ||
     (typeof property?.agentId === "string" ? property.agentId : null);
+  const contact = resolvedContact || rawContact;
+
+  const resolveAgentContact = async (agentId: string) => {
+    try {
+      const response = await agentService.getProfile(agentId);
+      const agent = response?.data?.agent;
+      if (agent) {
+        setResolvedContact({
+          _id: agent._id,
+          agentId: agent._id,
+          name: agent.name,
+          photo: (agent as any).photo || "",
+          phone: agent.phone || "",
+          whatsapp: agent.whatsappNumber || "",
+          whatsappNumber: agent.whatsappNumber || "",
+          verificationStatus: agent.verificationStatus,
+          state: (agent as any).state || "",
+          city: (agent as any).city || "",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to resolve agent contact:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!property) {
+      setResolvedContact(null);
+      return;
+    }
+
+    if (rawContact) {
+      setResolvedContact(rawContact);
+      return;
+    }
+
+    const agentIdString =
+      typeof property.contactUserId === "string"
+        ? property.contactUserId
+        : typeof property.agentId === "string"
+        ? property.agentId
+        : null;
+
+    if (agentIdString) {
+      resolveAgentContact(agentIdString);
+    }
+  }, [property, rawContact]);
 
   const gallery = usePropertyImageGallery({
     imageCount: property?.images?.length || 0,
@@ -103,23 +152,16 @@ const PropertyDetails: React.FC = () => {
       return;
     }
 
-    const whatsapp = contact?.whatsapp || contact?.whatsappNumber;
-    if (!whatsapp) {
-      toast.error("WhatsApp number not available");
-      return;
-    }
-
     createLead({
       agentId: contactId,
       type: "whatsapp",
       propertyId: property?._id,
     }).catch(console.error);
 
-    const message = `Hello, I'm interested in your property: ${property?.title}`;
-    window.open(
-      `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`,
-      "_blank"
-    );
+    const whatsappUrl =
+      "https://wa.me/2347082293054?text=" +
+      encodeURIComponent(`Hello, I'm interested in your property: ${property?.title}`);
+    window.open(whatsappUrl, "_blank");
   };
 
   const handlePhoneCall = async () => {

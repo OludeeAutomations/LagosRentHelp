@@ -57,8 +57,7 @@ const PropertyContactCard: React.FC<PropertyContactCardProps> = ({
         <div className="space-y-3">
           <Button
             className="w-full bg-green-600 hover:bg-green-700"
-            onClick={onChat}
-            disabled={!contact?.whatsapp && !contact?.whatsappNumber}>
+            onClick={onChat}>
             <MessageCircle className="mr-2 h-4 w-4" /> Chat on WhatsApp
           </Button>
           <Button
