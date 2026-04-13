@@ -59,27 +59,18 @@ export const propertyService = {
   },
 
   getManageById: async (id: string): Promise<ApiResponse<Property>> => {
-    return api.get<Property>(`/properties/manage/${id}`);
+    return api.get<ApiResponse<Property>>(`/properties/manage/${id}`);
   },
 
   create: async (propertyData: FormData): Promise<ApiResponse<Property>> => {
-    return api.post<Property>("/properties", propertyData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    return api.post<ApiResponse<Property>>("/properties", propertyData);
   },
 
   update: async (
     id: string,
     updates: Partial<Property> | FormData
   ): Promise<ApiResponse<Property>> => {
-    const config =
-      updates instanceof FormData
-        ? { headers: { "Content-Type": "multipart/form-data" } }
-        : {};
-
-    return api.put<Property>(`/properties/${id}`, updates, config);
+    return api.put<ApiResponse<Property>>(`/properties/${id}`, updates);
   },
 
   updateApproval: async (

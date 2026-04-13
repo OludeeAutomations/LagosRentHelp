@@ -16,8 +16,6 @@ export type ApiResponse<T> = {
   };
 };
 
-const DEFAULT_API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || window.location.origin || "http://localhost:5000";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || window.location.origin || "http://localhost:5000";
 
 if (!import.meta.env.VITE_API_BASE_URL) {
@@ -99,6 +97,16 @@ async function refreshAccessToken(): Promise<string> {
 
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    if (config.data instanceof FormData) {
+      if (config.headers) {
+        if (typeof config.headers.set === "function") {
+          config.headers.delete("Content-Type");
+        } else {
+          delete config.headers["Content-Type"];
+        }
+      }
+    }
+
     const token = getAccessToken();
     if (token) {
       if (!config.headers) {

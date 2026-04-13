@@ -3,6 +3,8 @@ export interface ListingContact {
   agentId?: string;
   name?: string;
   photo?: string;
+  avatar?: string;
+  idPhoto?: string;
   phone?: string;
   whatsapp?: string;
   whatsappNumber?: string;
