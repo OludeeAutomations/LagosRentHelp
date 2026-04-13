@@ -72,11 +72,22 @@ const PropertyDetails: React.FC = () => {
       const response = await agentService.getProfile(agentId);
       const agent = response?.data?.agent;
       if (agent) {
+        const userImage =
+          (agent as any).userId?.avatar ||
+          (agent as any).userId?.avatarUrl ||
+          (agent as any).userId?.photo ||
+          "";
+
         setResolvedContact({
           _id: agent._id,
           agentId: agent._id,
           name: agent.name,
-          photo: (agent as any).photo || "",
+          photo:
+            (agent as any).photo ||
+            agent.avatar ||
+            agent.idPhoto ||
+            userImage ||
+            "",
           phone: agent.phone || "",
           whatsapp: agent.whatsappNumber || "",
           whatsappNumber: agent.whatsappNumber || "",

@@ -312,9 +312,13 @@ const PropertyEditorPage: React.FC = () => {
       }
 
       navigate("/admin/properties");
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to save property");
+    } catch (error: unknown) {
+      console.error("Failed to save property:", error);
+      const backendMessage =
+        (error as any)?.response?.data?.message ||
+        (error as any)?.message ||
+        "Failed to save property";
+      toast.error(backendMessage);
     } finally {
       setLoading(false);
     }
