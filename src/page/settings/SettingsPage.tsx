@@ -14,8 +14,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import type { User } from "@/types";
 import {
-  User,
+  User as UserIcon,
   Shield,
   Bell,
   Lock,
@@ -29,7 +30,7 @@ import {
 
 const SettingsPage: React.FC = () => {
   // 1. Destructure refresh/fetch method if available, or rely on user
-  const { user, updateProfile, changePassword } = useAuthStore();
+  const { user, updateProfile, changePassword, setUser } = useAuthStore();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("profile");
   const [isLoading, setIsLoading] = useState(false);
@@ -40,7 +41,10 @@ const SettingsPage: React.FC = () => {
     email: "",
     phone: "",
     location: "", // Added location safety
+    avatar: "",
   });
+
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const [securityData, setSecurityData] = useState({
     currentPassword: "",
@@ -71,10 +75,12 @@ const SettingsPage: React.FC = () => {
         name: user.name || "",
         email: user.email || "",
         phone: user.phone || "",
+        avatar: user.avatar || "",
         // If your user model has location, map it here.
         // If it's on the Agent profile, you might need to fetch Agent profile separately.
         location: (user as any).location || (user as any).address || "",
       });
+      setAvatarPreview(user.avatar || null);
 
       // Update notifications if user has saved preferences
       // setNotifications(user.preferences?.notifications || defaultNotifications);
@@ -85,17 +91,44 @@ const SettingsPage: React.FC = () => {
   }, [user]); // Dependency on 'user' is crucial
 
   // Handle profile update
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const preview = reader.result as string;
+      setAvatarPreview(preview);
+      setProfileData((prev) => ({
+        ...prev,
+        avatar: preview,
+      }));
+
+      if (user) {
+        setUser({
+          ...user,
+          avatar: preview,
+        });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Pass only the allowed fields to updateProfile
-      await updateProfile({
+      const payload: Partial<User> = {
         name: profileData.name,
         phone: profileData.phone,
-        // email is usually redundant to send if not changing, but depends on backend
-      });
+      };
+
+      if (profileData.avatar) {
+        payload.avatar = profileData.avatar;
+      }
+
+      await updateProfile(payload);
       toast.success("Profile updated successfully");
     } catch (error: any) {
       console.error(error);
@@ -173,7 +206,7 @@ const SettingsPage: React.FC = () => {
           className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="profile" className="flex items-center gap-2">
-              <User className="h-4 w-4" /> Profile
+              <UserIcon className="h-4 w-4" /> Profile
             </TabsTrigger>
             <TabsTrigger value="security" className="flex items-center gap-2">
               <Shield className="h-4 w-4" /> Security
@@ -190,7 +223,7 @@ const SettingsPage: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" /> Profile Information
+                  <UserIcon className="h-5 w-5" /> Profile Information
                 </CardTitle>
                 <CardDescription>
                   Update your personal information.
@@ -248,6 +281,47 @@ const SettingsPage: React.FC = () => {
                         className="pl-10"
                         placeholder="+234..."
                       />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="avatar">Profile Picture</Label>
+                    <p className="text-sm text-gray-500">
+                      Input an image to update your profile picture.
+                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+                      <div className="h-20 w-20 rounded-full overflow-hidden border border-gray-200 bg-gray-100">
+                        {avatarPreview ? (
+                          <img
+                            src={avatarPreview}
+                            alt="Profile preview"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : user.avatar ? (
+                          <img
+                            src={user.avatar}
+                            alt="Current profile"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-gray-500 text-sm">
+                            No image
+                          </div>
+                        )}
+                      </div>
+                      <label
+                        htmlFor="avatar"
+                        className="cursor-pointer rounded-md border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        Choose image
+                        <input
+                          id="avatar"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleAvatarChange}
+                        />
+                      </label>
                     </div>
                   </div>
 

@@ -26,7 +26,7 @@ const PropertyImageGallery: React.FC<PropertyImageGalleryProps> = ({
           <img
             src={property.images[activeImageIndex]}
             alt={property.title}
-            className="w-full h-full object-contain md:object-cover transition-transform duration-300 hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-100">
