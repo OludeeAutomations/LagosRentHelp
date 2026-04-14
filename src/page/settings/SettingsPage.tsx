@@ -123,7 +123,7 @@ const SettingsPage: React.FC = () => {
     try {
       await changePassword(
         securityData.currentPassword,
-        securityData.newPassword
+        securityData.newPassword,
       );
       toast.success("Password changed successfully");
       setSecurityData({
@@ -299,10 +299,10 @@ const SettingsPage: React.FC = () => {
                       {user.role === "super_admin"
                         ? "Super Admin Account"
                         : user.role === "admin"
-                        ? "Admin Account"
-                        : user.role === "agent"
-                        ? "Agent Account"
-                        : "User Account"}
+                          ? "Admin Account"
+                          : user.role === "agent"
+                            ? "Agent Account"
+                            : "User Account"}
                     </p>
                   </div>
                   {/* You can display verification status if it exists on user or agent */}
