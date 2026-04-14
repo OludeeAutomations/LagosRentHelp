@@ -37,8 +37,8 @@ type PropertyFormState = {
   amenities: string;
   ownerId: string;
   contactUserId: string;
-  latitude: string;
-  longitude: string;
+  // latitude: string;
+  // longitude: string;
   availableFrom: string;
   minimumStay: string;
 };
@@ -59,8 +59,8 @@ const emptyForm: PropertyFormState = {
   contactUserId: "",
 
   availableFrom: "",
-  latitude: "",
-  longitude: "",
+  // latitude: "",
+  // longitude: "",
   minimumStay: "",
 };
 
@@ -182,12 +182,12 @@ const PropertyEditorPage: React.FC = () => {
                 typeof property.contactUserId === "object"
                   ? property.contactUserId?._id || ""
                   : String(property.contactUserId || defaultContactId),
-              latitude: property.coordinates?.lat
-                ? String(property.coordinates.lat)
-                : "",
-              longitude: property.coordinates?.lng
-                ? String(property.coordinates.lng)
-                : "",
+              // latitude: property.coordinates?.lat
+              //   ? String(property.coordinates.lat)
+              //   : "",
+              // longitude: property.coordinates?.lng
+              //   ? String(property.coordinates.lng)
+              //   : "",
               availableFrom: property.availableFrom
                 ? property.availableFrom.slice(0, 10)
                 : "",
@@ -277,17 +277,17 @@ const PropertyEditorPage: React.FC = () => {
       );
       payload.append("ownerId", form.ownerId);
       payload.append("contactUserId", form.contactUserId);
-      if (form.latitude && form.longitude) {
-        payload.append(
-          "coordinates",
-          JSON.stringify({
-            lat: Number(form.latitude),
-            lng: Number(form.longitude),
-          }),
-        );
-        payload.append("lat", form.latitude);
-        payload.append("lng", form.longitude);
-      }
+      // if (form.latitude && form.longitude) {
+      //   payload.append(
+      //     "coordinates",
+      //     JSON.stringify({
+      //       lat: Number(form.latitude),
+      //       lng: Number(form.longitude),
+      //     }),
+      //   );
+      //   payload.append("lat", form.latitude);
+      //   payload.append("lng", form.longitude);
+      // }
 
       if (form.availableFrom) {
         payload.append("availableFrom", form.availableFrom);

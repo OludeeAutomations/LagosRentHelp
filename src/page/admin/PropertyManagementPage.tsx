@@ -14,7 +14,9 @@ const extractProperties = (payload: any): Property[] => {
   return [];
 };
 
-const getApprovalBadgeVariant = (approvalStatus?: Property["approvalStatus"]) => {
+const getApprovalBadgeVariant = (
+  approvalStatus?: Property["approvalStatus"],
+) => {
   if (approvalStatus === "approved") return "default";
   if (approvalStatus === "rejected") return "destructive";
   return "secondary";
@@ -59,7 +61,7 @@ const PropertyManagementPage: React.FC = () => {
 
   const handleApproval = async (
     propertyId: string,
-    approvalStatus: "approved" | "rejected"
+    approvalStatus: "approved" | "rejected",
   ) => {
     const approvalNote =
       approvalStatus === "rejected"
@@ -124,7 +126,9 @@ const PropertyManagementPage: React.FC = () => {
       <div className="container mx-auto px-4 max-w-6xl space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Manage Properties</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Manage Properties
+            </h1>
             <p className="text-gray-600 mt-2">
               Upload, review, and maintain assigned properties.
             </p>
@@ -169,9 +173,10 @@ const PropertyManagementPage: React.FC = () => {
                               {property.title}
                             </h2>
                             <Badge
-                              variant={getApprovalBadgeVariant(property.approvalStatus)}
-                              className="capitalize"
-                            >
+                              variant={getApprovalBadgeVariant(
+                                property.approvalStatus,
+                              )}
+                              className="capitalize">
                               {property.approvalStatus || "approved"}
                             </Badge>
                             <Badge
@@ -180,22 +185,23 @@ const PropertyManagementPage: React.FC = () => {
                                   ? "outline"
                                   : "secondary"
                               }
-                              className="capitalize"
-                            >
+                              className="capitalize">
                               {property.status || "available"}
                             </Badge>
                           </div>
 
-                          <p className="text-sm text-gray-600">{property.location}</p>
+                          <p className="text-sm text-gray-600">
+                            {property.location}
+                          </p>
                           <div className="flex flex-wrap gap-3 text-xs text-gray-500">
                             <span>Owner: {owner || "Unassigned"}</span>
                             <span>Contact: {contact || "Not set"}</span>
-                            <span>
+                            {/* <span>
                               Coordinates:{" "}
                               {property.coordinates
                                 ? `${property.coordinates.lat}, ${property.coordinates.lng}`
                                 : "Not set"}
-                            </span>
+                            </span> */}
                           </div>
                           {property.approvalNote && (
                             <p className="text-sm text-amber-700">
@@ -209,7 +215,9 @@ const PropertyManagementPage: React.FC = () => {
                             <Link to={`/properties/${property._id}`}>View</Link>
                           </Button>
                           <Button variant="outline" asChild>
-                            <Link to={`/admin/properties/${property._id}/edit`}>Edit</Link>
+                            <Link to={`/admin/properties/${property._id}/edit`}>
+                              Edit
+                            </Link>
                           </Button>
                           {property.status !== "rented" && (
                             <Button
@@ -223,13 +231,17 @@ const PropertyManagementPage: React.FC = () => {
                           {canApprove && (
                             <>
                               <Button
-                                onClick={() => handleApproval(property._id, "approved")}
+                                onClick={() =>
+                                  handleApproval(property._id, "approved")
+                                }
                                 disabled={actionId === property._id}>
                                 Approve
                               </Button>
                               <Button
                                 variant="secondary"
-                                onClick={() => handleApproval(property._id, "rejected")}
+                                onClick={() =>
+                                  handleApproval(property._id, "rejected")
+                                }
                                 disabled={actionId === property._id}>
                                 Reject
                               </Button>
