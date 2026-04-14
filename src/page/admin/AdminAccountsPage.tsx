@@ -10,18 +10,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/stores/authStore";
 import { CreateAdminData, userService } from "@/services/userService";
 import { User } from "@/types";
 import { useNavigate } from "react-router-dom";
+import { COMPANY_LOGO_URL, getDisplayProfileImage } from "@/lib/profileImage";
 
 const emptyForm: CreateAdminData = {
   name: "",
   email: "",
   phone: "",
   password: "",
+  avatar: "",
 };
 
 const extractUsers = (payload: unknown): User[] => {
@@ -47,6 +50,8 @@ const AdminAccountsPage: React.FC = () => {
   const { user } = useAuthStore();
   const [admins, setAdmins] = useState<User[]>([]);
   const [form, setForm] = useState<CreateAdminData>(emptyForm);
+  const [avatarPreview, setAvatarPreview] = useState<string>(COMPANY_LOGO_URL);
+  const [createdAdminAvatars, setCreatedAdminAvatars] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "super_admin">(
     "all"
@@ -64,7 +69,15 @@ const AdminAccountsPage: React.FC = () => {
         search: search || undefined,
         role: roleFilter === "all" ? undefined : roleFilter,
       });
-      setAdmins(extractUsers(response.data || response));
+      const fetchedAdmins = extractUsers(response.data || response).map((admin) => {
+        const localAvatar = createdAdminAvatars[admin._id || admin.email || ""];
+
+        return {
+          ...admin,
+          avatar: admin.avatar || localAvatar,
+        };
+      });
+      setAdmins(fetchedAdmins);
     } catch (error) {
       console.error(error);
       toast.error("Failed to load admin accounts");
@@ -96,14 +109,45 @@ const AdminAccountsPage: React.FC = () => {
     }));
   };
 
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const avatarData = reader.result as string;
+      setForm((current) => ({
+        ...current,
+        avatar: avatarData,
+      }));
+      setAvatarPreview(avatarData);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleCreateAdmin = async (event: React.FormEvent) => {
     event.preventDefault();
     setCreating(true);
 
     try {
-      await userService.createAdmin(form);
+      const response = await userService.createAdmin(form);
+      const createdAdmin = response.data || response;
+
+      if (createdAdmin) {
+        const createdId = createdAdmin._id || createdAdmin.email || "";
+        if (form.avatar) {
+          setCreatedAdminAvatars((current) => ({
+            ...current,
+            [createdId]: form.avatar as string,
+          }));
+        }
+
+        setAdmins((current) => [...current, createdAdmin]);
+      }
+
       toast.success("Admin account created");
       setForm(emptyForm);
+      setAvatarPreview(COMPANY_LOGO_URL);
       await loadAdmins();
     } catch (error) {
       console.error(error);
@@ -209,6 +253,30 @@ const AdminAccountsPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="avatar">Profile Picture</Label>
+                  <p className="text-sm text-gray-500">
+                    Upload an image to serve as the admin profile picture.
+                  </p>
+                  <input
+                    id="avatar"
+                    type="file"
+                    accept="image/*"
+                    aria-label="Upload admin profile picture"
+                    className="block w-full text-sm text-gray-900 file:mr-4 file:rounded-full file:border-0 file:bg-green-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-green-700 hover:file:bg-green-100"
+                    onChange={handleAvatarChange}
+                  />
+                  <img
+                    src={avatarPreview}
+                    alt={
+                      avatarPreview === COMPANY_LOGO_URL
+                        ? "Company logo preview"
+                        : "Admin avatar preview"
+                    }
+                    className="mt-2 h-24 w-24 rounded-full border border-gray-200 object-cover"
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <Input
                     id="password"
@@ -242,6 +310,7 @@ const AdminAccountsPage: React.FC = () => {
                 />
 
                 <select
+                  aria-label="Filter admin role"
                   value={roleFilter}
                   onChange={(event) =>
                     setRoleFilter(
@@ -277,19 +346,34 @@ const AdminAccountsPage: React.FC = () => {
                         key={adminUser._id}
                         className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-4 md:flex-row md:items-center md:justify-between"
                       >
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h2 className="font-semibold text-gray-900">
-                              {adminUser.name}
-                            </h2>
-                            <Badge variant={getRoleBadgeVariant(adminUser.role)}>
-                              {adminUser.role.replace("_", " ")}
-                            </Badge>
-                            {isCurrentUser && <Badge variant="outline">You</Badge>}
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            <div>{adminUser.email}</div>
-                            <div>{adminUser.phone || "No phone number"}</div>
+                        <div className="flex items-center gap-4">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage
+                              src={getDisplayProfileImage(adminUser) || undefined}
+                              alt={adminUser.name}
+                            />
+                            <AvatarFallback className="bg-[#129B36] text-white text-sm">
+                              {adminUser.name
+                                .split(" ")
+                                .map((part) => part[0])
+                                .join("")
+                                .toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h2 className="font-semibold text-gray-900">
+                                {adminUser.name}
+                              </h2>
+                              <Badge variant={getRoleBadgeVariant(adminUser.role)}>
+                                {adminUser.role.replace("_", " ")}
+                              </Badge>
+                              {isCurrentUser && <Badge variant="outline">You</Badge>}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              <div>{adminUser.email}</div>
+                              <div>{adminUser.phone || "No phone number"}</div>
+                            </div>
                           </div>
                         </div>
 

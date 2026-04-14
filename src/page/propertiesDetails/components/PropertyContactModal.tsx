@@ -22,6 +22,13 @@ const PropertyContactModal: React.FC<PropertyContactModalProps> = ({
     return null;
   }
 
+  const contactImage =
+    contact.photo || contact.avatar || contact.idPhoto ||
+    (contact as any)?.userId?.avatar ||
+    (contact as any)?.userId?.avatarUrl ||
+    (contact as any)?.userId?.photo ||
+    "/icon.png";
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
@@ -37,18 +44,18 @@ const PropertyContactModal: React.FC<PropertyContactModalProps> = ({
 
         <div className="text-center">
           <img
-            src={contact.photo || "/placeholder-user.jpg"}
+            src={contactImage}
             alt={contact.name}
             className="w-24 h-24 rounded-full mx-auto mb-4 object-cover border-4 border-green-100"
           />
-          <h3 className="text-xl font-bold mb-1">{contact.name}</h3>
+          <h3 className="text-2xl font-bold mb-1">{contact.name}</h3>
           {contact.verificationStatus === "verified" && (
-            <Badge className="bg-green-100 text-green-800 hover:bg-green-100 mb-4">
+            <Badge className="bg-green-100 text-green-800 hover:bg-green-100 mb-4 text-base">
               Verified Contact
             </Badge>
           )}
 
-          <div className="space-y-3 text-left bg-gray-50 p-4 rounded-lg text-sm mb-6">
+          <div className="space-y-3 text-left bg-gray-50 p-4 rounded-lg text-base mb-6">
             <div className="flex justify-between">
               <span className="text-gray-500">State</span>
               <span className="font-medium capitalize">{contact.state || "N/A"}</span>
@@ -60,10 +67,10 @@ const PropertyContactModal: React.FC<PropertyContactModalProps> = ({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Button onClick={onChat} className="bg-green-600 hover:bg-green-700">
+            <Button onClick={onChat} className="bg-green-600 hover:bg-green-700 text-lg py-3">
               WhatsApp
             </Button>
-            <Button onClick={onCall} variant="outline">
+            <Button onClick={onCall} variant="outline" className="text-lg py-3">
               Call
             </Button>
           </div>

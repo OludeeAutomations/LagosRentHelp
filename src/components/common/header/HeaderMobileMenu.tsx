@@ -32,8 +32,8 @@ const HeaderMobileMenu: React.FC<HeaderMobileMenuProps> = ({
   return (
     <button
       onClick={onToggle}
-      className="md:hidden p-2 rounded-md text-[#0E0E0E] hover:text-[#129B36] hover:bg-gray-100 focus:outline-none">
-      {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+      className="lg:hidden p-1.5 sm:p-2 rounded-md text-[#0E0E0E] hover:text-[#129B36] hover:bg-gray-100 focus:outline-none">
+      {isOpen ? <X className="h-5 w-5 sm:h-6 sm:w-6" /> : <Menu className="h-5 w-5 sm:h-6 sm:w-6" />}
     </button>
   );
 };

@@ -18,6 +18,13 @@ const PropertyContactCard: React.FC<PropertyContactCardProps> = ({
   onChat,
   onOpen,
 }) => {
+  const contactImage =
+    contact?.photo || contact?.avatar || contact?.idPhoto ||
+    (contact as any)?.userId?.avatar ||
+    (contact as any)?.userId?.avatarUrl ||
+    (contact as any)?.userId?.photo ||
+    "/icon.png";
+
   return (
     <Card>
       <CardHeader>
@@ -26,10 +33,10 @@ const PropertyContactCard: React.FC<PropertyContactCardProps> = ({
       <CardContent>
         <div className="flex items-center gap-4 mb-6 cursor-pointer" onClick={onOpen}>
           <div className="relative">
-            {contact?.photo ? (
+            {contactImage ? (
               <img
-                src={contact.photo}
-                alt={contact.name}
+                src={contactImage}
+                alt={contact?.name}
                 className="h-16 w-16 rounded-full object-cover border-2 border-green-500"
               />
             ) : (
@@ -47,26 +54,25 @@ const PropertyContactCard: React.FC<PropertyContactCardProps> = ({
             )}
           </div>
           <div>
-            <h3 className="font-semibold text-lg hover:underline decoration-green-500 underline-offset-4">
+            <h3 className="font-semibold text-xl hover:underline decoration-green-500 underline-offset-4">
               {contact?.name || "Listing Contact"}
             </h3>
-            <p className="text-sm text-gray-500">View Contact</p>
+            <p className="text-base text-gray-500">View Contact</p>
           </div>
         </div>
 
         <div className="space-y-3">
           <Button
-            className="w-full bg-green-600 hover:bg-green-700"
-            onClick={onChat}
-            disabled={!contact?.whatsapp && !contact?.whatsappNumber}>
-            <MessageCircle className="mr-2 h-4 w-4" /> Chat on WhatsApp
+            className="w-full bg-green-600 hover:bg-green-700 text-lg py-3"
+            onClick={onChat}>
+            <MessageCircle className="mr-2 h-5 w-5" /> Chat on WhatsApp
           </Button>
           <Button
             variant="outline"
-            className="w-full border-green-600 text-green-600 hover:bg-green-50"
+            className="w-full border-green-600 text-green-600 hover:bg-green-50 text-lg py-3"
             onClick={onCall}
             disabled={!contact?.phone}>
-            <Phone className="mr-2 h-4 w-4" /> Call Owner
+            <Phone className="mr-2 h-5 w-5" /> Call Owner
           </Button>
         </div>
       </CardContent>

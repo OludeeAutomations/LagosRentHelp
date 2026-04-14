@@ -1,6 +1,7 @@
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from "@/types";
+import { getDisplayProfileImage } from "@/lib/profileImage";
 
 interface HeaderUserInfoProps {
   user: User;
@@ -18,7 +19,10 @@ const HeaderUserInfo: React.FC<HeaderUserInfoProps> = ({
       isMobile ? "px-3 py-2" : ""
     }`}>
     <Avatar className={`${isMobile ? "h-8 w-8" : "h-10 w-10"}`}>
-      <AvatarImage src={user.avatar} alt={user.name} />
+      <AvatarImage
+        src={getDisplayProfileImage(user) || undefined}
+        alt={user.name}
+      />
       <AvatarFallback className="bg-[#129B36] text-white">
         {getInitials(user.name)}
       </AvatarFallback>

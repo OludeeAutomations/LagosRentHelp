@@ -14,11 +14,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Don't show header/footer on auth pages or maintenance mode
   const isAuthPage = ["/login", "/register"].includes(location.pathname);
-  const isMaintenanceMode = location.pathname === "/";
-
+  //const isMaintenanceMode = location.pathname === "/";
+  //add && !isMaintenanceMode to the condition above when maintenance mode is implemented
   return (
     <div className="min-h-screen flex flex-col">
-      {!isAuthPage && !isMaintenanceMode && <Header />}
+      {/* add && !isMaintenanceMode to the condition above when maintenance mode
+      is implemented */}
+      {!isAuthPage && <Header />}
       {isAuthPage ? (
         children
       ) : (
@@ -31,7 +33,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {children}
         </motion.main>
       )}
-      {!isAuthPage && !isMaintenanceMode && <Footer />}
+      {/* add && !isMaintenanceMode to the condition above when maintenance mode
+      is implemented */}
+      {!isAuthPage && <Footer />}
     </div>
   );
 };

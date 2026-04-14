@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -10,7 +11,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { propertyService } from "@/services/propertyService";
 import { userService } from "@/services/userService";
 import { ManageableUser, Property, User } from "@/types";
-
+import { ImagePlus, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 const propertyTypes = [
   "1-bedroom",
   "2-bedroom",
@@ -55,9 +57,10 @@ const emptyForm: PropertyFormState = {
   amenities: "",
   ownerId: "",
   contactUserId: "",
+
+  availableFrom: "",
   latitude: "",
   longitude: "",
-  availableFrom: "",
   minimumStay: "",
 };
 
@@ -88,7 +91,40 @@ const PropertyEditorPage: React.FC = () => {
   const canManage = user?.role === "admin" || user?.role === "super_admin";
   const isSuperAdmin = user?.role === "super_admin";
   const defaultContactId = useMemo(() => user?._id || "", [user?._id]);
+  const [input, setInput] = useState("");
+  const MIN_IMAGES = 5;
+  const MAX_IMAGES = 10;
 
+  const addFiles = (incoming: FileList | null) => {
+    if (!incoming) return;
+    const merged = [...files, ...Array.from(incoming)].slice(0, MAX_IMAGES);
+    setFiles(merged);
+  };
+
+  const removeFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+  // Convert string → array (if your form stores string)
+  const amenities = form.amenities
+    ? form.amenities
+        .split(",")
+        .map((a) => a.trim())
+        .filter(Boolean)
+    : [];
+
+  const addAmenity = () => {
+    const value = input.trim();
+    if (!value || amenities.includes(value)) return;
+
+    const updated = [...amenities, value];
+    updateField("amenities", updated.join(", "));
+    setInput("");
+  };
+
+  const removeAmenity = (item: string) => {
+    const updated = amenities.filter((a) => a !== item);
+    updateField("amenities", updated.join(", "));
+  };
   useEffect(() => {
     if (!user) {
       navigate("/login");
@@ -103,19 +139,28 @@ const PropertyEditorPage: React.FC = () => {
     const loadPage = async () => {
       setPageLoading(true);
       try {
-        const [usersResponse, adminsResponse, propertyResponse] = await Promise.all([
-          userService.getManageableUsers(),
-          isSuperAdmin
-            ? userService.getAdmins()
-            : Promise.resolve({ data: user ? [user] : [] }),
-          isEditMode && id ? propertyService.getManageById(id) : Promise.resolve(null),
-        ]);
+        const [usersResponse, adminsResponse, propertyResponse] =
+          await Promise.all([
+            userService.getManageableUsers(),
+            isSuperAdmin
+              ? userService.getAdmins()
+              : Promise.resolve({ data: user ? [user] : [] }),
+            isEditMode && id
+              ? propertyService.getManageById(id)
+              : Promise.resolve(null),
+          ]);
 
-        setManageableUsers(normalizeUsers<ManageableUser>(usersResponse.data || usersResponse));
-        setAdminUsers(normalizeUsers<User>(adminsResponse.data || adminsResponse));
+        setManageableUsers(
+          normalizeUsers<ManageableUser>(usersResponse.data || usersResponse),
+        );
+        setAdminUsers(
+          normalizeUsers<User>(adminsResponse.data || adminsResponse),
+        );
 
         if (propertyResponse) {
-          const property = normalizeProperty(propertyResponse.data || propertyResponse);
+          const property = normalizeProperty(
+            propertyResponse.data || propertyResponse,
+          );
           if (property) {
             setForm({
               title: property.title || "",
@@ -167,7 +212,15 @@ const PropertyEditorPage: React.FC = () => {
     };
 
     loadPage();
-  }, [user, canManage, navigate, isEditMode, id, defaultContactId, isSuperAdmin]);
+  }, [
+    user,
+    canManage,
+    navigate,
+    isEditMode,
+    id,
+    defaultContactId,
+    isSuperAdmin,
+  ]);
 
   const updateField = (field: keyof PropertyFormState, value: string) => {
     setForm((current) => ({
@@ -189,11 +242,17 @@ const PropertyEditorPage: React.FC = () => {
       return;
     }
 
-    if (!form.latitude || !form.longitude) {
+    // Latitude and longitude are hidden in the edit form
+    // and should be preserved from existing property data.
+    if (isEditMode && (!form.latitude || !form.longitude)) {
       toast.error("Please provide both latitude and longitude");
       return;
     }
 
+    if (files.length < MIN_IMAGES) {
+      toast.error(`Please upload at least ${MIN_IMAGES} images`);
+      return;
+    }
     setLoading(true);
     try {
       const payload = new FormData();
@@ -213,17 +272,22 @@ const PropertyEditorPage: React.FC = () => {
           form.amenities
             .split(",")
             .map((item) => item.trim())
-            .filter(Boolean)
-        )
+            .filter(Boolean),
+        ),
       );
       payload.append("ownerId", form.ownerId);
       payload.append("contactUserId", form.contactUserId);
-      payload.append("coordinates", JSON.stringify({
-        lat: Number(form.latitude),
-        lng: Number(form.longitude),
-      }));
-      payload.append("lat", form.latitude);
-      payload.append("lng", form.longitude);
+      if (form.latitude && form.longitude) {
+        payload.append(
+          "coordinates",
+          JSON.stringify({
+            lat: Number(form.latitude),
+            lng: Number(form.longitude),
+          }),
+        );
+        payload.append("lat", form.latitude);
+        payload.append("lng", form.longitude);
+      }
 
       if (form.availableFrom) {
         payload.append("availableFrom", form.availableFrom);
@@ -243,14 +307,18 @@ const PropertyEditorPage: React.FC = () => {
         toast.success(
           user?.role === "admin"
             ? "Property submitted for approval"
-            : "Property created successfully"
+            : "Property created successfully",
         );
       }
 
       navigate("/admin/properties");
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to save property");
+    } catch (error: unknown) {
+      console.error("Failed to save property:", error);
+      const backendMessage =
+        (error as any)?.response?.data?.message ||
+        (error as any)?.message ||
+        "Failed to save property";
+      toast.error(backendMessage);
     } finally {
       setLoading(false);
     }
@@ -285,7 +353,9 @@ const PropertyEditorPage: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>{isEditMode ? "Update Listing" : "New Listing"}</CardTitle>
+            <CardTitle>
+              {isEditMode ? "Update Listing" : "New Listing"}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {pageLoading ? (
@@ -348,7 +418,10 @@ const PropertyEditorPage: React.FC = () => {
                       id="type"
                       value={form.type}
                       onChange={(e) =>
-                        updateField("type", e.target.value as PropertyFormState["type"])
+                        updateField(
+                          "type",
+                          e.target.value as PropertyFormState["type"],
+                        )
                       }
                       className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
                       {propertyTypes.map((type) => (
@@ -369,7 +442,7 @@ const PropertyEditorPage: React.FC = () => {
                       onChange={(e) =>
                         updateField(
                           "listingType",
-                          e.target.value as PropertyFormState["listingType"]
+                          e.target.value as PropertyFormState["listingType"],
                         )
                       }
                       className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
@@ -413,7 +486,9 @@ const PropertyEditorPage: React.FC = () => {
                       id="availableFrom"
                       type="date"
                       value={form.availableFrom}
-                      onChange={(e) => updateField("availableFrom", e.target.value)}
+                      onChange={(e) =>
+                        updateField("availableFrom", e.target.value)
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -423,21 +498,45 @@ const PropertyEditorPage: React.FC = () => {
                       type="number"
                       min="0"
                       value={form.minimumStay}
-                      onChange={(e) => updateField("minimumStay", e.target.value)}
+                      onChange={(e) =>
+                        updateField("minimumStay", e.target.value)
+                      }
                       placeholder="Months or nights, depending on listing type"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="amenities">Amenities</Label>
-                  <Textarea
-                    id="amenities"
-                    rows={3}
-                    value={form.amenities}
-                    onChange={(e) => updateField("amenities", e.target.value)}
-                    placeholder="wifi, parking, security, balcony"
-                  />
+                  <Label>Amenities</Label>
+
+                  {/* Chips */}
+                  <div className="flex flex-wrap gap-2">
+                    {amenities.map((item) => (
+                      <Badge
+                        key={item}
+                        variant="secondary"
+                        className="flex items-center gap-1">
+                        {item}
+                        <X
+                          className="w-3 h-3 cursor-pointer"
+                          onClick={() => removeAmenity(item)}
+                        />
+                      </Badge>
+                    ))}
+                  </div>
+
+                  {/* Input + Add */}
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add amenity..."
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && addAmenity()}
+                    />
+                    <Button type="button" onClick={addAmenity}>
+                      +
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
@@ -450,7 +549,9 @@ const PropertyEditorPage: React.FC = () => {
                       className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
                       <option value="">Select a user</option>
                       {manageableUsers.map((manageableUser) => (
-                        <option key={manageableUser._id} value={manageableUser._id}>
+                        <option
+                          key={manageableUser._id}
+                          value={manageableUser._id}>
                           {manageableUser.name} ({manageableUser.email})
                         </option>
                       ))}
@@ -462,10 +563,11 @@ const PropertyEditorPage: React.FC = () => {
                     <select
                       id="contactUserId"
                       value={form.contactUserId}
-                      onChange={(e) => updateField("contactUserId", e.target.value)}
+                      onChange={(e) =>
+                        updateField("contactUserId", e.target.value)
+                      }
                       className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                      disabled={!isSuperAdmin}
-                    >
+                      disabled={!isSuperAdmin}>
                       <option value="">Select contact admin</option>
                       {contactOptions.map((adminUser) => (
                         <option key={adminUser._id} value={adminUser._id}>
@@ -474,11 +576,13 @@ const PropertyEditorPage: React.FC = () => {
                       ))}
                     </select>
                     <p className="text-xs text-gray-500">
-                      End users will see this admin's name, email, phone, and avatar.
+                      End users will see this admin's name, email, phone, and
+                      avatar.
                     </p>
                   </div>
                 </div>
 
+                {/*
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="latitude">Latitude</Label>
@@ -501,23 +605,115 @@ const PropertyEditorPage: React.FC = () => {
                     />
                   </div>
                 </div>
+                */}
 
-                <div className="space-y-2">
-                  <Label htmlFor="images">Images</Label>
-                  <Input
-                    id="images"
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={(e) =>
-                      setFiles(Array.from(e.target.files || []))
+                {/* Images upload section */}
+                <div className="space-y-3">
+                  <Label>
+                    Images{" "}
+                    <span className="text-xs text-gray-400 font-normal">
+                      (min {MIN_IMAGES}, max {MAX_IMAGES})
+                    </span>
+                  </Label>
+
+                  {/* Drop zone */}
+                  <div
+                    className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-gray-300 transition-colors bg-gray-50"
+                    onClick={() =>
+                      document.getElementById("imageInput")?.click()
                     }
-                  />
-                </div>
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      addFiles(e.dataTransfer.files);
+                    }}>
+                    <ImagePlus
+                      className="mx-auto mb-2 text-gray-400"
+                      size={32}
+                    />
+                    <p className="text-sm text-gray-500">
+                      Click to browse or drag images here
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      JPEG, PNG, WEBP
+                    </p>
+                    <input
+                      id="imageInput"
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => addFiles(e.target.files)}
+                    />
+                  </div>
 
+                  {/* Preview grid */}
+                  {files.length > 0 && (
+                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                      {files.map((file, i) => (
+                        <div
+                          key={i}
+                          className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={file.name}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeFile(i)}
+                            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition-colors">
+                            <X size={10} color="white" />
+                          </button>
+                          <div className="absolute bottom-0 inset-x-0 bg-black/40 px-1 py-0.5">
+                            <p className="text-white text-[10px] truncate">
+                              {file.name}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Counter + status */}
+                  {files.length > 0 && (
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>
+                        <strong className="text-gray-700">
+                          {files.length}
+                        </strong>{" "}
+                        of {MAX_IMAGES} selected
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full font-medium ${
+                          files.length < MIN_IMAGES
+                            ? "bg-amber-100 text-amber-800"
+                            : "bg-green-100 text-green-800"
+                        }`}>
+                        {files.length < MIN_IMAGES
+                          ? `need ${MIN_IMAGES - files.length} more`
+                          : "ready to submit"}
+                      </span>
+                      {files.length < MAX_IMAGES && (
+                        <button
+                          type="button"
+                          className="text-blue-500 underline underline-offset-2"
+                          onClick={() =>
+                            document.getElementById("imageInput")?.click()
+                          }>
+                          + add more
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <div className="flex justify-end">
                   <Button type="submit" disabled={loading}>
-                    {loading ? "Saving..." : isEditMode ? "Update Property" : "Create Property"}
+                    {loading
+                      ? "Saving..."
+                      : isEditMode
+                        ? "Update Property"
+                        : "Create Property"}
                   </Button>
                 </div>
               </form>

@@ -36,16 +36,16 @@ const Header: React.FC = () => {
   return (
     <>
       <header className="bg-white shadow-md sticky top-0 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center py-4">
+        <div className="container mx-auto px-2 sm:px-4">
+          <div className="flex justify-between items-center py-3 sm:py-4">
             {/* Logo */}
-            <div className="flex items-center space-x-2">
-              <img src="/icon.png" alt="LagosRentHelp Logo" className="w-14" />
-              <span className="text-xl font-bold text-[#0E0E0E]">LagosRentHelp</span>
+            <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+              <img src="/icon.png" alt="LagosRentHelp Logo" className="w-10 sm:w-12 lg:w-14" />
+              <span className="text-base sm:text-lg lg:text-xl font-bold text-[#0E0E0E] hidden sm:inline">LagosRentHelp</span>
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex space-x-8">
+            <nav className="hidden lg:flex space-x-4 xl:space-x-8 flex-1 justify-center px-4">
               {headerNavigation.map((item) => (
                 <HeaderNavLink
                   key={item.href}
@@ -56,9 +56,9 @@ const Header: React.FC = () => {
             </nav>
 
             {/* User Actions */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               {!user ? (
-                <div className="hidden md:flex items-center space-x-4">
+                <div className="hidden lg:flex items-center space-x-3">
                   <HeaderActionButton
                     to="/login"
                     icon={undefined}
@@ -70,14 +70,17 @@ const Header: React.FC = () => {
                     icon={undefined}
                     label="Sign Up"
                     variant="button"
+                    className="!px-3 !py-1.5 !text-sm"
                   />
                 </div>
               ) : (
-                <HeaderUserMenu
-                  user={user}
-                  getInitials={getInitials}
-                  onLogout={handleLogout}
-                />
+                <div className="hidden lg:block">
+                  <HeaderUserMenu
+                    user={user}
+                    getInitials={getInitials}
+                    onLogout={handleLogout}
+                  />
+                </div>
               )}
 
               <HeaderMobileMenu
@@ -95,8 +98,8 @@ const Header: React.FC = () => {
         </div>
       </header>
       {isMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200 sticky top-[80px] z-40">
-          <div className="px-4 py-4 space-y-4">
+        <div className="lg:hidden bg-white border-t border-gray-200 sticky top-[64px] sm:top-[80px] z-40">
+          <div className="px-3 sm:px-4 py-3 sm:py-4 space-y-3 sm:space-y-4">
             {headerNavigation.map((item) => (
               <HeaderNavLink
                 key={item.href}
@@ -107,7 +110,7 @@ const Header: React.FC = () => {
               />
             ))}
 
-            <div className="pt-4 border-t border-gray-200 space-y-4">
+            <div className="pt-3 sm:pt-4 border-t border-gray-200 space-y-3 sm:space-y-4">
                 {!user ? (
                   <>
                     <HeaderActionButton
@@ -126,7 +129,7 @@ const Header: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <div className="px-3 py-2">
+                    <div className="px-2 sm:px-3 py-2">
                       <HeaderUserInfo
                         user={user}
                         getInitials={getInitials}
@@ -161,7 +164,7 @@ const Header: React.FC = () => {
 
                     <Dialog>
                       <DialogTrigger asChild>
-                        <button className="flex items-center space-x-3 w-full px-3 py-2 rounded-md text-base font-medium text-[#0E0E0E] hover:text-[#129B36] hover:bg-gray-50 transition-colors">
+                        <button className="flex items-center space-x-3 w-full px-2 sm:px-3 py-2 rounded-md text-sm sm:text-base font-medium text-[#0E0E0E] hover:text-[#129B36] hover:bg-gray-50 transition-colors">
                           <UserIcon className="h-5 w-5" />
                           <span>View Profile</span>
                         </button>
