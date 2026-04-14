@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from "@/types";
+import { getDisplayProfileImage } from "@/lib/profileImage";
 import HeaderActionButton from "./HeaderActionButton";
 import HeaderUserInfo from "./HeaderUserInfo";
 import HeaderUserProfileDialog from "./HeaderUserProfileDialog";
@@ -45,7 +46,10 @@ const HeaderUserMenu: React.FC<HeaderUserMenuProps> = ({
             variant="ghost"
             className="flex items-center space-x-1.5 lg:space-x-2 p-1.5 lg:p-2 rounded-full hover:bg-gray-100 transition-colors">
             <Avatar className="h-7 lg:h-8 w-7 lg:w-8">
-              <AvatarImage src={user.avatar || "/icon.png"} alt={user.name} />
+              <AvatarImage
+                src={getDisplayProfileImage(user) || undefined}
+                alt={user.name}
+              />
               <AvatarFallback className="bg-[#129B36] text-white text-xs lg:text-sm">
                 {getInitials(user.name)}
               </AvatarFallback>

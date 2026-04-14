@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/authStore";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,34 +15,36 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import type { User } from "@/types";
 import {
-  User as UserIcon,
-  Shield,
+  COMPANY_LOGO_URL,
+  getDisplayProfileImage,
+  isAdminRole,
+} from "@/lib/profileImage";
+import {
   Bell,
-  Lock,
-  Mail,
-  Phone,
-  MapPin,
-  Save,
   Eye,
   EyeOff,
+  Lock,
+  Mail,
+  MapPin,
+  Phone,
+  Save,
+  Shield,
+  User as UserIcon,
 } from "lucide-react";
 
 const SettingsPage: React.FC = () => {
-  // 1. Destructure refresh/fetch method if available, or rely on user
   const { user, updateProfile, changePassword, setUser } = useAuthStore();
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("profile");
   const [isLoading, setIsLoading] = useState(false);
+  const canUploadProfilePicture = isAdminRole(user?.role ?? null);
 
-  // 2. Initial State (Safe defaults)
   const [profileData, setProfileData] = useState({
     name: "",
     email: "",
     phone: "",
-    location: "", // Added location safety
+    location: "",
     avatar: "",
   });
-
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const [securityData, setSecurityData] = useState({
@@ -56,7 +57,6 @@ const SettingsPage: React.FC = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // 3. Notification State
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
     smsNotifications: false,
@@ -67,37 +67,35 @@ const SettingsPage: React.FC = () => {
     newListings: true,
   });
 
-  // ✅ FIX 1: Sync Local State with Auth Store
-  // This runs whenever the 'user' object changes (e.g., after page load)
   useEffect(() => {
-    if (user) {
-      setProfileData({
-        name: user.name || "",
-        email: user.email || "",
-        phone: user.phone || "",
-        avatar: user.avatar || "",
-        // If your user model has location, map it here.
-        // If it's on the Agent profile, you might need to fetch Agent profile separately.
-        location: (user as any).location || (user as any).address || "",
-      });
-      setAvatarPreview(user.avatar || null);
-
-      // Update notifications if user has saved preferences
-      // setNotifications(user.preferences?.notifications || defaultNotifications);
-    } else {
-      // If no user is found after a timeout/check, redirect
-      // navigate("/login");
+    if (!user) {
+      return;
     }
-  }, [user]); // Dependency on 'user' is crucial
 
-  // Handle profile update
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    setProfileData({
+      name: user.name || "",
+      email: user.email || "",
+      phone: user.phone || "",
+      avatar: user.avatar || "",
+      location: (user as any).location || (user as any).address || "",
+    });
+    setAvatarPreview(getDisplayProfileImage(user) || null);
+  }, [user]);
+
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!canUploadProfilePicture) {
+      return;
+    }
+
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = () => {
       const preview = reader.result as string;
+
       setAvatarPreview(preview);
       setProfileData((prev) => ({
         ...prev,
@@ -108,14 +106,15 @@ const SettingsPage: React.FC = () => {
         setUser({
           ...user,
           avatar: preview,
+          displayAvatar: preview,
         });
       }
     };
     reader.readAsDataURL(file);
   };
 
-  const handleProfileUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleProfileUpdate = async (event: React.FormEvent) => {
+    event.preventDefault();
     setIsLoading(true);
 
     try {
@@ -124,7 +123,7 @@ const SettingsPage: React.FC = () => {
         phone: profileData.phone,
       };
 
-      if (profileData.avatar) {
+      if (canUploadProfilePicture && profileData.avatar) {
         payload.avatar = profileData.avatar;
       }
 
@@ -138,8 +137,8 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handlePasswordChange = async (event: React.FormEvent) => {
+    event.preventDefault();
 
     if (securityData.newPassword !== securityData.confirmPassword) {
       toast.error("New passwords don't match");
@@ -156,7 +155,7 @@ const SettingsPage: React.FC = () => {
     try {
       await changePassword(
         securityData.currentPassword,
-        securityData.newPassword,
+        securityData.newPassword
       );
       toast.success("Password changed successfully");
       setSecurityData({
@@ -176,12 +175,9 @@ const SettingsPage: React.FC = () => {
       ...prev,
       [key]: value,
     }));
-    // TODO: Call API to save preference
-    // api.put('/users/preferences', { notifications: { ...notifications, [key]: value } })
     toast.success("Notification preferences updated");
   };
 
-  // Prevent rendering empty form if user isn't loaded yet
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -203,7 +199,8 @@ const SettingsPage: React.FC = () => {
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
-          className="space-y-6">
+          className="space-y-6"
+        >
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <UserIcon className="h-4 w-4" /> Profile
@@ -213,12 +210,12 @@ const SettingsPage: React.FC = () => {
             </TabsTrigger>
             <TabsTrigger
               value="notifications"
-              className="flex items-center gap-2">
+              className="flex items-center gap-2"
+            >
               <Bell className="h-4 w-4" /> Notifications
             </TabsTrigger>
           </TabsList>
 
-          {/* Profile Tab */}
           <TabsContent value="profile" className="space-y-6">
             <Card>
               <CardHeader>
@@ -231,16 +228,16 @@ const SettingsPage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleProfileUpdate} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="name">Full Name</Label>
                       <Input
                         id="name"
                         value={profileData.name}
-                        onChange={(e) =>
+                        onChange={(event) =>
                           setProfileData((prev) => ({
                             ...prev,
-                            name: e.target.value,
+                            name: event.target.value,
                           }))
                         }
                         placeholder="Enter your full name"
@@ -255,7 +252,7 @@ const SettingsPage: React.FC = () => {
                           id="email"
                           type="email"
                           value={profileData.email}
-                          disabled // Usually email update requires verify, so disable for now
+                          disabled
                           className="pl-10 bg-gray-100 cursor-not-allowed"
                         />
                       </div>
@@ -272,10 +269,10 @@ const SettingsPage: React.FC = () => {
                       <Input
                         id="phone"
                         value={profileData.phone}
-                        onChange={(e) =>
+                        onChange={(event) =>
                           setProfileData((prev) => ({
                             ...prev,
-                            phone: e.target.value,
+                            phone: event.target.value,
                           }))
                         }
                         className="pl-10"
@@ -287,20 +284,20 @@ const SettingsPage: React.FC = () => {
                   <div className="space-y-2">
                     <Label htmlFor="avatar">Profile Picture</Label>
                     <p className="text-sm text-gray-500">
-                      Input an image to update your profile picture.
+                      {canUploadProfilePicture
+                        ? "Admins and super admins can upload a profile picture here."
+                        : "Profile picture upload is available only for admin and super admin accounts."}
                     </p>
                     <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
                       <div className="h-20 w-20 rounded-full overflow-hidden border border-gray-200 bg-gray-100">
                         {avatarPreview ? (
                           <img
                             src={avatarPreview}
-                            alt="Profile preview"
-                            className="h-full w-full object-cover"
-                          />
-                        ) : user.avatar ? (
-                          <img
-                            src={user.avatar}
-                            alt="Current profile"
+                            alt={
+                              avatarPreview === COMPANY_LOGO_URL
+                                ? "Company logo"
+                                : "Profile preview"
+                            }
                             className="h-full w-full object-cover"
                           />
                         ) : (
@@ -309,23 +306,31 @@ const SettingsPage: React.FC = () => {
                           </div>
                         )}
                       </div>
-                      <label
-                        htmlFor="avatar"
-                        className="cursor-pointer rounded-md border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        Choose image
-                        <input
-                          id="avatar"
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleAvatarChange}
-                        />
-                      </label>
+
+                      {canUploadProfilePicture ? (
+                        <label
+                          htmlFor="avatar"
+                          className="cursor-pointer rounded-md border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          Choose image
+                          <input
+                            id="avatar"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleAvatarChange}
+                          />
+                        </label>
+                      ) : (
+                        <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                          {avatarPreview === COMPANY_LOGO_URL
+                            ? "Your account is currently showing the company logo."
+                            : "No upload option for this account type."}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Only show location if your User model actually has it, otherwise remove or sync with Agent profile */}
                   <div className="space-y-2">
                     <Label htmlFor="location">Location</Label>
                     <div className="relative">
@@ -333,10 +338,10 @@ const SettingsPage: React.FC = () => {
                       <Input
                         id="location"
                         value={profileData.location}
-                        onChange={(e) =>
+                        onChange={(event) =>
                           setProfileData((prev) => ({
                             ...prev,
-                            location: e.target.value,
+                            location: event.target.value,
                           }))
                         }
                         className="pl-10"
@@ -349,7 +354,8 @@ const SettingsPage: React.FC = () => {
                     <Button
                       type="submit"
                       disabled={isLoading}
-                      className="flex items-center gap-2">
+                      className="flex items-center gap-2"
+                    >
                       <Save className="h-4 w-4" />
                       {isLoading ? "Saving..." : "Save Changes"}
                     </Button>
@@ -366,7 +372,7 @@ const SettingsPage: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center justify-between rounded-lg border p-4">
                   <div>
                     <p className="font-semibold capitalize">{user.role}</p>
                     <p className="text-sm text-gray-600">
@@ -379,8 +385,7 @@ const SettingsPage: React.FC = () => {
                             : "User Account"}
                     </p>
                   </div>
-                  {/* You can display verification status if it exists on user or agent */}
-                  <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                  <div className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
                     Active
                   </div>
                 </div>
@@ -388,7 +393,6 @@ const SettingsPage: React.FC = () => {
             </Card>
           </TabsContent>
 
-          {/* Security Tab */}
           <TabsContent value="security" className="space-y-6">
             <Card>
               <CardHeader>
@@ -407,10 +411,10 @@ const SettingsPage: React.FC = () => {
                         id="currentPassword"
                         type={showCurrentPassword ? "text" : "password"}
                         value={securityData.currentPassword}
-                        onChange={(e) =>
+                        onChange={(event) =>
                           setSecurityData((prev) => ({
                             ...prev,
-                            currentPassword: e.target.value,
+                            currentPassword: event.target.value,
                           }))
                         }
                         className="pl-10 pr-10"
@@ -422,7 +426,8 @@ const SettingsPage: React.FC = () => {
                         className="absolute right-3 top-2 h-6 w-6 p-0"
                         onClick={() =>
                           setShowCurrentPassword(!showCurrentPassword)
-                        }>
+                        }
+                      >
                         {showCurrentPassword ? (
                           <EyeOff className="h-4 w-4" />
                         ) : (
@@ -440,10 +445,10 @@ const SettingsPage: React.FC = () => {
                         id="newPassword"
                         type={showNewPassword ? "text" : "password"}
                         value={securityData.newPassword}
-                        onChange={(e) =>
+                        onChange={(event) =>
                           setSecurityData((prev) => ({
                             ...prev,
-                            newPassword: e.target.value,
+                            newPassword: event.target.value,
                           }))
                         }
                         className="pl-10 pr-10"
@@ -453,7 +458,8 @@ const SettingsPage: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         className="absolute right-3 top-2 h-6 w-6 p-0"
-                        onClick={() => setShowNewPassword(!showNewPassword)}>
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                      >
                         {showNewPassword ? (
                           <EyeOff className="h-4 w-4" />
                         ) : (
@@ -471,10 +477,10 @@ const SettingsPage: React.FC = () => {
                         id="confirmPassword"
                         type={showConfirmPassword ? "text" : "password"}
                         value={securityData.confirmPassword}
-                        onChange={(e) =>
+                        onChange={(event) =>
                           setSecurityData((prev) => ({
                             ...prev,
-                            confirmPassword: e.target.value,
+                            confirmPassword: event.target.value,
                           }))
                         }
                         className="pl-10 pr-10"
@@ -486,7 +492,8 @@ const SettingsPage: React.FC = () => {
                         className="absolute right-3 top-2 h-6 w-6 p-0"
                         onClick={() =>
                           setShowConfirmPassword(!showConfirmPassword)
-                        }>
+                        }
+                      >
                         {showConfirmPassword ? (
                           <EyeOff className="h-4 w-4" />
                         ) : (
@@ -497,10 +504,7 @@ const SettingsPage: React.FC = () => {
                   </div>
 
                   <div className="flex justify-end">
-                    <Button
-                      type="submit"
-                      disabled={isLoading}
-                      variant="default">
+                    <Button type="submit" disabled={isLoading} variant="default">
                       {isLoading ? "Updating..." : "Change Password"}
                     </Button>
                   </div>
@@ -509,7 +513,6 @@ const SettingsPage: React.FC = () => {
             </Card>
           </TabsContent>
 
-          {/* Notifications Tab */}
           <TabsContent value="notifications" className="space-y-6">
             <Card>
               <CardHeader>

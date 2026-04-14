@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@/types";
+import { getDisplayProfileImage } from "@/lib/profileImage";
 
 interface HeaderUserProfileDialogProps {
   user: User;
@@ -20,7 +21,10 @@ const HeaderUserProfileDialog: React.FC<HeaderUserProfileDialogProps> = ({
     <div className="space-y-4">
       <div className="flex items-center space-x-4">
         <Avatar className="h-16 w-16">
-          <AvatarImage src={user.avatar || "/icon.png"} alt={user.name} />
+          <AvatarImage
+            src={getDisplayProfileImage(user) || undefined}
+            alt={user.name}
+          />
           <AvatarFallback className="bg-[#129B36] text-white text-lg">
             {getInitials(user.name)}
           </AvatarFallback>

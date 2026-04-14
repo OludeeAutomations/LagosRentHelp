@@ -17,6 +17,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { CreateAdminData, userService } from "@/services/userService";
 import { User } from "@/types";
 import { useNavigate } from "react-router-dom";
+import { COMPANY_LOGO_URL, getDisplayProfileImage } from "@/lib/profileImage";
 
 const emptyForm: CreateAdminData = {
   name: "",
@@ -49,7 +50,7 @@ const AdminAccountsPage: React.FC = () => {
   const { user } = useAuthStore();
   const [admins, setAdmins] = useState<User[]>([]);
   const [form, setForm] = useState<CreateAdminData>(emptyForm);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>(COMPANY_LOGO_URL);
   const [createdAdminAvatars, setCreatedAdminAvatars] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "super_admin">(
@@ -68,13 +69,14 @@ const AdminAccountsPage: React.FC = () => {
         search: search || undefined,
         role: roleFilter === "all" ? undefined : roleFilter,
       });
-      const fetchedAdmins = extractUsers(response.data || response).map((admin) => ({
-        ...admin,
-        avatar:
-          admin.avatar ||
-          createdAdminAvatars[admin._id || admin.email || ""] ||
-          admin.avatar,
-      }));
+      const fetchedAdmins = extractUsers(response.data || response).map((admin) => {
+        const localAvatar = createdAdminAvatars[admin._id || admin.email || ""];
+
+        return {
+          ...admin,
+          avatar: admin.avatar || localAvatar,
+        };
+      });
       setAdmins(fetchedAdmins);
     } catch (error) {
       console.error(error);
@@ -140,18 +142,12 @@ const AdminAccountsPage: React.FC = () => {
           }));
         }
 
-        setAdmins((current) => [
-          ...current,
-          {
-            ...createdAdmin,
-            avatar: createdAdmin.avatar || form.avatar,
-          },
-        ]);
+        setAdmins((current) => [...current, createdAdmin]);
       }
 
       toast.success("Admin account created");
       setForm(emptyForm);
-      setAvatarPreview(null);
+      setAvatarPreview(COMPANY_LOGO_URL);
       await loadAdmins();
     } catch (error) {
       console.error(error);
@@ -269,13 +265,15 @@ const AdminAccountsPage: React.FC = () => {
                     className="block w-full text-sm text-gray-900 file:mr-4 file:rounded-full file:border-0 file:bg-green-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-green-700 hover:file:bg-green-100"
                     onChange={handleAvatarChange}
                   />
-                  {avatarPreview && (
-                    <img
-                      src={avatarPreview}
-                      alt="Admin avatar preview"
-                      className="mt-2 h-24 w-24 rounded-full object-cover border border-gray-200"
-                    />
-                  )}
+                  <img
+                    src={avatarPreview}
+                    alt={
+                      avatarPreview === COMPANY_LOGO_URL
+                        ? "Company logo preview"
+                        : "Admin avatar preview"
+                    }
+                    className="mt-2 h-24 w-24 rounded-full border border-gray-200 object-cover"
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -349,34 +347,35 @@ const AdminAccountsPage: React.FC = () => {
                         className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-4 md:flex-row md:items-center md:justify-between"
                       >
                         <div className="flex items-center gap-4">
-                      <Avatar className="h-12 w-12">
-                        {adminUser.avatar ? (
-                          <AvatarImage src={adminUser.avatar} alt={adminUser.name} />
-                        ) : null}
-                        <AvatarFallback className="bg-[#129B36] text-white text-sm">
-                          {adminUser.name
-                            .split(" ")
-                            .map((part) => part[0])
-                            .join("")
-                            .toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h2 className="font-semibold text-gray-900">
-                            {adminUser.name}
-                          </h2>
-                          <Badge variant={getRoleBadgeVariant(adminUser.role)}>
-                            {adminUser.role.replace("_", " ")}
-                          </Badge>
-                          {isCurrentUser && <Badge variant="outline">You</Badge>}
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage
+                              src={getDisplayProfileImage(adminUser) || undefined}
+                              alt={adminUser.name}
+                            />
+                            <AvatarFallback className="bg-[#129B36] text-white text-sm">
+                              {adminUser.name
+                                .split(" ")
+                                .map((part) => part[0])
+                                .join("")
+                                .toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h2 className="font-semibold text-gray-900">
+                                {adminUser.name}
+                              </h2>
+                              <Badge variant={getRoleBadgeVariant(adminUser.role)}>
+                                {adminUser.role.replace("_", " ")}
+                              </Badge>
+                              {isCurrentUser && <Badge variant="outline">You</Badge>}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              <div>{adminUser.email}</div>
+                              <div>{adminUser.phone || "No phone number"}</div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-600">
-                          <div>{adminUser.email}</div>
-                          <div>{adminUser.phone || "No phone number"}</div>
-                        </div>
-                      </div>
-                    </div>
 
                         <div className="flex flex-wrap gap-2">
                           {!isSuperAdmin && (

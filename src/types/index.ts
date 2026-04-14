@@ -34,6 +34,7 @@ export interface User {
   email: string;
   phone: string;
   avatar?: string;
+  displayAvatar?: string;
   role: "user" | "agent" | "admin" | "super_admin";
   favorites: string[];
   searchHistory: SearchFilters[];
