@@ -37,8 +37,6 @@ type PropertyFormState = {
   amenities: string;
   ownerId: string;
   contactUserId: string;
-  // latitude: string;
-  // longitude: string;
   availableFrom: string;
   minimumStay: string;
 };
@@ -59,8 +57,6 @@ const emptyForm: PropertyFormState = {
   contactUserId: "",
 
   availableFrom: "",
-  // latitude: "",
-  // longitude: "",
   minimumStay: "",
 };
 
@@ -182,12 +178,6 @@ const PropertyEditorPage: React.FC = () => {
                 typeof property.contactUserId === "object"
                   ? property.contactUserId?._id || ""
                   : String(property.contactUserId || defaultContactId),
-              // latitude: property.coordinates?.lat
-              //   ? String(property.coordinates.lat)
-              //   : "",
-              // longitude: property.coordinates?.lng
-              //   ? String(property.coordinates.lng)
-              //   : "",
               availableFrom: property.availableFrom
                 ? property.availableFrom.slice(0, 10)
                 : "",
@@ -242,13 +232,6 @@ const PropertyEditorPage: React.FC = () => {
       return;
     }
 
-    // Latitude and longitude are hidden in the edit form
-    // and should be preserved from existing property data.
-    if (isEditMode && (!form.latitude || !form.longitude)) {
-      toast.error("Please provide both latitude and longitude");
-      return;
-    }
-
     if (files.length < MIN_IMAGES) {
       toast.error(`Please upload at least ${MIN_IMAGES} images`);
       return;
@@ -277,17 +260,6 @@ const PropertyEditorPage: React.FC = () => {
       );
       payload.append("ownerId", form.ownerId);
       payload.append("contactUserId", form.contactUserId);
-      // if (form.latitude && form.longitude) {
-      //   payload.append(
-      //     "coordinates",
-      //     JSON.stringify({
-      //       lat: Number(form.latitude),
-      //       lng: Number(form.longitude),
-      //     }),
-      //   );
-      //   payload.append("lat", form.latitude);
-      //   payload.append("lng", form.longitude);
-      // }
 
       if (form.availableFrom) {
         payload.append("availableFrom", form.availableFrom);
@@ -341,8 +313,7 @@ const PropertyEditorPage: React.FC = () => {
               {isEditMode ? "Edit Property" : "Create Property"}
             </h1>
             <p className="mt-2 text-gray-600">
-              Assign the property, choose the public contact admin, and set map
-              coordinates for the listing.
+              Assign the property and choose the public contact admin.
             </p>
           </div>
 
@@ -582,30 +553,6 @@ const PropertyEditorPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/*
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="latitude">Latitude</Label>
-                    <Input
-                      id="latitude"
-                      type="number"
-                      step="any"
-                      value={form.latitude}
-                      onChange={(e) => updateField("latitude", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="longitude">Longitude</Label>
-                    <Input
-                      id="longitude"
-                      type="number"
-                      step="any"
-                      value={form.longitude}
-                      onChange={(e) => updateField("longitude", e.target.value)}
-                    />
-                  </div>
-                </div>
-                */}
 
                 {/* Images upload section */}
                 <div className="space-y-3">
