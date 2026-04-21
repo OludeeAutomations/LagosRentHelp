@@ -11,7 +11,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { propertyService } from "@/services/propertyService";
 import { userService } from "@/services/userService";
 import { ManageableUser, Property, User } from "@/types";
-import { ImagePlus, X } from "lucide-react";
+import { ImagePlus, X, AlertCircle, RotateCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 const propertyTypes = [
   "1-bedroom",
@@ -80,6 +80,8 @@ const PropertyEditorPage: React.FC = () => {
   const [manageableUsers, setManageableUsers] = useState<ManageableUser[]>([]);
   const [adminUsers, setAdminUsers] = useState<User[]>([]);
   const [files, setFiles] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [imagesToRemove, setImagesToRemove] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
 
@@ -100,6 +102,15 @@ const PropertyEditorPage: React.FC = () => {
   const removeFile = (index: number) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
+
+  const removeExistingImage = (url: string) => {
+    setImagesToRemove((prev) => [...prev, url]);
+  };
+
+  const restoreExistingImage = (url: string) => {
+    setImagesToRemove((prev) => prev.filter((item) => item !== url));
+  };
+
   // Convert string → array (if your form stores string)
   const amenities = form.amenities
     ? form.amenities
@@ -185,6 +196,21 @@ const PropertyEditorPage: React.FC = () => {
                 ? String(property.minimumStay)
                 : "",
             });
+
+            // Handle existing images
+            if (property.images && property.images.length > 0) {
+              const baseApiUrl =
+                import.meta.env.VITE_API_BASE_URL ||
+                window.location.origin ||
+                "http://localhost:5000";
+              const images = property.images.map((img) => {
+                if (typeof img === "string" && img.startsWith("http")) {
+                  return img;
+                }
+                return `${baseApiUrl}/uploads/${img}`;
+              });
+              setExistingImages(images);
+            }
           }
         } else {
           setForm((current) => ({
@@ -232,8 +258,10 @@ const PropertyEditorPage: React.FC = () => {
       return;
     }
 
-    if (files.length < MIN_IMAGES) {
-      toast.error(`Please upload at least ${MIN_IMAGES} images`);
+    const totalImages =
+      existingImages.length - imagesToRemove.length + files.length;
+    if (totalImages < MIN_IMAGES) {
+      toast.error(`Please have at least ${MIN_IMAGES} images`);
       return;
     }
     setLoading(true);
@@ -267,6 +295,10 @@ const PropertyEditorPage: React.FC = () => {
 
       if (form.minimumStay) {
         payload.append("minimumStay", form.minimumStay);
+      }
+
+      if (imagesToRemove.length > 0) {
+        payload.append("imagesToRemove", JSON.stringify(imagesToRemove));
       }
 
       files.forEach((file) => payload.append("images", file));
@@ -553,7 +585,6 @@ const PropertyEditorPage: React.FC = () => {
                   </div>
                 </div>
 
-
                 {/* Images upload section */}
                 <div className="space-y-3">
                   <Label>
@@ -595,12 +626,55 @@ const PropertyEditorPage: React.FC = () => {
                   </div>
 
                   {/* Preview grid */}
-                  {files.length > 0 && (
+                  {(existingImages.length > 0 || files.length > 0) && (
                     <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                      {/* Existing Images */}
+                      {existingImages.map((url, i) => {
+                        const isRemoved = imagesToRemove.includes(url);
+                        return (
+                          <div
+                            key={`existing-${i}`}
+                            className={`relative aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100 ${
+                              isRemoved ? "opacity-40 grayscale" : ""
+                            }`}>
+                            <img
+                              src={url}
+                              alt={`Existing ${i}`}
+                              className="w-full h-full object-cover"
+                            />
+                            {isRemoved ? (
+                              <button
+                                type="button"
+                                onClick={() => restoreExistingImage(url)}
+                                className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/40 transition-colors"
+                                title="Restore image">
+                                <RotateCcw size={20} color="white" />
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => removeExistingImage(url)}
+                                className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm"
+                                title="Remove image">
+                                <X size={14} color="white" />
+                              </button>
+                            )}
+                            <div className="absolute bottom-0 inset-x-0 bg-black/40 px-1 py-0.5">
+                              <p className="text-white text-[10px] truncate text-center">
+                                {isRemoved
+                                  ? "Marked for removal"
+                                  : "Server Image"}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {/* New Files */}
                       {files.map((file, i) => (
                         <div
-                          key={i}
-                          className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
+                          key={`new-${i}`}
+                          className="relative aspect-square rounded-lg overflow-hidden border border-blue-200 bg-blue-50">
                           <img
                             src={URL.createObjectURL(file)}
                             alt={file.name}
@@ -609,12 +683,13 @@ const PropertyEditorPage: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => removeFile(i)}
-                            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition-colors">
-                            <X size={10} color="white" />
+                            className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition-colors"
+                            title="Remove new file">
+                            <X size={14} color="white" />
                           </button>
-                          <div className="absolute bottom-0 inset-x-0 bg-black/40 px-1 py-0.5">
-                            <p className="text-white text-[10px] truncate">
-                              {file.name}
+                          <div className="absolute bottom-0 inset-x-0 bg-blue-600/60 px-1 py-0.5">
+                            <p className="text-white text-[10px] truncate text-center font-medium">
+                              New Upload
                             </p>
                           </div>
                         </div>
@@ -623,32 +698,60 @@ const PropertyEditorPage: React.FC = () => {
                   )}
 
                   {/* Counter + status */}
-                  {files.length > 0 && (
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>
-                        <strong className="text-gray-700">
-                          {files.length}
-                        </strong>{" "}
-                        of {MAX_IMAGES} selected
-                      </span>
-                      <span
-                        className={`px-2 py-0.5 rounded-full font-medium ${
-                          files.length < MIN_IMAGES
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-green-100 text-green-800"
-                        }`}>
-                        {files.length < MIN_IMAGES
-                          ? `need ${MIN_IMAGES - files.length} more`
-                          : "ready to submit"}
-                      </span>
-                      {files.length < MAX_IMAGES && (
+                  {(existingImages.length > 0 || files.length > 0) && (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>
+                          <strong className="text-gray-700">
+                            {existingImages.length -
+                              imagesToRemove.length +
+                              files.length}
+                          </strong>{" "}
+                          of {MAX_IMAGES} images total
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded-full font-medium ${
+                            existingImages.length -
+                              imagesToRemove.length +
+                              files.length <
+                            MIN_IMAGES
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-green-100 text-green-800"
+                          }`}>
+                          {existingImages.length -
+                            imagesToRemove.length +
+                            files.length <
+                          MIN_IMAGES
+                            ? `need ${
+                                MIN_IMAGES -
+                                (existingImages.length -
+                                  imagesToRemove.length +
+                                  files.length)
+                              } more`
+                            : "ready to submit"}
+                        </span>
+                      </div>
+
+                      {imagesToRemove.length > 0 && (
+                        <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 p-2 rounded-md">
+                          <AlertCircle size={14} />
+                          <span>
+                            {imagesToRemove.length} images will be removed from
+                            the server upon saving.
+                          </span>
+                        </div>
+                      )}
+
+                      {files.length +
+                        (existingImages.length - imagesToRemove.length) <
+                        MAX_IMAGES && (
                         <button
                           type="button"
-                          className="text-blue-500 underline underline-offset-2"
+                          className="text-blue-600 text-xs font-medium hover:underline w-fit"
                           onClick={() =>
                             document.getElementById("imageInput")?.click()
                           }>
-                          + add more
+                          + upload more images
                         </button>
                       )}
                     </div>
