@@ -82,10 +82,6 @@ export interface Property {
   views?: number;
   likes?: number;
   isActive?: boolean;
-  coordinates?: {
-    lat: number;
-    lng: number;
-  };
   availableFrom?: string;
   minimumStay?: number;
 }
