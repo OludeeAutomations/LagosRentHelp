@@ -1,125 +1,94 @@
-// components/PropertyMap.tsx
 import React, { useEffect, useRef, useState } from "react";
+import L from "leaflet";
 import { Navigation } from "lucide-react";
 import StreetViewModal from "./StreetViewMap";
 
 interface PropertyMapProps {
   address: string;
+  coordinates?: { lat: number; lng: number };
   height?: string;
   showStreetViewButton?: boolean;
 }
 
 const PropertyMap: React.FC<PropertyMapProps> = ({
   address,
+  coordinates,
   height = "256px",
   showStreetViewButton = true,
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
   const [status, setStatus] = useState<"loading" | "loaded" | "error">(
     "loading"
   );
   const [error, setError] = useState("");
-  const [streetViewAvailable, setStreetViewAvailable] = useState(false);
   const [isStreetViewModalOpen, setIsStreetViewModalOpen] = useState(false);
 
   useEffect(() => {
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) {
-      setStatus("error");
-      setError(
-        "Google Maps API key is missing. Set VITE_GOOGLE_MAPS_API_KEY for map features."
-      );
-      return;
-    }
+    if (!mapRef.current) return;
 
-    if (window.google && window.google.maps) {
-      initializeMap();
-      return;
-    }
-
-    const existingScript = document.querySelector(
-      'script[src*=\"maps.googleapis.com\"]'
-    );
-    if (existingScript) {
-      existingScript.addEventListener("load", initializeMap);
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=marker`;
-    script.async = true;
-    script.defer = true;
-    script.onload = initializeMap;
-    script.onerror = () => {
-      setStatus("error");
-      setError("Failed to load Google Maps");
-    };
-
-    document.head.appendChild(script);
-
-    async function initializeMap() {
-      if (!mapRef.current) return;
-
+    const initializeMap = async () => {
       try {
-        const map = new google.maps.Map(mapRef.current, {
-          zoom: 15,
-          center: { lat: 40.7128, lng: -74.006 },
-          mapTypeId: "satellite",
-          mapTypeControl: true,
-          mapId: "febe7f4b8621c1169df35bb2",
-        });
+        // If we already have an instance, just update it
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.remove();
+        }
 
-        const geocoder = new google.maps.Geocoder();
-        geocoder.geocode({ address }, async (results, status) => {
-          if (status === "OK" && results?.[0]) {
-            const location = results[0].geometry.location;
-            map.setCenter(location);
-            map.setZoom(17);
+        let mapLat = coordinates?.lat;
+        let mapLng = coordinates?.lng;
 
-            // Use AdvancedMarkerElement
-            const { AdvancedMarkerElement } = (await google.maps.importLibrary(
-              "marker"
-            )) as google.maps.MarkerLibrary;
-
-            new AdvancedMarkerElement({
-              map,
-              position: location,
-              title: address,
-            });
-
-            // Check Street View availability
-            const streetViewService = new google.maps.StreetViewService();
-            streetViewService.getPanorama(
-              {
-                location: location,
-                radius: 50,
-              },
-              (data, streetViewStatus) => {
-                setStreetViewAvailable(streetViewStatus === "OK");
-              }
+        // Fallback to geocoding if coordinates are missing
+        if (!mapLat || !mapLng) {
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+                address
+              )}`
             );
-
-            setStatus("loaded");
-          } else {
-            setStatus("error");
-            setError("Address not found");
+            const data = await response.json();
+            if (data && data.length > 0) {
+              mapLat = parseFloat(data[0].lat);
+              mapLng = parseFloat(data[0].lon);
+            }
+          } catch (e) {
+            console.error("Geocoding failed", e);
           }
-        });
+        }
+
+        if (!mapLat || !mapLng) {
+          setStatus("error");
+          setError("Location coordinates not found.");
+          return;
+        }
+
+        const map = L.map(mapRef.current).setView([mapLat, mapLng], 15);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(map);
+
+        markerRef.current = L.marker([mapLat, mapLng]).addTo(map).bindPopup(address);
+
+        mapInstanceRef.current = map;
+        setStatus("loaded");
       } catch (err) {
+        console.error("Map initialization error", err);
         setStatus("error");
         setError("Error initializing map");
       }
-    }
+    };
+
+    initializeMap();
 
     return () => {
-      const script = document.querySelector(
-        'script[src*="maps.googleapis.com"]'
-      );
-      if (script) {
-        script.removeEventListener("load", initializeMap);
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
       }
     };
-  }, [address]);
+  }, [address, coordinates]);
 
   if (status === "error") {
     return (
@@ -137,11 +106,14 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         <div
           ref={mapRef}
           style={{ height }}
-          className="w-full rounded-lg border border-gray-200"
+          className="w-full rounded-lg border border-gray-200 z-0"
         />
 
-        {/* Street View Button */}
-        {showStreetViewButton && streetViewAvailable && (
+        {/* Note: Street View is a Google Maps specific feature. 
+            If the user wants to keep it, it will require Google Maps API.
+            For now, we'll keep the button but it might need coordinates passed to the modal.
+        */}
+        {showStreetViewButton && (
           <button
             onClick={() => setIsStreetViewModalOpen(true)}
             className="absolute top-2 right-2 z-10 flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-lg hover:bg-gray-50 transition-colors text-sm font-medium">
@@ -151,11 +123,11 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         )}
       </div>
 
-      {/* Street View Modal */}
       <StreetViewModal
         isOpen={isStreetViewModalOpen}
         onClose={() => setIsStreetViewModalOpen(false)}
         address={address}
+        coordinates={coordinates}
       />
     </>
   );

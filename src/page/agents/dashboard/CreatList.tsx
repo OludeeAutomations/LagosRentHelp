@@ -10,6 +10,7 @@ import {
   Image,
   AlertCircle,
 } from "lucide-react";
+import CoordinatePicker from "@/components/common/CoordinatePicker";
 import { usePropertyStore } from "@/stores/propertyStore";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
@@ -71,6 +72,10 @@ const createListingSchema = z.object({
   bathrooms: z.number().min(0, "Number of bathrooms is required"),
   area: z.number().min(1, "Area is required"),
   amenities: z.array(z.string()).min(2, "At least one amenity is required"),
+  coordinates: z.object({
+    lat: z.number(),
+    lng: z.number()
+  }).optional(),
 });
 
 type CreateListingForm = z.infer<typeof createListingSchema>;
@@ -112,6 +117,7 @@ const CreateListing: React.FC<CreateListingProps> = ({
             bathrooms: property.bathrooms,
             area: property.area,
             amenities: property.amenities || [],
+            coordinates: (property as any).coordinates,
           }
         : {
             title: "",
@@ -125,6 +131,7 @@ const CreateListing: React.FC<CreateListingProps> = ({
             bathrooms: 0,
             area: 0,
             amenities: [],
+            coordinates: undefined,
           },
   });
 
@@ -166,6 +173,10 @@ const CreateListing: React.FC<CreateListingProps> = ({
 
       // Stringify amenities array for backend parsing
       formData.append("amenities", JSON.stringify(data.amenities));
+
+      if (data.coordinates) {
+        formData.append("coordinates", JSON.stringify(data.coordinates));
+      }
 
       // 2. Handle images for edit mode
       if (editMode && property) {
@@ -544,6 +555,11 @@ const CreateListing: React.FC<CreateListingProps> = ({
                       <FormMessage />
                     </FormItem>
                   )}
+                />
+
+                <CoordinatePicker
+                  value={form.watch("coordinates")}
+                  onChange={(coords) => form.setValue("coordinates", coords)}
                 />
 
                 <div className="space-y-4">
