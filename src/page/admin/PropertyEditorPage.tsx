@@ -11,7 +11,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { propertyService } from "@/services/propertyService";
 import { userService } from "@/services/userService";
 import { ManageableUser, Property, User } from "@/types";
-import { ImagePlus, X, AlertCircle, RotateCcw, MapPin } from "lucide-react";
+import { ImagePlus, X, AlertCircle, RotateCcw } from "lucide-react";
 import CoordinatePicker from "@/components/common/CoordinatePicker";
 import { Badge } from "@/components/ui/badge";
 const propertyTypes = [
@@ -600,8 +600,6 @@ const PropertyEditorPage: React.FC = () => {
                   </div>
                 </div>
 
-
-
                 {/* Images upload section */}
                 <div className="space-y-3">
                   <Label>
@@ -678,7 +676,9 @@ const PropertyEditorPage: React.FC = () => {
                             )}
                             <div className="absolute bottom-0 inset-x-0 bg-black/40 px-1 py-0.5">
                               <p className="text-white text-[10px] truncate text-center">
-                                {isRemoved ? "Marked for removal" : "Server Image"}
+                                {isRemoved
+                                  ? "Marked for removal"
+                                  : "Server Image"}
                               </p>
                             </div>
                           </div>
@@ -746,11 +746,14 @@ const PropertyEditorPage: React.FC = () => {
                             : "ready to submit"}
                         </span>
                       </div>
-                      
+
                       {imagesToRemove.length > 0 && (
                         <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 p-2 rounded-md">
                           <AlertCircle size={14} />
-                          <span>{imagesToRemove.length} images will be removed from the server upon saving.</span>
+                          <span>
+                            {imagesToRemove.length} images will be removed from
+                            the server upon saving.
+                          </span>
                         </div>
                       )}
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import L from "leaflet";
-import { Navigation } from "lucide-react";
+import { Navigation, Layers } from "lucide-react";
 import StreetViewModal from "./StreetViewMap";
 
 interface PropertyMapProps {
@@ -24,6 +24,23 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
   );
   const [error, setError] = useState("");
   const [isStreetViewModalOpen, setIsStreetViewModalOpen] = useState(false);
+  const [isSatellite, setIsSatellite] = useState(true);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
+
+  const STREETS_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  const SATELLITE_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+  const SATELLITE_ATTR = "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community";
+
+  const primaryColor = "#129B36";
+  const customIcon = L.divIcon({
+    html: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z" fill="${primaryColor}" stroke="white" stroke-width="1.5"/>
+    </svg>`,
+    className: "custom-marker-icon",
+    iconSize: [24, 24],
+    iconAnchor: [12, 24],
+    popupAnchor: [0, -24],
+  });
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -64,12 +81,15 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
 
         const map = L.map(mapRef.current).setView([mapLat, mapLng], 15);
 
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        const tiles = L.tileLayer(isSatellite ? SATELLITE_TILES : STREETS_TILES, {
+          attribution: isSatellite
+            ? SATELLITE_ATTR
+            : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         }).addTo(map);
 
-        markerRef.current = L.marker([mapLat, mapLng]).addTo(map).bindPopup(address);
+        tileLayerRef.current = tiles;
+
+        markerRef.current = L.marker([mapLat, mapLng], { icon: customIcon }).addTo(map).bindPopup(address);
 
         mapInstanceRef.current = map;
         setStatus("loaded");
@@ -89,6 +109,23 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
       }
     };
   }, [address, coordinates]);
+
+  // Handle tile layer switching
+  useEffect(() => {
+    if (!mapInstanceRef.current || !tileLayerRef.current) return;
+
+    // Remove current layer
+    tileLayerRef.current.remove();
+
+    // Create and add new layer
+    const newTiles = L.tileLayer(isSatellite ? SATELLITE_TILES : STREETS_TILES, {
+      attribution: isSatellite
+        ? SATELLITE_ATTR
+        : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(mapInstanceRef.current);
+
+    tileLayerRef.current = newTiles;
+  }, [isSatellite]);
 
   if (status === "error") {
     return (
@@ -114,12 +151,21 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             For now, we'll keep the button but it might need coordinates passed to the modal.
         */}
         {showStreetViewButton && (
-          <button
-            onClick={() => setIsStreetViewModalOpen(true)}
-            className="absolute top-2 right-2 z-10 flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-lg hover:bg-gray-50 transition-colors text-sm font-medium">
-            <Navigation className="h-4 w-4" />
-            Street View
-          </button>
+          <div className="absolute top-2 right-2 z-10 flex flex-col gap-2">
+            <button
+              onClick={() => setIsStreetViewModalOpen(true)}
+              className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors text-sm font-medium border border-gray-200">
+              <Navigation className="h-4 w-4 text-blue-600" />
+              Street View
+            </button>
+            <button
+              onClick={() => setIsSatellite(!isSatellite)}
+              className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors text-xs font-medium border border-gray-200"
+            >
+              <Layers className="h-3.5 w-3.5 text-blue-600" />
+              {isSatellite ? "Map" : "Satellite"}
+            </button>
+          </div>
         )}
       </div>
 
