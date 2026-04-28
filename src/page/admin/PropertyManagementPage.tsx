@@ -196,6 +196,12 @@ const PropertyManagementPage: React.FC = () => {
                           <div className="flex flex-wrap gap-3 text-xs text-gray-500">
                             <span>Owner: {owner || "Unassigned"}</span>
                             <span>Contact: {contact || "Not set"}</span>
+                            {property.coordinates && (
+                              <span>
+                                Coordinates: {property.coordinates.lat.toFixed(4)},{" "}
+                                {property.coordinates.lng.toFixed(4)}
+                              </span>
+                            )}
                           </div>
                           {property.approvalNote && (
                             <p className="text-sm text-amber-700">

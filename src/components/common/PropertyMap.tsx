@@ -1,125 +1,131 @@
-// components/PropertyMap.tsx
 import React, { useEffect, useRef, useState } from "react";
-import { Navigation } from "lucide-react";
+import L from "leaflet";
+import { Navigation, Layers } from "lucide-react";
 import StreetViewModal from "./StreetViewMap";
 
 interface PropertyMapProps {
   address: string;
+  coordinates?: { lat: number; lng: number };
   height?: string;
   showStreetViewButton?: boolean;
 }
 
 const PropertyMap: React.FC<PropertyMapProps> = ({
   address,
+  coordinates,
   height = "256px",
   showStreetViewButton = true,
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
   const [status, setStatus] = useState<"loading" | "loaded" | "error">(
     "loading"
   );
   const [error, setError] = useState("");
-  const [streetViewAvailable, setStreetViewAvailable] = useState(false);
   const [isStreetViewModalOpen, setIsStreetViewModalOpen] = useState(false);
+  const [isSatellite, setIsSatellite] = useState(true);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
+
+  const STREETS_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  const SATELLITE_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+  const SATELLITE_ATTR = "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community";
+
+  const primaryColor = "#129B36";
+  const customIcon = L.divIcon({
+    html: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z" fill="${primaryColor}" stroke="white" stroke-width="1.5"/>
+    </svg>`,
+    className: "custom-marker-icon",
+    iconSize: [24, 24],
+    iconAnchor: [12, 24],
+    popupAnchor: [0, -24],
+  });
 
   useEffect(() => {
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) {
-      setStatus("error");
-      setError(
-        "Google Maps API key is missing. Set VITE_GOOGLE_MAPS_API_KEY for map features."
-      );
-      return;
-    }
+    if (!mapRef.current) return;
 
-    if (window.google && window.google.maps) {
-      initializeMap();
-      return;
-    }
-
-    const existingScript = document.querySelector(
-      'script[src*=\"maps.googleapis.com\"]'
-    );
-    if (existingScript) {
-      existingScript.addEventListener("load", initializeMap);
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=marker`;
-    script.async = true;
-    script.defer = true;
-    script.onload = initializeMap;
-    script.onerror = () => {
-      setStatus("error");
-      setError("Failed to load Google Maps");
-    };
-
-    document.head.appendChild(script);
-
-    async function initializeMap() {
-      if (!mapRef.current) return;
-
+    const initializeMap = async () => {
       try {
-        const map = new google.maps.Map(mapRef.current, {
-          zoom: 15,
-          center: { lat: 40.7128, lng: -74.006 },
-          mapTypeId: "satellite",
-          mapTypeControl: true,
-          mapId: "febe7f4b8621c1169df35bb2",
-        });
+        // If we already have an instance, just update it
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.remove();
+        }
 
-        const geocoder = new google.maps.Geocoder();
-        geocoder.geocode({ address }, async (results, status) => {
-          if (status === "OK" && results?.[0]) {
-            const location = results[0].geometry.location;
-            map.setCenter(location);
-            map.setZoom(17);
+        let mapLat = coordinates?.lat;
+        let mapLng = coordinates?.lng;
 
-            // Use AdvancedMarkerElement
-            const { AdvancedMarkerElement } = (await google.maps.importLibrary(
-              "marker"
-            )) as google.maps.MarkerLibrary;
-
-            new AdvancedMarkerElement({
-              map,
-              position: location,
-              title: address,
-            });
-
-            // Check Street View availability
-            const streetViewService = new google.maps.StreetViewService();
-            streetViewService.getPanorama(
-              {
-                location: location,
-                radius: 50,
-              },
-              (data, streetViewStatus) => {
-                setStreetViewAvailable(streetViewStatus === "OK");
-              }
+        // Fallback to geocoding if coordinates are missing
+        if (!mapLat || !mapLng) {
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+                address
+              )}`
             );
-
-            setStatus("loaded");
-          } else {
-            setStatus("error");
-            setError("Address not found");
+            const data = await response.json();
+            if (data && data.length > 0) {
+              mapLat = parseFloat(data[0].lat);
+              mapLng = parseFloat(data[0].lon);
+            }
+          } catch (e) {
+            console.error("Geocoding failed", e);
           }
-        });
+        }
+
+        if (!mapLat || !mapLng) {
+          setStatus("error");
+          setError("Location coordinates not found.");
+          return;
+        }
+
+        const map = L.map(mapRef.current).setView([mapLat, mapLng], 15);
+
+        const tiles = L.tileLayer(isSatellite ? SATELLITE_TILES : STREETS_TILES, {
+          attribution: isSatellite
+            ? SATELLITE_ATTR
+            : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(map);
+
+        tileLayerRef.current = tiles;
+
+        markerRef.current = L.marker([mapLat, mapLng], { icon: customIcon }).addTo(map).bindPopup(address);
+
+        mapInstanceRef.current = map;
+        setStatus("loaded");
       } catch (err) {
+        console.error("Map initialization error", err);
         setStatus("error");
         setError("Error initializing map");
       }
-    }
+    };
+
+    initializeMap();
 
     return () => {
-      const script = document.querySelector(
-        'script[src*="maps.googleapis.com"]'
-      );
-      if (script) {
-        script.removeEventListener("load", initializeMap);
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
       }
     };
-  }, [address]);
+  }, [address, coordinates]);
+
+  // Handle tile layer switching
+  useEffect(() => {
+    if (!mapInstanceRef.current || !tileLayerRef.current) return;
+
+    // Remove current layer
+    tileLayerRef.current.remove();
+
+    // Create and add new layer
+    const newTiles = L.tileLayer(isSatellite ? SATELLITE_TILES : STREETS_TILES, {
+      attribution: isSatellite
+        ? SATELLITE_ATTR
+        : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(mapInstanceRef.current);
+
+    tileLayerRef.current = newTiles;
+  }, [isSatellite]);
 
   if (status === "error") {
     return (
@@ -137,25 +143,37 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         <div
           ref={mapRef}
           style={{ height }}
-          className="w-full rounded-lg border border-gray-200"
+          className="w-full rounded-lg border border-gray-200 z-0"
         />
 
-        {/* Street View Button */}
-        {showStreetViewButton && streetViewAvailable && (
-          <button
-            onClick={() => setIsStreetViewModalOpen(true)}
-            className="absolute top-2 right-2 z-10 flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-lg hover:bg-gray-50 transition-colors text-sm font-medium">
-            <Navigation className="h-4 w-4" />
-            Street View
-          </button>
+        {/* Note: Street View is a Google Maps specific feature. 
+            If the user wants to keep it, it will require Google Maps API.
+            For now, we'll keep the button but it might need coordinates passed to the modal.
+        */}
+        {showStreetViewButton && (
+          <div className="absolute top-2 right-2 z-10 flex flex-col gap-2">
+            <button
+              onClick={() => setIsStreetViewModalOpen(true)}
+              className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors text-sm font-medium border border-gray-200">
+              <Navigation className="h-4 w-4 text-blue-600" />
+              Street View
+            </button>
+            <button
+              onClick={() => setIsSatellite(!isSatellite)}
+              className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors text-xs font-medium border border-gray-200"
+            >
+              <Layers className="h-3.5 w-3.5 text-blue-600" />
+              {isSatellite ? "Map" : "Satellite"}
+            </button>
+          </div>
         )}
       </div>
 
-      {/* Street View Modal */}
       <StreetViewModal
         isOpen={isStreetViewModalOpen}
         onClose={() => setIsStreetViewModalOpen(false)}
         address={address}
+        coordinates={coordinates}
       />
     </>
   );

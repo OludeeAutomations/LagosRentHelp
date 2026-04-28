@@ -371,6 +371,7 @@ const PropertyDetails: React.FC = () => {
                   <CardContent className="p-0">
                     <PropertyMap
                       address={property.location}
+                      coordinates={property.coordinates}
                       height="400px"
                       showStreetViewButton={true}
                     />

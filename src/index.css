@@ -150,3 +150,9 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom Map Marker Styling */
+.custom-marker-icon {
+  background: none !important;
+  border: none !important;
+}

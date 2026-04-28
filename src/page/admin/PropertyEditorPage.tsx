@@ -12,6 +12,7 @@ import { propertyService } from "@/services/propertyService";
 import { userService } from "@/services/userService";
 import { ManageableUser, Property, User } from "@/types";
 import { ImagePlus, X, AlertCircle, RotateCcw } from "lucide-react";
+import CoordinatePicker from "@/components/common/CoordinatePicker";
 import { Badge } from "@/components/ui/badge";
 const propertyTypes = [
   "1-bedroom",
@@ -39,6 +40,7 @@ type PropertyFormState = {
   contactUserId: string;
   availableFrom: string;
   minimumStay: string;
+  coordinates?: { lat: number; lng: number };
 };
 
 const emptyForm: PropertyFormState = {
@@ -58,6 +60,7 @@ const emptyForm: PropertyFormState = {
 
   availableFrom: "",
   minimumStay: "",
+  coordinates: undefined,
 };
 
 const normalizeProperty = (payload: any): Property | null => {
@@ -195,6 +198,7 @@ const PropertyEditorPage: React.FC = () => {
               minimumStay: property.minimumStay
                 ? String(property.minimumStay)
                 : "",
+              coordinates: property.coordinates,
             });
 
             // Handle existing images
@@ -301,6 +305,10 @@ const PropertyEditorPage: React.FC = () => {
         payload.append("imagesToRemove", JSON.stringify(imagesToRemove));
       }
 
+      if (form.coordinates) {
+        payload.append("coordinates", JSON.stringify(form.coordinates));
+      }
+
       files.forEach((file) => payload.append("images", file));
 
       if (isEditMode && id) {
@@ -383,6 +391,13 @@ const PropertyEditorPage: React.FC = () => {
                     />
                   </div>
                 </div>
+
+                <CoordinatePicker
+                  value={form.coordinates}
+                  onChange={(coords) =>
+                    setForm((prev) => ({ ...prev, coordinates: coords }))
+                  }
+                />
 
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>

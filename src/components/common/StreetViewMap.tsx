@@ -7,12 +7,14 @@ interface StreetViewModalProps {
   isOpen: boolean;
   onClose: () => void;
   address: string;
+  coordinates?: { lat: number; lng: number };
 }
 
 const StreetViewModal: React.FC<StreetViewModalProps> = ({
   isOpen,
   onClose,
   address,
+  coordinates,
 }) => {
   const streetViewRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<"loading" | "loaded" | "error">(
@@ -62,58 +64,58 @@ const StreetViewModal: React.FC<StreetViewModalProps> = ({
       if (!streetViewRef.current) return;
 
       try {
-        const geocoder = new google.maps.Geocoder();
+        const streetViewService = new google.maps.StreetViewService();
 
-        geocoder.geocode({ address }, (results, status) => {
-          if (status === "OK" && results?.[0]) {
-            const location = results[0].geometry.location;
-
-            const streetViewService = new google.maps.StreetViewService();
-
-            streetViewService.getPanorama(
-              {
-                location: location,
-                radius: 100,
-                source: google.maps.StreetViewSource.OUTDOOR,
-              },
-              (data, streetViewStatus) => {
-                if (streetViewStatus === "OK" && data) {
-                  // Create Street View panorama with minimal controls
-                  const panoramaInstance = new google.maps.StreetViewPanorama(
-                    streetViewRef.current!,
-                    {
-                      position: location,
-                      pov: {
-                        heading: 34,
-                        pitch: 10,
-                      },
-                      zoom: 1,
-                      visible: true,
-                      addressControl: false, // Hide default address control
-                      linksControl: false, // Hide default links
-                      panControl: false, // Hide default pan control
-                      zoomControl: false, // Hide default zoom control
-                      enableCloseButton: false, // Hide close button
-                      fullscreenControl: false, // Hide fullscreen control
-                      motionTrackingControl: false,
-                    }
-                  );
-
-                  setPanorama(panoramaInstance);
-                  setStatus("loaded");
-                } else {
-                  setStatus("error");
-                  setError(
-                    "Street View is not available for this location. Try exploring nearby streets."
-                  );
-                }
+        const setupPanorama = (location: google.maps.LatLng | google.maps.LatLngLiteral) => {
+          streetViewService.getPanorama(
+            {
+              location: location,
+              radius: 100,
+              source: google.maps.StreetViewSource.OUTDOOR,
+            },
+            (data, streetViewStatus) => {
+              if (streetViewStatus === "OK" && data) {
+                const panoramaInstance = new google.maps.StreetViewPanorama(
+                  streetViewRef.current!,
+                  {
+                    position: location,
+                    pov: { heading: 34, pitch: 10 },
+                    zoom: 1,
+                    visible: true,
+                    addressControl: false,
+                    linksControl: false,
+                    panControl: false,
+                    zoomControl: false,
+                    enableCloseButton: false,
+                    fullscreenControl: false,
+                    motionTrackingControl: false,
+                  }
+                );
+                setPanorama(panoramaInstance);
+                setStatus("loaded");
+              } else {
+                setStatus("error");
+                setError(
+                  "Street View is not available for this location. Try exploring nearby streets."
+                );
               }
-            );
-          } else {
-            setStatus("error");
-            setError("Address not found");
-          }
-        });
+            }
+          );
+        };
+
+        if (coordinates?.lat && coordinates?.lng) {
+          setupPanorama({ lat: coordinates.lat, lng: coordinates.lng });
+        } else {
+          const geocoder = new google.maps.Geocoder();
+          geocoder.geocode({ address }, (results, status) => {
+            if (status === "OK" && results?.[0]) {
+              setupPanorama(results[0].geometry.location);
+            } else {
+              setStatus("error");
+              setError("Address not found");
+            }
+          });
+        }
       } catch (err) {
         setStatus("error");
         setError("Error initializing Street View");
