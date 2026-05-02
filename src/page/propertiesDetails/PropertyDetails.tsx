@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import { useLoginModalStore } from "@/stores/modalStore";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,13 +37,18 @@ const PropertyDetails: React.FC = () => {
   const navigate = useNavigate();
   const { userFavorites, toggleFavorite, getPropertyById } = usePropertyStore();
   const { user } = useAuthStore();
+  const openLoginModal = useLoginModalStore((state) => state.openLoginModal);
   const { createLead, checkContactStatus } = useLeadStore();
 
   const [property, setProperty] = useState<Property | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showContactModal, setShowContactModal] = useState(false);
-  const [resolvedContact, setResolvedContact] = useState<ListingContact | null>(null);
-  const propertyWithContact = property as (Property & { agent?: ListingContact }) | null;
+  const [resolvedContact, setResolvedContact] = useState<ListingContact | null>(
+    null,
+  );
+  const propertyWithContact = property as
+    | (Property & { agent?: ListingContact })
+    | null;
 
   const openContactModal = () => {
     if (typeof window !== "undefined") {
@@ -62,7 +68,9 @@ const PropertyDetails: React.FC = () => {
       : null);
   const contactId =
     rawContact?._id ||
-    (typeof property?.contactUserId === "string" ? property.contactUserId : null) ||
+    (typeof property?.contactUserId === "string"
+      ? property.contactUserId
+      : null) ||
     rawContact?.agentId ||
     (typeof property?.agentId === "string" ? property.agentId : null);
   const contact = resolvedContact || rawContact;
@@ -116,8 +124,8 @@ const PropertyDetails: React.FC = () => {
       typeof property.contactUserId === "string"
         ? property.contactUserId
         : typeof property.agentId === "string"
-        ? property.agentId
-        : null;
+          ? property.agentId
+          : null;
 
     if (agentIdString) {
       resolveAgentContact(agentIdString);
@@ -158,8 +166,10 @@ const PropertyDetails: React.FC = () => {
 
   const handleWhatsAppClick = async () => {
     if (!user) {
-      toast.error("Please login to contact the listing owner");
-      navigate("/login");
+      openLoginModal(
+        "Please login to continue and contact the listing owner.",
+        async () => handleWhatsAppClick(),
+      );
       return;
     }
 
@@ -171,14 +181,18 @@ const PropertyDetails: React.FC = () => {
 
     const whatsappUrl =
       "https://wa.me/2347082293054?text=" +
-      encodeURIComponent(`Hello, I'm interested in your property: ${property?.title}`);
+      encodeURIComponent(
+        `Hello, I'm interested in your property: ${property?.title}`,
+      );
     window.open(whatsappUrl, "_blank");
   };
 
   const handlePhoneCall = async () => {
     if (!user) {
-      toast.error("Please login to contact the listing owner");
-      navigate("/login");
+      openLoginModal(
+        "Please login to continue and contact the listing owner.",
+        async () => handlePhoneCall(),
+      );
       return;
     }
 
@@ -198,7 +212,10 @@ const PropertyDetails: React.FC = () => {
 
   const handleToggleFavorite = () => {
     if (!user) {
-      toast.error("Please log in to save favorites");
+      openLoginModal(
+        "Please login to save this property to favorites.",
+        async () => handleToggleFavorite(),
+      );
       return;
     }
 
@@ -262,7 +279,9 @@ const PropertyDetails: React.FC = () => {
             <CardTitle>Property Not Found</CardTitle>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate("/properties")}>Browse Properties</Button>
+            <Button onClick={() => navigate("/properties")}>
+              Browse Properties
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -331,7 +350,9 @@ const PropertyDetails: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Bath className="h-5 w-5 text-gray-400" />
-                  <span className="font-medium">{property.bathrooms} Baths</span>
+                  <span className="font-medium">
+                    {property.bathrooms} Baths
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Square className="h-5 w-5 text-gray-400" />
@@ -376,7 +397,9 @@ const PropertyDetails: React.FC = () => {
                       showStreetViewButton={true}
                     />
                     <div className="p-4">
-                      <h4 className="font-semibold mb-2 text-gray-900">Address</h4>
+                      <h4 className="font-semibold mb-2 text-gray-900">
+                        Address
+                      </h4>
                       <p className="text-gray-600">{property.location}</p>
                     </div>
                   </CardContent>
@@ -408,12 +431,16 @@ const PropertyDetails: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Type</span>
-                  <span className="font-medium capitalize">{property.type}</span>
+                  <span className="font-medium capitalize">
+                    {property.type}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Status</span>
                   <Badge
-                    variant={property.status === "available" ? "default" : "secondary"}
+                    variant={
+                      property.status === "available" ? "default" : "secondary"
+                    }
                     className="capitalize">
                     {property.status}
                   </Badge>

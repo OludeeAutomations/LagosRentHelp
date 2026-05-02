@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuthStore } from "@/stores/authStore";
+import { useLoginModalStore } from "@/stores/modalStore";
 import { propertyService } from "@/services/propertyService";
 import { userService } from "@/services/userService";
 import { ManageableUser, Property, User } from "@/types";
@@ -79,6 +80,7 @@ const PropertyEditorPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const openLoginModal = useLoginModalStore((state) => state.openLoginModal);
   const [form, setForm] = useState<PropertyFormState>(emptyForm);
   const [manageableUsers, setManageableUsers] = useState<ManageableUser[]>([]);
   const [adminUsers, setAdminUsers] = useState<User[]>([]);
@@ -137,7 +139,9 @@ const PropertyEditorPage: React.FC = () => {
   };
   useEffect(() => {
     if (!user) {
-      navigate("/login");
+      openLoginModal(
+        "Your session has expired. Please login again to continue.",
+      );
       return;
     }
 
@@ -241,6 +245,7 @@ const PropertyEditorPage: React.FC = () => {
     id,
     defaultContactId,
     isSuperAdmin,
+    openLoginModal,
   ]);
 
   const updateField = (field: keyof PropertyFormState, value: string) => {

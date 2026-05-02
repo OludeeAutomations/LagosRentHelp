@@ -19,6 +19,7 @@ import {
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAgentStore } from "@/stores/agentStore";
 import { useAuthStore } from "@/stores/authStore";
+import { useLoginModalStore } from "@/stores/modalStore";
 import { agentReviewService } from "@/services/reviewService";
 import { useLeadStore } from "@/stores/leadStore";
 
@@ -40,6 +41,7 @@ import { Button } from "@/components/ui/button";
 
 const AgentProfile: React.FC = () => {
   const { user } = useAuthStore();
+  const openLoginModal = useLoginModalStore((state) => state.openLoginModal);
   const { agentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
   const { agentProfile, fetchAgentById, loading, error } = useAgentStore();
@@ -65,11 +67,11 @@ const AgentProfile: React.FC = () => {
 
   // Filter properties by status
   const availableProperties = agentProperties.filter(
-    (p) => p.status === "available"
+    (p) => p.status === "available",
   );
   const rentedProperties = agentProperties.filter((p) => p.status === "rented");
   const pendingProperties = agentProperties.filter(
-    (p) => p.status === "pending"
+    (p) => p.status === "pending",
   );
 
   const hasContacted = agentId ? contactStatus[agentId] : false;
@@ -90,7 +92,7 @@ const AgentProfile: React.FC = () => {
           if (response.success) {
             setReviews(response.data.reviews || []);
             const roundedRating = Number(
-              response.data.averageRating.toFixed(1)
+              response.data.averageRating.toFixed(1),
             );
             setAgentRating(roundedRating);
             setTotalReviews(response.data.totalReviews);
@@ -159,14 +161,15 @@ const AgentProfile: React.FC = () => {
 
   const hasReviewed = reviews.some(
     (rev) =>
-      rev.reviewerId?._id === user?._id || rev.reviewerId?._id === user?._id
+      rev.reviewerId?._id === user?._id || rev.reviewerId?._id === user?._id,
   );
 
   // Handle WhatsApp message
   const handleWhatsAppClick = async () => {
     if (!user || !agentId) {
-      toast.error("Please login to contact agent");
-      navigate("/login");
+      openLoginModal("Please login to contact this agent.", async () =>
+        handleWhatsAppClick(),
+      );
       return;
     }
 
@@ -201,8 +204,9 @@ const AgentProfile: React.FC = () => {
   // Handle Phone call
   const handlePhoneClick = async () => {
     if (!user || !agentId) {
-      toast.error("Please login to contact agent");
-      navigate("/login");
+      openLoginModal("Please login to contact this agent.", async () =>
+        handlePhoneClick(),
+      );
       return;
     }
 
@@ -564,8 +568,8 @@ const AgentProfile: React.FC = () => {
                             property.status === "available"
                               ? "bg-green-500 text-white border-0"
                               : property.status === "rented"
-                              ? "bg-orange-500 text-white border-0"
-                              : "bg-blue-500 text-white border-0"
+                                ? "bg-orange-500 text-white border-0"
+                                : "bg-blue-500 text-white border-0"
                           }`}>
                           {property.status}
                         </Badge>
@@ -689,8 +693,8 @@ const AgentProfile: React.FC = () => {
                         agent.verificationStatus === "verified"
                           ? "bg-green-100 text-green-800 border-0"
                           : agent.verificationStatus === "pending"
-                          ? "bg-yellow-100 text-yellow-800 border-0"
-                          : "bg-red-100 text-red-800 border-0"
+                            ? "bg-yellow-100 text-yellow-800 border-0"
+                            : "bg-red-100 text-red-800 border-0"
                       }`}>
                       {agent.verificationStatus}
                     </Badge>

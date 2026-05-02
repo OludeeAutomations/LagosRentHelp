@@ -2,15 +2,18 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { useLoginModalStore } from "@/stores/modalStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/stores/authStore";
 import { propertyService } from "@/services/propertyService";
 import { Property } from "@/types";
 
-const extractProperties = (payload: any): Property[] => {
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload)) return payload;
+const extractProperties = (payload: unknown): Property[] => {
+  if (Array.isArray((payload as { data?: unknown })?.data)) {
+    return (payload as { data: Property[] }).data;
+  }
+  if (Array.isArray(payload)) return payload as Property[];
   return [];
 };
 
@@ -25,6 +28,7 @@ const getApprovalBadgeVariant = (
 const PropertyManagementPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const openLoginModal = useLoginModalStore((state) => state.openLoginModal);
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
@@ -47,7 +51,12 @@ const PropertyManagementPage: React.FC = () => {
 
   useEffect(() => {
     if (!user) {
-      navigate("/login");
+      openLoginModal(
+        "Please login to continue managing properties.",
+        async () => {
+          await loadProperties();
+        },
+      );
       return;
     }
 
@@ -57,7 +66,7 @@ const PropertyManagementPage: React.FC = () => {
     }
 
     loadProperties();
-  }, [user, canManage, navigate]);
+  }, [user, canManage, navigate, openLoginModal]);
 
   const handleApproval = async (
     propertyId: string,
@@ -198,7 +207,8 @@ const PropertyManagementPage: React.FC = () => {
                             <span>Contact: {contact || "Not set"}</span>
                             {property.coordinates && (
                               <span>
-                                Coordinates: {property.coordinates.lat.toFixed(4)},{" "}
+                                Coordinates:{" "}
+                                {property.coordinates.lat.toFixed(4)},{" "}
                                 {property.coordinates.lng.toFixed(4)}
                               </span>
                             )}

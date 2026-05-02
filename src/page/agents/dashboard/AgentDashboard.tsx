@@ -15,6 +15,7 @@ import {
   Heart,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import { useLoginModalStore } from "@/stores/modalStore";
 import { useAgentStore } from "@/stores/agentStore";
 import { useLeadStore } from "@/stores/leadStore";
 import { Link, useNavigate } from "react-router-dom";
@@ -35,6 +36,7 @@ import { canAgentListProperties } from "@/utils/agentUtils";
 
 const AgentDashboard: React.FC = () => {
   const { user, agent } = useAuthStore();
+  const openLoginModal = useLoginModalStore((state) => state.openLoginModal);
   const { fetchAgentProfile, loading: isLoading, error } = useAgentStore();
   const { leads, fetchAgentLeads, loading: leadsLoading } = useLeadStore();
 
@@ -49,14 +51,15 @@ const AgentDashboard: React.FC = () => {
   // ✅ FIX 1: Dedicated Auth Check Effect
   // This runs immediately on mount/refresh
   useEffect(() => {
-    // If we have a user, mark checked.
-    // If no user, redirect immediately.
     if (!user) {
-      navigate("/login");
-    } else {
-      setIsAuthChecked(true);
+      openLoginModal("Please login to continue to your dashboard.", async () =>
+        Promise.resolve(),
+      );
+      return;
     }
-  }, [user, navigate]);
+
+    setIsAuthChecked(true);
+  }, [user, openLoginModal]);
 
   // ✅ FIX 2: Fetch Agent Profile only if User exists
   useEffect(() => {
@@ -114,7 +117,7 @@ const AgentDashboard: React.FC = () => {
     ) {
       return Math.ceil(
         (new Date(agent.subscription.trialEndsAt).getTime() - Date.now()) /
-          (1000 * 60 * 60 * 24)
+          (1000 * 60 * 60 * 24),
       );
     }
 
@@ -123,7 +126,7 @@ const AgentDashboard: React.FC = () => {
     if (verifiedAt) {
       const verifiedDate = new Date(verifiedAt);
       const daysSinceVerification = Math.floor(
-        (Date.now() - verifiedDate.getTime()) / (1000 * 60 * 60 * 24)
+        (Date.now() - verifiedDate.getTime()) / (1000 * 60 * 60 * 24),
       );
       if (daysSinceVerification < 7) {
         return 7 - daysSinceVerification;
@@ -173,8 +176,8 @@ const AgentDashboard: React.FC = () => {
             agent.verificationStatus === "verified"
               ? "bg-green-100 border-green-300"
               : agent.verificationStatus === "pending"
-              ? "bg-yellow-100 border-yellow-300"
-              : "bg-red-100 border-red-300"
+                ? "bg-yellow-100 border-yellow-300"
+                : "bg-red-100 border-red-300"
           }`}>
           {agent.verificationStatus === "verified" ? (
             <CheckCircle className="h-4 w-4 text-green-700" />
@@ -185,8 +188,8 @@ const AgentDashboard: React.FC = () => {
             {agent.verificationStatus === "verified"
               ? "Verified Agent"
               : agent.verificationStatus === "pending"
-              ? "Verification in Progress"
-              : "Verification Required"}
+                ? "Verification in Progress"
+                : "Verification Required"}
           </AlertTitle>
           <AlertDescription>
             {agent.verificationStatus === "verified" ? (

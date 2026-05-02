@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/stores/authStore";
+import { useLoginModalStore } from "@/stores/modalStore";
 import { CreateAdminData, userService } from "@/services/userService";
 import { User } from "@/types";
 import { useNavigate } from "react-router-dom";
@@ -48,13 +49,16 @@ const getRoleBadgeVariant = (role: User["role"]) => {
 const AdminAccountsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const openLoginModal = useLoginModalStore((state) => state.openLoginModal);
   const [admins, setAdmins] = useState<User[]>([]);
   const [form, setForm] = useState<CreateAdminData>(emptyForm);
   const [avatarPreview, setAvatarPreview] = useState<string>(COMPANY_LOGO_URL);
-  const [createdAdminAvatars, setCreatedAdminAvatars] = useState<Record<string, string>>({});
+  const [createdAdminAvatars, setCreatedAdminAvatars] = useState<
+    Record<string, string>
+  >({});
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "super_admin">(
-    "all"
+    "all",
   );
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -69,14 +73,17 @@ const AdminAccountsPage: React.FC = () => {
         search: search || undefined,
         role: roleFilter === "all" ? undefined : roleFilter,
       });
-      const fetchedAdmins = extractUsers(response.data || response).map((admin) => {
-        const localAvatar = createdAdminAvatars[admin._id || admin.email || ""];
+      const fetchedAdmins = extractUsers(response.data || response).map(
+        (admin) => {
+          const localAvatar =
+            createdAdminAvatars[admin._id || admin.email || ""];
 
-        return {
-          ...admin,
-          avatar: admin.avatar || localAvatar,
-        };
-      });
+          return {
+            ...admin,
+            avatar: admin.avatar || localAvatar,
+          };
+        },
+      );
       setAdmins(fetchedAdmins);
     } catch (error) {
       console.error(error);
@@ -88,7 +95,12 @@ const AdminAccountsPage: React.FC = () => {
 
   useEffect(() => {
     if (!user) {
-      navigate("/login");
+      openLoginModal(
+        "Please login to continue managing admin accounts.",
+        async () => {
+          await loadAdmins();
+        },
+      );
       return;
     }
 
@@ -173,7 +185,7 @@ const AdminAccountsPage: React.FC = () => {
 
   const handleDelete = async (userId: string) => {
     const confirmed = window.confirm(
-      "Delete this admin account? This will fail if the account is still linked to properties."
+      "Delete this admin account? This will fail if the account is still linked to properties.",
     );
 
     if (!confirmed) {
@@ -204,12 +216,14 @@ const AdminAccountsPage: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Admin Accounts</h1>
             <p className="mt-2 text-gray-600">
-              Create admin users, promote trusted admins, and keep account access
-              under control.
+              Create admin users, promote trusted admins, and keep account
+              access under control.
             </p>
           </div>
 
-          <Button variant="outline" onClick={() => navigate("/admin/properties")}>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/admin/properties")}>
             Back to Properties
           </Button>
         </div>
@@ -239,7 +253,9 @@ const AdminAccountsPage: React.FC = () => {
                     id="email"
                     type="email"
                     value={form.email}
-                    onChange={(event) => updateForm("email", event.target.value)}
+                    onChange={(event) =>
+                      updateForm("email", event.target.value)
+                    }
                   />
                 </div>
 
@@ -248,7 +264,9 @@ const AdminAccountsPage: React.FC = () => {
                   <Input
                     id="phone"
                     value={form.phone}
-                    onChange={(event) => updateForm("phone", event.target.value)}
+                    onChange={(event) =>
+                      updateForm("phone", event.target.value)
+                    }
                   />
                 </div>
 
@@ -282,7 +300,9 @@ const AdminAccountsPage: React.FC = () => {
                     id="password"
                     type="password"
                     value={form.password}
-                    onChange={(event) => updateForm("password", event.target.value)}
+                    onChange={(event) =>
+                      updateForm("password", event.target.value)
+                    }
                   />
                 </div>
 
@@ -298,7 +318,8 @@ const AdminAccountsPage: React.FC = () => {
             <CardHeader>
               <CardTitle>Existing Admins</CardTitle>
               <CardDescription>
-                Review admin and super admin accounts, then promote or remove them.
+                Review admin and super admin accounts, then promote or remove
+                them.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -314,23 +335,27 @@ const AdminAccountsPage: React.FC = () => {
                   value={roleFilter}
                   onChange={(event) =>
                     setRoleFilter(
-                      event.target.value as "all" | "admin" | "super_admin"
+                      event.target.value as "all" | "admin" | "super_admin",
                     )
                   }
-                  className="h-9 rounded-md border border-gray-300 px-3 text-sm"
-                >
+                  className="h-9 rounded-md border border-gray-300 px-3 text-sm">
                   <option value="all">All roles</option>
                   <option value="admin">Admins</option>
                   <option value="super_admin">Super Admins</option>
                 </select>
 
-                <Button variant="outline" onClick={loadAdmins} disabled={loading}>
+                <Button
+                  variant="outline"
+                  onClick={loadAdmins}
+                  disabled={loading}>
                   Refresh
                 </Button>
               </div>
 
               {loading ? (
-                <div className="text-sm text-gray-500">Loading admin accounts...</div>
+                <div className="text-sm text-gray-500">
+                  Loading admin accounts...
+                </div>
               ) : visibleAdmins.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-gray-300 p-6 text-sm text-gray-500">
                   No admin accounts matched your filters.
@@ -344,12 +369,13 @@ const AdminAccountsPage: React.FC = () => {
                     return (
                       <div
                         key={adminUser._id}
-                        className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-4 md:flex-row md:items-center md:justify-between"
-                      >
+                        className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-4 md:flex-row md:items-center md:justify-between">
                         <div className="flex items-center gap-4">
                           <Avatar className="h-12 w-12">
                             <AvatarImage
-                              src={getDisplayProfileImage(adminUser) || undefined}
+                              src={
+                                getDisplayProfileImage(adminUser) || undefined
+                              }
                               alt={adminUser.name}
                             />
                             <AvatarFallback className="bg-[#129B36] text-white text-sm">
@@ -365,10 +391,13 @@ const AdminAccountsPage: React.FC = () => {
                               <h2 className="font-semibold text-gray-900">
                                 {adminUser.name}
                               </h2>
-                              <Badge variant={getRoleBadgeVariant(adminUser.role)}>
+                              <Badge
+                                variant={getRoleBadgeVariant(adminUser.role)}>
                                 {adminUser.role.replace("_", " ")}
                               </Badge>
-                              {isCurrentUser && <Badge variant="outline">You</Badge>}
+                              {isCurrentUser && (
+                                <Badge variant="outline">You</Badge>
+                              )}
                             </div>
                             <div className="text-sm text-gray-600">
                               <div>{adminUser.email}</div>
@@ -382,8 +411,7 @@ const AdminAccountsPage: React.FC = () => {
                             <Button
                               variant="outline"
                               onClick={() => handlePromote(adminUser._id)}
-                              disabled={actionUserId === adminUser._id}
-                            >
+                              disabled={actionUserId === adminUser._id}>
                               <Shield className="h-4 w-4" />
                               Promote
                             </Button>
@@ -393,8 +421,7 @@ const AdminAccountsPage: React.FC = () => {
                             <Button
                               variant="destructive"
                               onClick={() => handleDelete(adminUser._id)}
-                              disabled={actionUserId === adminUser._id}
-                            >
+                              disabled={actionUserId === adminUser._id}>
                               <Trash2 className="h-4 w-4" />
                               Delete
                             </Button>

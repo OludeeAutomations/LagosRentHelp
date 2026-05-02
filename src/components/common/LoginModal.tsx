@@ -35,8 +35,8 @@ export const LoginModal = () => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+    <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white/95 border border-sky-200 shadow-2xl rounded-3xl p-6 w-full max-w-md mx-4 ring-1 ring-sky-100">
         <div className="mb-4">
           <h2 className="text-xl font-semibold text-gray-900">
             Session Expired

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { usePropertyStore } from "@/stores/propertyStore";
 import { useAuthStore } from "@/stores/authStore";
+import { useLoginModalStore } from "@/stores/modalStore";
 import { Property } from "@/types";
 import CreateListing from "./CreatList"; // Typo fixed from 'CreatList'
 import { toast } from "sonner";
@@ -19,6 +20,7 @@ const EditListing: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { agent } = useAuthStore();
+  const openLoginModal = useLoginModalStore((state) => state.openLoginModal);
   const { getPropertyById } = usePropertyStore();
   const [property, setProperty] = useState<Property | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,8 +37,10 @@ const EditListing: React.FC = () => {
       }
 
       if (!agent) {
-        toast.error("Please log in as an agent");
-        navigate("/login");
+        openLoginModal(
+          "Please log in as an agent to edit this listing.",
+          async () => Promise.resolve(),
+        );
         return;
       }
 
@@ -55,7 +59,9 @@ const EditListing: React.FC = () => {
           // If images are URLs, use them directly
           // If they're file paths, you might need to prepend a base URL
           const baseApiUrl =
-            import.meta.env.VITE_API_BASE_URL || window.location.origin || "http://localhost:5000";
+            import.meta.env.VITE_API_BASE_URL ||
+            window.location.origin ||
+            "http://localhost:5000";
           const images = foundProperty.images.map((img) => {
             if (typeof img === "string" && img.startsWith("http")) {
               return img;
