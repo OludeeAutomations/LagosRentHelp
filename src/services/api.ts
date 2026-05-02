@@ -2,6 +2,7 @@ import axios, {
   AxiosError,
   AxiosInstance,
   InternalAxiosRequestConfig,
+  AxiosRequestHeaders,
   AxiosResponse,
 } from "axios";
 export type ApiResponse<T> = {
@@ -16,13 +17,10 @@ export type ApiResponse<T> = {
   };
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || window.location.origin || "http://localhost:5000";
-
-if (!import.meta.env.VITE_API_BASE_URL) {
-  console.warn(
-    "VITE_API_BASE_URL is not defined. Falling back to default local API base URL (http://localhost:5000)."
-  );
-}
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  window.location.origin ||
+  "http://localhost:5000";
 
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -44,7 +42,7 @@ const setAccessToken = (token: string) => {
   localStorage.setItem("accessToken", token);
   // Dispatch event so authStore can update its state and persistence
   window.dispatchEvent(
-    new CustomEvent("auth-token-refresh", { detail: token })
+    new CustomEvent("auth-token-refresh", { detail: token }),
   );
 };
 
@@ -56,12 +54,12 @@ const removeTokens = () => {
 let isRefreshing = false;
 let refreshSubscribers: {
   resolve: (token: string) => void;
-  reject: (err: any) => void;
+  reject: (err: unknown) => void;
 }[] = [];
 
 function subscribeTokenRefresh(
   resolveCb: (token: string) => void,
-  rejectCb: (err: any) => void
+  rejectCb: (err: unknown) => void,
 ) {
   refreshSubscribers.push({ resolve: resolveCb, reject: rejectCb });
 }
@@ -71,7 +69,7 @@ function onTokenRefreshed(newToken: string) {
   refreshSubscribers = [];
 }
 
-function onRefreshFailed(error: any) {
+function onRefreshFailed(error: unknown) {
   refreshSubscribers.forEach(({ reject }) => reject(error));
   refreshSubscribers = [];
 }
@@ -81,7 +79,7 @@ async function refreshAccessToken(): Promise<string> {
     const response = await axios.post(
       `${API_BASE_URL}/auth/refresh`,
       {},
-      { withCredentials: true }
+      { withCredentials: true },
     );
 
     const newToken = response.data?.accessToken;
@@ -116,25 +114,41 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // utils/api.ts - Update the interceptor
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
-    const originalRequest: any = error.config || {};
+    const originalRequest =
+      (error.config as InternalAxiosRequestConfig & {
+        _retry?: boolean;
+        headers?: AxiosRequestHeaders | Record<string, string>;
+      }) || {};
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           subscribeTokenRefresh(
             (token) => {
-              if (!originalRequest.headers) originalRequest.headers = {};
-              originalRequest.headers["Authorization"] = `Bearer ${token}`;
+              if (!originalRequest.headers) {
+                originalRequest.headers = {} as AxiosRequestHeaders;
+              }
+              if (
+                typeof (originalRequest.headers as AxiosRequestHeaders).set ===
+                "function"
+              ) {
+                (originalRequest.headers as AxiosRequestHeaders).set(
+                  "Authorization",
+                  `Bearer ${token}`,
+                );
+              } else {
+                originalRequest.headers["Authorization"] = `Bearer ${token}`;
+              }
               resolve(api(originalRequest));
             },
-            (err) => reject(err)
+            (err) => reject(err),
           );
         });
       }
@@ -146,8 +160,19 @@ api.interceptors.response.use(
         const newToken = await refreshAccessToken();
         onTokenRefreshed(newToken);
 
-        if (!originalRequest.headers) originalRequest.headers = {};
-        originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
+        if (!originalRequest.headers)
+          originalRequest.headers = {} as AxiosRequestHeaders;
+        if (
+          typeof (originalRequest.headers as AxiosRequestHeaders).set ===
+          "function"
+        ) {
+          (originalRequest.headers as AxiosRequestHeaders).set(
+            "Authorization",
+            `Bearer ${newToken}`,
+          );
+        } else {
+          originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
+        }
 
         return api(originalRequest);
       } catch (refreshError) {
@@ -156,11 +181,11 @@ api.interceptors.response.use(
 
         // ✅ Show login modal using Zustand
         const modalStore = await import("../stores/modalStore").then((module) =>
-          module.useLoginModalStore.getState()
+          module.useLoginModalStore.getState(),
         );
         modalStore.openLoginModal(
           "Your session has expired. Please login again to continue.",
-          () => api(originalRequest) // Retry the original request after login
+          () => api(originalRequest), // Retry the original request after login
         );
 
         return Promise.reject(refreshError);
@@ -170,6 +195,6 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 export { api, setAccessToken, removeTokens };

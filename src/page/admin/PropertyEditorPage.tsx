@@ -223,9 +223,10 @@ const PropertyEditorPage: React.FC = () => {
             ownerId: current.ownerId || user?._id || "",
           }));
         }
-      } catch (error) {
-        console.error(error);
-        toast.error("Failed to load property editor");
+      } catch {
+        toast.error(
+          "Failed to load property editor. Please refresh or login again.",
+        );
       } finally {
         setPageLoading(false);
       }
@@ -325,12 +326,12 @@ const PropertyEditorPage: React.FC = () => {
 
       navigate("/admin/properties");
     } catch (error: unknown) {
-      console.error("Failed to save property:", error);
-      const backendMessage =
-        (error as any)?.response?.data?.message ||
-        (error as any)?.message ||
-        "Failed to save property";
-      toast.error(backendMessage);
+      const status = (error as any)?.response?.status;
+      const message =
+        status === 401 || status === 403
+          ? "Your session has expired. Please login again to continue."
+          : "Unable to save property. Please try again.";
+      toast.error(message);
     } finally {
       setLoading(false);
     }

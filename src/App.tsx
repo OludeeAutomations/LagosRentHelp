@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import Layout from "./layout";
+import { ModalProvider } from "./provider/ModalProvider";
 import Home from "./page/home/Home";
 import Contact from "./page/contact/Contact";
 import About from "./page/about/About";
@@ -229,7 +230,9 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <Router>
-      <AppContent />
+      <ModalProvider>
+        <AppContent />
+      </ModalProvider>
     </Router>
   );
 };

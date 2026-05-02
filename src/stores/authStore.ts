@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { Agent, User } from "@/types";
 import { authService, type RegisterData } from "@/services/authService";
 import { userService } from "@/services/userService";
+import { useLoginModalStore } from "@/stores/modalStore";
 import { normalizeAuthPayload } from "./authStore.helpers";
 
 interface AuthState {
@@ -21,7 +22,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: (userData: unknown) => Promise<void>;
   register: (
-    userData: RegisterData
+    userData: RegisterData,
   ) => Promise<{ success: boolean; requiresVerification?: boolean }>;
   logout: () => void;
   updateProfile: (updates: Partial<User>) => Promise<void>;
@@ -34,7 +35,7 @@ interface AuthState {
 const createAuthenticatedState = (
   user: User,
   accessToken: string,
-  agent: Agent | null
+  agent: Agent | null,
 ) => ({
   user,
   accessToken,
@@ -87,6 +88,14 @@ export const useAuthStore = create<AuthState>()(
           throw new Error("Authentication failed");
         } catch {
           get().logout();
+          useLoginModalStore
+            .getState()
+            .openLoginModal(
+              "Your session has expired. Please login again to continue.",
+              async () => {
+                await get().fetchUserData();
+              },
+            );
           return false;
         }
       },
@@ -136,7 +145,9 @@ export const useAuthStore = create<AuthState>()(
         set({ loading: true, error: null });
 
         try {
-          const response = await authService.loginWithGoogle(userData as object);
+          const response = await authService.loginWithGoogle(
+            userData as object,
+          );
           const { user, accessToken, agent } = normalizeAuthPayload(response);
           set(createAuthenticatedState(user, accessToken, agent));
         } catch (error: unknown) {
@@ -194,7 +205,9 @@ export const useAuthStore = create<AuthState>()(
           return response;
         } catch (error: unknown) {
           const errorMessage =
-            error instanceof Error ? error.message : "Email verification failed";
+            error instanceof Error
+              ? error.message
+              : "Email verification failed";
           set({ error: errorMessage, loading: false });
           throw error;
         }
@@ -218,8 +231,12 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const userResponse = await userService.getProfile();
-          const user = userResponse.data || userResponse;
-          const agentData = userResponse.agentData || null;
+          const responseData = userResponse as {
+            data?: User;
+            agentData?: Agent | null;
+          };
+          const user = responseData.data || (userResponse as unknown as User);
+          const agentData = responseData.agentData || null;
 
           set({
             user,
@@ -229,7 +246,9 @@ export const useAuthStore = create<AuthState>()(
           });
         } catch (error: unknown) {
           const errorMessage =
-            error instanceof Error ? error.message : "Failed to fetch user data";
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch user data";
 
           set({
             error: errorMessage,
@@ -241,6 +260,14 @@ export const useAuthStore = create<AuthState>()(
             (error.message.includes("401") || error.message.includes("403"))
           ) {
             get().logout();
+            useLoginModalStore
+              .getState()
+              .openLoginModal(
+                "Your session has expired. Please login again to continue.",
+                async () => {
+                  await get().fetchUserData();
+                },
+              );
           }
         }
       },
@@ -261,8 +288,8 @@ export const useAuthStore = create<AuthState>()(
         accessToken: state.accessToken,
         isAuthenticated: state.isAuthenticated,
       }),
-    }
-  )
+    },
+  ),
 );
 
 if (typeof window !== "undefined") {

@@ -4,10 +4,13 @@ import { create } from "zustand";
 interface LoginModalState {
   isOpen: boolean;
   message: string;
-  retryAction: (() => void) | null;
-  openLoginModal: (message?: string, retryAction?: () => void) => void;
+  retryAction: (() => Promise<unknown>) | null;
+  openLoginModal: (
+    message?: string,
+    retryAction?: () => Promise<unknown>,
+  ) => void;
   closeLoginModal: () => void;
-  executeRetry: () => void;
+  executeRetry: () => Promise<unknown>;
 }
 
 export const useLoginModalStore = create<LoginModalState>((set, get) => ({
@@ -17,7 +20,7 @@ export const useLoginModalStore = create<LoginModalState>((set, get) => ({
 
   openLoginModal: (
     message = "Your session has expired. Please login again.",
-    retryAction
+    retryAction,
   ) => {
     set({
       isOpen: true,
@@ -34,10 +37,11 @@ export const useLoginModalStore = create<LoginModalState>((set, get) => ({
     });
   },
 
-  executeRetry: () => {
+  executeRetry: async () => {
     const { retryAction } = get();
     if (retryAction) {
-      retryAction();
+      return retryAction();
     }
+    return Promise.resolve();
   },
 }));

@@ -20,12 +20,15 @@ export const LoginModal = () => {
 
     try {
       await login(email, password);
-      setIsLoading(false);
-      executeRetry(); // Execute the retry action after successful login
+      await executeRetry();
       closeLoginModal();
     } catch (err: any) {
       setIsLoading(false);
-      setError(err.response?.data?.error || "Login failed. Please try again.");
+      setError(
+        err?.response?.data?.error ||
+          err?.message ||
+          "Login failed. Please try again.",
+      );
     }
   };
 

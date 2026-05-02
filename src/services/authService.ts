@@ -1,5 +1,5 @@
-import axios from "axios";
-import { api, ApiResponse } from "./api";
+import axios, { AxiosResponse } from "axios";
+import { api } from "./api";
 import { User, LoginResponse } from "@/types";
 
 export interface RegisterData {
@@ -14,8 +14,8 @@ export interface RegisterData {
 export const authService = {
   login: async (
     email: string,
-    password: string
-  ): Promise<ApiResponse<LoginResponse>> => {
+    password: string,
+  ): Promise<AxiosResponse<LoginResponse>> => {
     try {
       const response = await api.post<LoginResponse>("/auth/login", {
         email,
@@ -23,26 +23,32 @@ export const authService = {
       });
       return response;
     } catch (error) {
-      console.error("Login error:", error);
-      throw new Error(error instanceof Error ? error.message : "Login failed");
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Login failed. Please check your credentials.";
+      throw new Error(message);
     }
   },
 
   loginWithGoogle: async (
-    userData: object
-  ): Promise<ApiResponse<LoginResponse>> => {
+    userData: object,
+  ): Promise<AxiosResponse<LoginResponse>> => {
     try {
       const response = await api.post<LoginResponse>("/auth/google", userData);
       return response;
     } catch (error) {
-      console.error("Login error:", error);
-      throw new Error(error instanceof Error ? error.message : "Login failed");
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Login failed. Please try again.";
+      throw new Error(message);
     }
   },
 
   register: async (
-    userData: RegisterData
-  ): Promise<ApiResponse<LoginResponse>> => {
+    userData: RegisterData,
+  ): Promise<AxiosResponse<LoginResponse>> => {
     try {
       const registrationData = {
         name: userData.name?.trim() || "",
@@ -53,44 +59,38 @@ export const authService = {
         ...(userData.avatar && { avatar: userData.avatar }),
       };
 
-      console.log("Sending registration data:", registrationData);
-
       const response = await api.post<LoginResponse>(
         "/auth/register",
-        registrationData
+        registrationData,
       );
-
-      // 🔍 ADD THIS DEBUG LOG
-      console.log("Registration response received:", {
-        fullResponse: response,
-        data: response.data,
-        userInResponse: response.data.user,
-        accessTokenInResponse: response.data.accessToken,
-      });
-
       return response;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const backendMessage = error.response?.data?.error || error.message;
-        console.error("Registration error:", backendMessage);
+        const backendMessage =
+          error.response?.data?.error ||
+          "Registration failed. Please try again.";
         throw new Error(backendMessage);
       }
 
-      // Non-Axios error
-      throw new Error("An unexpected error occurred");
+      throw new Error("An unexpected error occurred.");
     }
   },
 
-  verifyEmail: async (userId: string, token: string) => {
+  verifyEmail: async (
+    userId: string,
+    token: string,
+  ): Promise<AxiosResponse<unknown>> => {
     try {
       const response = await api.get(`/auth/verify-email/${userId}/${token}`);
       return response.data; // This should be { success: true, message: "..." }
-    } catch (error: any) {
-      // Make sure this only throws on actual errors, not on success responses
+    } catch (error: unknown) {
+      const axiosError = error as {
+        response?: { data?: { error?: string; message?: string } };
+      };
       throw new Error(
-        error.response?.data?.error ||
-          error.response?.data?.message ||
-          "Email verification failed"
+        axiosError.response?.data?.error ||
+          axiosError.response?.data?.message ||
+          "Email verification failed",
       );
     }
   },
@@ -142,26 +142,28 @@ export const authService = {
   validateToken: async (): Promise<{ valid: boolean; user?: User }> => {
     try {
       const response = await api.get("/auth/validate");
-      console.log("Token validation response:", response);
       return {
         valid: true,
         user: response.data.user,
       };
-    } catch (error) {
+    } catch {
       return {
         valid: false,
       };
     }
   },
-  updateProfile: async (updates: Partial<User>): Promise<ApiResponse<User>> => {
+  updateProfile: async (
+    updates: Partial<User>,
+  ): Promise<AxiosResponse<User>> => {
     try {
       const response = await api.put<User>("/users/profile", updates);
       return response;
     } catch (error) {
-      console.error("Update profile error:", error);
-      throw new Error(
-        error instanceof Error ? error.message : "Profile update failed"
-      );
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Profile update failed. Please try again.";
+      throw new Error(message);
     }
   },
 };
