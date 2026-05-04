@@ -27,7 +27,6 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
   const [isSatellite, setIsSatellite] = useState(true);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
 
-
   const STREETS_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
   const SATELLITE_TILES =
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
