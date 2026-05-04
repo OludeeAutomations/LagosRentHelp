@@ -22,9 +22,11 @@ export const LoginModal = () => {
     try {
       await login(email, password);
       closeLoginModal();
-      await executeRetry();
-    } catch (retryError) {
-      console.error(retryError);
+      try {
+        await executeRetry();
+      } catch (retryError) {
+        console.error("Retry failed", retryError);
+      }
     } catch (err: any) {
       setIsLoading(false);
       setError(
