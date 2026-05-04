@@ -17,7 +17,7 @@ interface PropertyState {
   addProperty: (propertyData: FormData) => Promise<void>;
   updateProperty: (
     id: string,
-    updates: Partial<Property> | FormData
+    updates: Partial<Property> | FormData,
   ) => Promise<void>;
   deleteProperty: (id: string) => Promise<void>;
   toggleFavorite: (propertyId: string) => Promise<void>;
@@ -52,19 +52,12 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
   getPropertyById: async (id: string): Promise<Property | null> => {
     try {
       const response = await propertyService.getById(id);
-      console.log("Full response:", response);
-      console.log("Response data:", response.data);
-      console.log("Response keys:", Object.keys(response.data));
-
       // Check what's actually in the response
       if (response.data && response.data.data) {
-        console.log("Found nested data:", response.data.data);
         return response.data.data;
       } else if (response.data) {
-        console.log("Using direct data:", response.data);
         return response.data;
       } else {
-        console.log("No data found in response");
         return null;
       }
     } catch (error: unknown) {
@@ -109,13 +102,13 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
       const response = await propertyService.update(id, updates);
       set((state) => {
         const updatedProperties = state.properties.map((prop) =>
-          prop._id === id ? { ...prop, ...response.data } : prop
+          prop._id === id ? { ...prop, ...response.data } : prop,
         );
         return {
           properties: updatedProperties,
           filteredProperties: updatedProperties,
           featuredProperties: updatedProperties.filter(
-            (prop) => prop.isFeatured
+            (prop) => prop.isFeatured,
           ),
           loading: false,
         };
@@ -134,13 +127,13 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
       await propertyService.delete(id);
       set((state) => {
         const filteredProperties = state.properties.filter(
-          (prop) => prop._id !== id
+          (prop) => prop._id !== id,
         );
         return {
           properties: filteredProperties,
           filteredProperties: filteredProperties,
           featuredProperties: filteredProperties.filter(
-            (prop) => prop.isFeatured
+            (prop) => prop.isFeatured,
           ),
           loading: false,
         };
@@ -190,7 +183,7 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
           (!newFilters.bedrooms || property.bedrooms >= newFilters.bedrooms) &&
           (!newFilters.amenities?.length ||
             newFilters.amenities.every((amenity) =>
-              property.amenities.includes(amenity)
+              property.amenities.includes(amenity),
             ))
         );
       });
@@ -206,13 +199,13 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
         case "newest":
           sortedProperties.sort(
             (a, b) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
           );
           break;
         case "oldest":
           sortedProperties.sort(
             (a, b) =>
-              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
           );
           break;
       }
@@ -252,14 +245,14 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
       const propertyArray: Property[] = Array.isArray(rawPayload)
         ? rawPayload
         : Array.isArray(rawPayload?.data)
-        ? rawPayload.data
-        : [];
+          ? rawPayload.data
+          : [];
 
       set({
         properties: propertyArray,
         filteredProperties: propertyArray,
         featuredProperties: propertyArray.filter(
-          (prop: Property) => prop.isFeatured
+          (prop: Property) => prop.isFeatured,
         ),
         loading: false,
       });

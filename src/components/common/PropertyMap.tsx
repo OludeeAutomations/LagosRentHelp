@@ -20,16 +20,19 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const [status, setStatus] = useState<"loading" | "loaded" | "error">(
-    "loading"
+    "loading",
   );
   const [error, setError] = useState("");
   const [isStreetViewModalOpen, setIsStreetViewModalOpen] = useState(false);
   const [isSatellite, setIsSatellite] = useState(true);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
 
+
   const STREETS_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-  const SATELLITE_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
-  const SATELLITE_ATTR = "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community";
+  const SATELLITE_TILES =
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+  const SATELLITE_ATTR =
+    "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community";
 
   const primaryColor = "#129B36";
   const customIcon = L.divIcon({
@@ -60,8 +63,8 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           try {
             const response = await fetch(
               `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-                address
-              )}`
+                address,
+              )}`,
             );
             const data = await response.json();
             if (data && data.length > 0) {
@@ -81,15 +84,20 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
 
         const map = L.map(mapRef.current).setView([mapLat, mapLng], 15);
 
-        const tiles = L.tileLayer(isSatellite ? SATELLITE_TILES : STREETS_TILES, {
-          attribution: isSatellite
-            ? SATELLITE_ATTR
-            : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        }).addTo(map);
+        const tiles = L.tileLayer(
+          isSatellite ? SATELLITE_TILES : STREETS_TILES,
+          {
+            attribution: isSatellite
+              ? SATELLITE_ATTR
+              : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          },
+        ).addTo(map);
 
         tileLayerRef.current = tiles;
 
-        markerRef.current = L.marker([mapLat, mapLng], { icon: customIcon }).addTo(map).bindPopup(address);
+        markerRef.current = L.marker([mapLat, mapLng], { icon: customIcon })
+          .addTo(map)
+          .bindPopup(address);
 
         mapInstanceRef.current = map;
         setStatus("loaded");
@@ -118,11 +126,14 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
     tileLayerRef.current.remove();
 
     // Create and add new layer
-    const newTiles = L.tileLayer(isSatellite ? SATELLITE_TILES : STREETS_TILES, {
-      attribution: isSatellite
-        ? SATELLITE_ATTR
-        : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(mapInstanceRef.current);
+    const newTiles = L.tileLayer(
+      isSatellite ? SATELLITE_TILES : STREETS_TILES,
+      {
+        attribution: isSatellite
+          ? SATELLITE_ATTR
+          : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      },
+    ).addTo(mapInstanceRef.current);
 
     tileLayerRef.current = newTiles;
   }, [isSatellite]);
@@ -160,8 +171,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             </button>
             <button
               onClick={() => setIsSatellite(!isSatellite)}
-              className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors text-xs font-medium border border-gray-200"
-            >
+              className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors text-xs font-medium border border-gray-200">
               <Layers className="h-3.5 w-3.5 text-blue-600" />
               {isSatellite ? "Map" : "Satellite"}
             </button>
