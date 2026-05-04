@@ -46,16 +46,14 @@ export const LoginModal = () => {
         <div className="bg-[#129B36] px-7 pt-7 pb-6 flex flex-col items-center gap-3.5">
           {/* Replace the svg below with your actual logo */}
           <div className="w-16 h-16 rounded-2xl bg-white/20 border border-white/35 flex items-center justify-center">
-            <svg viewBox="0 0 36 36" className="w-9 h-9" fill="none">
-              <img
-                src="/icon.png"
-                alt="LagosRentHelp Logo"
-                className="w-10 sm:w-12 lg:w-14"
-              />
-            </svg>
+            <img
+              src="/icon.png"
+              alt="LagosRentHelp Logo"
+              className="w-10 sm:w-12 lg:w-14"
+            />
           </div>
           <div className="text-center">
-            <span className="text-base sm:text-lg lg:text-xl font-bold text-[#0E0E0E] hidden sm:inline">
+            <span className="text-base sm:text-lg lg:text-xl font-bold text-[#FFFFFF] hidden sm:inline">
               LagosRentHelp
             </span>
 
