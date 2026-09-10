@@ -1,6 +1,18 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, User, Mail, Phone, Lock, Check, X } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  User,
+  Mail,
+  Phone,
+  Lock,
+  Check,
+  X,
+  Building2,
+  Search,
+  Loader2,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import AuthLayout from "@/components/common/AuthLayout";
@@ -19,6 +31,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { RegisterData } from "@/services/authService";
+import GoogleLogo from "@/components/common/GoogleLogo";
 
 // Enhanced password validation schema
 const passwordRequirements = z
@@ -37,6 +50,7 @@ const registerSchema = z
     name: z.string().min(1, "Name is required"),
     email: z.string().email("Invalid email address"),
     phone: z.string().min(1, "Phone number is required"),
+    accountType: z.enum(["user", "landlord"]),
     password: passwordRequirements,
     confirmPassword: z.string(),
   })
@@ -62,7 +76,8 @@ const Register: React.FC = () => {
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
-  const { register: registerUser, setError } = useAuthStore();
+  const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
+  const { register: registerUser, loginWithGoogle, setError } = useAuthStore();
   const navigate = useNavigate();
 
   const form = useForm<RegisterForm>({
@@ -71,6 +86,7 @@ const Register: React.FC = () => {
       name: "",
       email: "",
       phone: "",
+      accountType: "user",
       password: "",
       confirmPassword: "",
     },
@@ -78,6 +94,7 @@ const Register: React.FC = () => {
 
   const passwordValue = form.watch("password");
   const confirmPasswordValue = form.watch("confirmPassword");
+  const accountType = form.watch("accountType");
   const passwordChecks = checkPasswordRequirements(passwordValue);
 
   const onSubmit = async (data: RegisterForm) => {
@@ -90,16 +107,21 @@ const Register: React.FC = () => {
         email: data.email,
         phone: data.phone,
         password: data.password,
-        role: "user",
+        role: data.accountType,
       };
 
       const result = await registerUser(formData);
 
       if (result.success) {
-        toast.success(
-          "Registration successful! Please check your email for verification."
-        );
-        navigate("/verify-email");
+        if (result.requiresVerification) {
+          toast.success(
+            "Registration successful! Please check your email for verification."
+          );
+          navigate("/verify-email");
+        } else {
+          toast.success("Your account is ready.");
+          navigate(data.accountType === "landlord" ? "/landlord/onboarding" : "/");
+        }
       } else {
         toast.error(result.error || "Registration failed");
       }
@@ -110,6 +132,19 @@ const Register: React.FC = () => {
       setError(errorMessage);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const continueWithGoogle = async () => {
+    setIsGoogleLoading(true);
+    setError(null);
+    try {
+      await loginWithGoogle(accountType);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Google signup failed.";
+      toast.error(message);
+      setError(message);
+      setIsGoogleLoading(false);
     }
   };
 
@@ -159,6 +194,51 @@ const Register: React.FC = () => {
           variants={containerVariants}
           initial="hidden"
           animate="visible">
+          <motion.div variants={itemVariants}>
+            <FormField
+              control={form.control}
+              name="accountType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-black">I want to *</FormLabel>
+                  <FormControl>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        disabled={isLoading}
+                        aria-pressed={field.value === "user"}
+                        onClick={() => field.onChange("user")}
+                        className={`rounded-lg border-2 p-4 text-left transition-colors ${
+                          field.value === "user"
+                            ? "border-[#129B36] bg-green-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}>
+                        <Search className="mb-2 h-5 w-5 text-[#129B36]" />
+                        <span className="block font-semibold">Find a home</span>
+                        <span className="text-sm text-gray-500">Tenant / renter</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isLoading}
+                        aria-pressed={field.value === "landlord"}
+                        onClick={() => field.onChange("landlord")}
+                        className={`rounded-lg border-2 p-4 text-left transition-colors ${
+                          field.value === "landlord"
+                            ? "border-[#129B36] bg-green-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}>
+                        <Building2 className="mb-2 h-5 w-5 text-[#129B36]" />
+                        <span className="block font-semibold">List a property</span>
+                        <span className="text-sm text-gray-500">Landlord / owner</span>
+                      </button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </motion.div>
+
           {/* Name */}
           <motion.div variants={itemVariants}>
             <FormField
@@ -436,7 +516,7 @@ const Register: React.FC = () => {
             <Button
               type="submit"
               className="w-full bg-[#129B36] hover:bg-[#41614F] text-white relative"
-              disabled={isLoading}
+              disabled={isLoading || isGoogleLoading}
               size="lg">
               {isLoading ? (
                 <div className="flex items-center justify-center">
@@ -454,6 +534,30 @@ const Register: React.FC = () => {
               ) : (
                 "Create Account"
               )}
+            </Button>
+          </motion.div>
+
+          <motion.div
+            variants={itemVariants}
+            className="flex items-center my-4">
+            <div className="flex-grow border-t border-gray-300" />
+            <span className="mx-3 text-sm text-gray-500">OR</span>
+            <div className="flex-grow border-t border-gray-300" />
+          </motion.div>
+
+          <motion.div variants={itemVariants}>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-3 border-gray-300 bg-white text-black hover:bg-gray-50"
+              disabled={isLoading || isGoogleLoading}
+              onClick={continueWithGoogle}>
+              {isGoogleLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <GoogleLogo />
+              )}
+              {isGoogleLoading ? "Connecting to Google..." : "Continue with Google"}
             </Button>
           </motion.div>
 

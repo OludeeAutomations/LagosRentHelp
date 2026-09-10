@@ -52,14 +52,7 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
   getPropertyById: async (id: string): Promise<Property | null> => {
     try {
       const response = await propertyService.getById(id);
-      // Check what's actually in the response
-      if (response.data && response.data.data) {
-        return response.data.data;
-      } else if (response.data) {
-        return response.data;
-      } else {
-        return null;
-      }
+      return response.data || null;
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to fetch property";
@@ -238,15 +231,7 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
 
     try {
       const response = await propertyService.getAll(filters);
-      console.log("Raw API response:", response.data);
-
-      // Support both payload shapes: data is either array or { data: array }
-      const rawPayload = response.data;
-      const propertyArray: Property[] = Array.isArray(rawPayload)
-        ? rawPayload
-        : Array.isArray(rawPayload?.data)
-          ? rawPayload.data
-          : [];
+      const propertyArray = response.data;
 
       set({
         properties: propertyArray,

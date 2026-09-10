@@ -1,13 +1,16 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
-import { Agent, User } from "@/types";
-import { authService, type RegisterData } from "@/services/authService";
-import { userService } from "@/services/userService";
-import { useLoginModalStore } from "@/stores/modalStore";
-import { normalizeAuthPayload } from "./authStore.helpers";
+import { createJSONStorage, persist } from "zustand/middleware";
+import type { Agent, User } from "@/types";
+import {
+  authService,
+  mapSupabaseSession,
+  type RegisterData,
+} from "@/services/authService";
+import { supabase } from "@/lib/supabase";
 
 interface AuthState {
   validateAuth: () => Promise<boolean>;
+  initializeAuth: () => () => void;
   user: User | null;
   agent: Agent | null;
   accessToken: string | null;
@@ -20,22 +23,29 @@ interface AuthState {
   setError: (error: string | null) => void;
   setAccessToken: (token: string | null) => void;
   login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: (userData: unknown) => Promise<void>;
+  loginWithGoogle: (accountType?: RegisterData["role"]) => Promise<void>;
   register: (
     userData: RegisterData,
-  ) => Promise<{ success: boolean; requiresVerification?: boolean }>;
-  logout: () => void;
+  ) => Promise<{
+    success: boolean;
+    requiresVerification?: boolean;
+    error?: string;
+  }>;
+  logout: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
   changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
-  verifyEmail: (userId: string, token: string) => Promise<unknown>;
-  resendVerificationEmail: (userId: string) => Promise<void>;
+  verifyEmail: (userId?: string, token?: string) => Promise<{
+    success: boolean;
+    message: string;
+  }>;
+  resendVerificationEmail: (userId?: string) => Promise<void>;
   fetchUserData: () => Promise<void>;
 }
 
 const createAuthenticatedState = (
   user: User,
   accessToken: string,
-  agent: Agent | null,
+  agent: Agent | null = null,
 ) => ({
   user,
   accessToken,
@@ -61,227 +71,155 @@ export const useAuthStore = create<AuthState>()(
       agent: null,
       accessToken: null,
       isAuthenticated: false,
-      loading: false,
+      loading: true,
       error: null,
 
-      setUser: (user) => set({ user, isAuthenticated: !!user }),
+      setUser: (user) => set({ user, isAuthenticated: Boolean(user) }),
       setAgent: (agent) => set({ agent }),
       setLoading: (loading) => set({ loading }),
       setError: (error) => set({ error }),
       setAccessToken: (accessToken) => set({ accessToken }),
 
-      validateAuth: async (): Promise<boolean> => {
-        const { user, accessToken, isAuthenticated } = get();
-
-        if (!isAuthenticated || !user || !accessToken) {
-          return false;
-        }
-
-        try {
-          const result = await authService.validateToken();
-
-          if (result.valid && result.user) {
-            set({ user: result.user });
-            return true;
+      initializeAuth: () => {
+        void supabase.auth.getSession().then(async ({ data, error }) => {
+          if (error || !data.session) {
+            set(createLoggedOutState());
+            return;
           }
 
-          throw new Error("Authentication failed");
-        } catch {
-          get().logout();
-          useLoginModalStore
-            .getState()
-            .openLoginModal(
-              "Your session has expired. Please login again to continue.",
-              async () => {
-                await get().fetchUserData();
-              },
-            );
-          return false;
-        }
+          const auth = await mapSupabaseSession(data.session);
+          set(createAuthenticatedState(auth.user, auth.accessToken));
+        });
+
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+          if (!session) {
+            set(createLoggedOutState());
+            return;
+          }
+
+          // Run profile hydration after Supabase finishes processing the auth
+          // event to avoid nested auth-client calls inside the callback.
+          window.setTimeout(() => {
+            void mapSupabaseSession(session).then((auth) => {
+              set(createAuthenticatedState(auth.user, auth.accessToken));
+            });
+          }, 0);
+        });
+
+        return () => subscription.unsubscribe();
       },
 
-      register: async (userData: RegisterData) => {
+      validateAuth: async (): Promise<boolean> => {
+        const result = await authService.validateToken();
+        if (!result.valid || !result.user || !result.accessToken) {
+          set(createLoggedOutState());
+          return false;
+        }
+
+        set(createAuthenticatedState(result.user, result.accessToken));
+        return true;
+      },
+
+      register: async (userData) => {
         set({ loading: true, error: null });
 
         try {
-          const response = await authService.register(userData);
-          const data = response.data || response;
-
-          if (!data.user && !data.success) {
-            throw new Error("Registration failed: No user data returned");
+          const result = await authService.register(userData);
+          if (result.auth) {
+            set(
+              createAuthenticatedState(
+                result.auth.user,
+                result.auth.accessToken,
+              ),
+            );
           }
-
-          return { success: true };
+          return result;
         } catch (error: unknown) {
-          const errorMessage =
+          const message =
             error instanceof Error ? error.message : "Failed to create account";
-
-          set({
-            error: errorMessage,
-            loading: false,
-          });
+          set({ error: message, loading: false });
           throw error;
         } finally {
           set({ loading: false });
         }
       },
 
-      login: async (email: string, password: string) => {
+      login: async (email, password) => {
         set({ loading: true, error: null });
-
         try {
-          const response = await authService.login(email, password);
-          const { user, accessToken, agent } = normalizeAuthPayload(response);
-          set(createAuthenticatedState(user, accessToken, agent));
+          const result = await authService.login(email, password);
+          set(createAuthenticatedState(result.user, result.accessToken));
         } catch (error: unknown) {
-          const errorMessage =
+          const message =
             error instanceof Error ? error.message : "Failed to login";
-          set(createLoggedOutState(errorMessage));
+          set(createLoggedOutState(message));
           throw error;
         }
       },
 
-      loginWithGoogle: async (userData: unknown) => {
+      loginWithGoogle: async (accountType) => {
         set({ loading: true, error: null });
-
         try {
-          const response = await authService.loginWithGoogle(
-            userData as object,
-          );
-          const { user, accessToken, agent } = normalizeAuthPayload(response);
-          set(createAuthenticatedState(user, accessToken, agent));
+          await authService.loginWithGoogle(accountType);
         } catch (error: unknown) {
-          const errorMessage =
+          const message =
             error instanceof Error ? error.message : "Failed to login";
-          set(createLoggedOutState(errorMessage));
+          set({ loading: false, error: message });
           throw error;
         }
       },
 
-      logout: () => {
-        set(createLoggedOutState());
-        authService.logout();
+      logout: async () => {
+        try {
+          await authService.logout();
+        } finally {
+          set(createLoggedOutState());
+        }
       },
 
-      updateProfile: async (updates: Partial<User>) => {
+      updateProfile: async (updates) => {
         set({ error: null });
-
         try {
-          const response = await authService.updateProfile(updates);
-          const updatedUser = response.data || response;
-
-          set((state) => ({
-            user: state.user ? { ...state.user, ...updatedUser } : null,
-          }));
+          const updatedUser = await authService.updateProfile(updates);
+          set({ user: updatedUser });
         } catch (error: unknown) {
-          const errorMessage =
+          const message =
             error instanceof Error ? error.message : "Failed to update profile";
-          set({ error: errorMessage });
+          set({ error: message });
           throw error;
         }
       },
 
-      changePassword: async (oldPassword: string, newPassword: string) => {
+      changePassword: async (oldPassword, newPassword) => {
         set({ loading: true, error: null });
-
         try {
           await authService.changePassword(oldPassword, newPassword);
-          set({ loading: false, error: null });
+          set({ loading: false });
         } catch (error: unknown) {
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "Failed to change password";
-          set({ error: errorMessage, loading: false });
+          const message =
+            error instanceof Error ? error.message : "Failed to change password";
+          set({ loading: false, error: message });
           throw error;
         }
       },
 
-      verifyEmail: async (userId: string, token: string) => {
-        try {
-          set({ loading: true, error: null });
-          const response = await authService.verifyEmail(userId, token);
-          set({ loading: false });
-          return response;
-        } catch (error: unknown) {
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "Email verification failed";
-          set({ error: errorMessage, loading: false });
-          throw error;
-        }
-      },
+      verifyEmail: async () => authService.verifyEmail(),
 
-      resendVerificationEmail: async (userId: string) => {
-        set({ loading: true, error: null });
-        try {
-          await authService.resendVerificationEmail(userId);
-          set({ loading: false });
-        } catch (error: unknown) {
-          const errorMessage =
-            error instanceof Error ? error.message : "Failed to resend email";
-          set({ error: errorMessage, loading: false });
-          throw error;
-        }
+      resendVerificationEmail: async () => {
+        await authService.resendVerificationEmail();
       },
 
       fetchUserData: async () => {
         set({ loading: true, error: null });
-
-        try {
-          const userResponse = await userService.getProfile();
-          const responseData = userResponse as {
-            data?: User;
-            agentData?: Agent | null;
-          };
-          const user = responseData.data || (userResponse as unknown as User);
-          const agentData = responseData.agentData || null;
-
-          set({
-            user,
-            agent: user.role === "agent" ? agentData : null,
-            loading: false,
-            error: null,
-          });
-        } catch (error: unknown) {
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "Failed to fetch user data";
-
-          set({
-            error: errorMessage,
-            loading: false,
-          });
-
-          if (
-            error instanceof Error &&
-            (error.message.includes("401") || error.message.includes("403"))
-          ) {
-            get().logout();
-            useLoginModalStore
-              .getState()
-              .openLoginModal(
-                "Your session has expired. Please login again to continue.",
-                async () => {
-                  await get().fetchUserData();
-                },
-              );
-          }
-        }
+        const valid = await get().validateAuth();
+        if (!valid) set({ loading: false });
       },
     }),
     {
       name: "auth-storage",
       storage: createJSONStorage(() => localStorage),
-      onRehydrateStorage: () => (state) => {
-        if (state) {
-          setTimeout(() => {
-            state.validateAuth();
-          }, 1000);
-        }
-      },
       partialize: (state) => ({
         user: state.user,
         agent: state.agent,
@@ -291,16 +229,3 @@ export const useAuthStore = create<AuthState>()(
     },
   ),
 );
-
-if (typeof window !== "undefined") {
-  window.addEventListener("auth-token-refresh", (event: Event) => {
-    const token = (event as CustomEvent<string>).detail;
-    if (token) {
-      useAuthStore.getState().setAccessToken(token);
-    }
-  });
-
-  window.addEventListener("auth-logout", () => {
-    useAuthStore.getState().logout();
-  });
-}

@@ -113,7 +113,7 @@ const SearchPage: React.FC = () => {
               </h3>
               <p className="text-muted-foreground">{error}</p>
               <button
-                onClick={() => fetchProperties}
+                onClick={() => fetchProperties()}
                 className="mt-4 bg-[#129B36] text-white px-4 py-2 rounded-md">
                 Try Again
               </button>

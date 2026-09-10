@@ -31,9 +31,23 @@ import Favorites from "./page/user/Favorites";
 import PropertyManagementPage from "./page/admin/PropertyManagementPage";
 import PropertyEditorPage from "./page/admin/PropertyEditorPage";
 import AdminAccountsPage from "./page/admin/AdminAccountsPage";
+import AuthCallback from "./page/login/AuthCallback";
+import { useAuthStore } from "./stores/authStore";
+import { AuthenticatedRoute, LandlordRoute } from "./components/common/RoleRoute";
+import LandlordOnboarding from "./page/landlord/LandlordOnboarding";
+import LandlordDashboard from "./page/landlord/LandlordDashboard";
+import LandlordCreateListing from "./page/landlord/LandlordCreateListing";
+import CompleteProfile from "./page/register/CompleteProfile";
+import LandlordDashboardLayout from "./page/landlord/LandlordDashboardLayout";
+import LandlordProfile from "./page/landlord/LandlordProfile";
+import LandlordListings from "./page/landlord/LandlordListings";
 
 const AppContent: React.FC = () => {
   const location = useLocation();
+  const initializeAuth = useAuthStore((state) => state.initializeAuth);
+
+  React.useEffect(() => initializeAuth(), [initializeAuth]);
+
   return (
     <>
       <Toaster position="top-right" />
@@ -171,6 +185,41 @@ const AppContent: React.FC = () => {
                 </Layout>
               }
             />
+            <Route
+              path="/reset-password"
+              element={
+                <Layout>
+                  <ResetPassword />
+                </Layout>
+              }
+            />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route element={<AuthenticatedRoute />}>
+              <Route
+                path="/complete-profile"
+                element={
+                  <Layout>
+                    <CompleteProfile />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/landlord/onboarding"
+                element={
+                  <Layout>
+                    <LandlordOnboarding />
+                  </Layout>
+                }
+              />
+            </Route>
+            <Route element={<LandlordRoute />}>
+              <Route element={<LandlordDashboardLayout />}>
+                <Route path="/landlord" element={<LandlordDashboard />} />
+                <Route path="/landlord/listings" element={<LandlordListings />} />
+                <Route path="/landlord/listings/new" element={<LandlordCreateListing />} />
+                <Route path="/landlord/profile" element={<LandlordProfile />} />
+              </Route>
+            </Route>
             <Route
               path="/properties/:id"
               element={

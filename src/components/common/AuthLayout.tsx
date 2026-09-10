@@ -9,12 +9,18 @@ interface AuthLayoutProps {
   children: React.ReactNode;
   title: string;
   subtitle?: string;
+  sideTitle?: string;
+  sideSubtitle?: string;
+  sideIcon?: React.ElementType;
 }
 
 const AuthLayout: React.FC<AuthLayoutProps> = ({
   children,
   title,
   subtitle,
+  sideTitle = "Find Your Perfect Home",
+  sideSubtitle = "Join thousands of happy renters across Lagos",
+  sideIcon: SideIcon = Heart,
 }) => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -71,12 +77,12 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.7 }}
                 className="mb-8">
-                <Heart className="h-16 w-16 text-white mx-auto mb-4" />
+                <SideIcon className="h-16 w-16 text-white mx-auto mb-4" />
                 <h2 className="text-4xl font-bold mb-4">
-                  Find Your Perfect Home
+                  {sideTitle}
                 </h2>
                 <p className="text-xl opacity-90">
-                  Join thousands of happy renters across Lagos
+                  {sideSubtitle}
                 </p>
               </motion.div>
 

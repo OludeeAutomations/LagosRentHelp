@@ -13,7 +13,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
 
   // Don't show header/footer on auth pages or maintenance mode
-  const isAuthPage = ["/login", "/register"].includes(location.pathname);
+  const isAuthPage = [
+    "/login",
+    "/register",
+    "/complete-profile",
+    "/landlord/onboarding",
+  ].includes(location.pathname);
   //const isMaintenanceMode = location.pathname === "/";
   //add && !isMaintenanceMode to the condition above when maintenance mode is implemented
   return (

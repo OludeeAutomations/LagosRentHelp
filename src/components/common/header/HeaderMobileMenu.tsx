@@ -21,13 +21,7 @@ interface HeaderMobileMenuProps {
 
 const HeaderMobileMenu: React.FC<HeaderMobileMenuProps> = ({
   isOpen,
-  user,
-  navigation,
-  pathname,
-  getInitials,
   onToggle,
-  onClose,
-  onLogout,
 }) => {
   return (
     <button

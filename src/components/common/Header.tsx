@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { User as UserIcon, LogIn, Heart, Building2, Shield, Settings, LogOut } from "lucide-react";
@@ -152,6 +152,22 @@ const Header: React.FC = () => {
                         onClick={closeMenu}
                       />
                     )}
+
+                    {user.role === "landlord" ? (
+                      <HeaderActionButton
+                        to="/landlord"
+                        icon={Building2}
+                        label="Landlord Dashboard"
+                        onClick={closeMenu}
+                      />
+                    ) : user.role === "user" ? (
+                      <HeaderActionButton
+                        to="/landlord/onboarding"
+                        icon={Building2}
+                        label="List Your Property"
+                        onClick={closeMenu}
+                      />
+                    ) : null}
 
                     {user.role === "super_admin" && (
                       <HeaderActionButton

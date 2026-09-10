@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Lock, Eye, EyeOff } from "lucide-react";
 import AuthLayout from "@/components/common/AuthLayout";
@@ -33,7 +33,6 @@ const resetPasswordSchema = z
 type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
 
 const ResetPassword: React.FC = () => {
-  const { userId, token } = useParams<{ userId: string; token: string }>();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -48,11 +47,10 @@ const ResetPassword: React.FC = () => {
   });
 
   const onSubmit = async (data: ResetPasswordForm) => {
-    if (!userId || !token) return;
     setIsLoading(true);
 
     try {
-      await authService.resetPassword(userId, token, data.password);
+      await authService.resetPassword(data.password);
       toast.success("Password reset successfully!");
       navigate("/login");
     } catch (error: any) {
@@ -69,7 +67,11 @@ const ResetPassword: React.FC = () => {
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5, ease: "easeOut" as const },
+    },
   };
 
   return (

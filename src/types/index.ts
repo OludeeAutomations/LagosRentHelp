@@ -35,7 +35,7 @@ export interface User {
   phone: string;
   avatar?: string;
   displayAvatar?: string;
-  role: "user" | "agent" | "admin" | "super_admin";
+  role: "user" | "landlord" | "agent" | "admin" | "super_admin";
   favorites: string[];
   searchHistory: SearchFilters[];
   createdAt: string;
@@ -182,7 +182,7 @@ export interface Notification {
 export interface SearchFilters {
   location: string;
   type: string;
-  listingType?: "rent" | "short-let";
+  listingType?: "rent" | "short-let" | "";
   minPrice: number;
   maxPrice: number;
   bedrooms: number;

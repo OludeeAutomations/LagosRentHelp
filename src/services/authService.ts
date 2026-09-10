@@ -1,169 +1,310 @@
-import axios, { AxiosResponse } from "axios";
-import { api } from "./api";
-import { User, LoginResponse } from "@/types";
+import type { Session, User as SupabaseUser } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
+import type { User } from "@/types";
 
 export interface RegisterData {
   name: string;
   email: string;
   phone: string;
   password: string;
-  role: string;
+  role: "user" | "landlord";
   avatar?: string;
 }
 
+export interface SupabaseAuthResult {
+  accessToken: string;
+  user: User;
+}
+
+const allowedRoles: User["role"][] = [
+  "user",
+  "landlord",
+  "agent",
+  "admin",
+  "super_admin",
+];
+
+const getRole = (authUser: SupabaseUser): User["role"] => {
+  // user_metadata is editable by the user, so elevated roles must only come
+  // from trusted app_metadata.
+  const candidate = authUser.app_metadata?.role;
+  if (candidate === "agent") return "landlord";
+  if (allowedRoles.includes(candidate)) return candidate;
+
+  // This is only an interface hint before the database profile is resolved.
+  // Supabase RLS never trusts user_metadata for authorization.
+  return authUser.user_metadata?.account_type === "landlord"
+    ? "landlord"
+    : "user";
+};
+
+const getAuthAvatar = (authUser: SupabaseUser): string | undefined => {
+  const metadataAvatar =
+    authUser.user_metadata?.avatar_url ||
+    authUser.user_metadata?.picture ||
+    authUser.user_metadata?.avatar;
+  if (metadataAvatar) return metadataAvatar;
+
+  const googleIdentity = authUser.identities?.find(
+    (identity) => identity.provider === "google",
+  );
+  return (
+    googleIdentity?.identity_data?.avatar_url ||
+    googleIdentity?.identity_data?.picture
+  );
+};
+
+export const mapSupabaseUser = (authUser: SupabaseUser): User => ({
+  _id: authUser.id,
+  name:
+    authUser.user_metadata?.full_name ||
+    authUser.user_metadata?.name ||
+    authUser.email?.split("@")[0] ||
+    "User",
+  email: authUser.email || "",
+  phone: authUser.phone || authUser.user_metadata?.phone || "",
+  avatar: getAuthAvatar(authUser),
+  displayAvatar: getAuthAvatar(authUser),
+  role: getRole(authUser),
+  favorites: [],
+  searchHistory: [],
+  createdAt: authUser.created_at,
+  emailVerified: Boolean(authUser.email_confirmed_at),
+  phoneVerified: Boolean(authUser.phone_confirmed_at),
+});
+
+type DatabaseProfile = {
+  id?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  avatar?: string | null;
+  role?: User["role"];
+  created_at?: string;
+};
+
+const resolveSupabaseUser = async (authUser: SupabaseUser): Promise<User> => {
+  const fallback = mapSupabaseUser(authUser);
+  const { data, error } = await supabase.rpc("ensure_my_profile");
+
+  // The fallback keeps authentication usable until the landlord SQL migration
+  // has been installed. Database writes remain protected by RLS.
+  if (error || !data || typeof data !== "object") return fallback;
+
+  const profile = data as DatabaseProfile;
+  const databaseRole = profile.role === "agent" ? "landlord" : profile.role;
+
+  return {
+    ...fallback,
+    _id: profile.id || fallback._id,
+    name: profile.name || fallback.name,
+    email: profile.email || fallback.email,
+    phone: profile.phone || fallback.phone,
+    avatar: profile.avatar || fallback.avatar,
+    displayAvatar: profile.avatar || fallback.displayAvatar,
+    role:
+      databaseRole && allowedRoles.includes(databaseRole)
+        ? databaseRole
+        : fallback.role,
+    createdAt: profile.created_at || fallback.createdAt,
+  };
+};
+
+export const mapSupabaseSession = async (
+  session: Session,
+): Promise<SupabaseAuthResult> => ({
+  accessToken: session.access_token,
+  user: await resolveSupabaseUser(session.user),
+});
+
+const throwIfError = (error: { message: string } | null) => {
+  if (error) throw new Error(error.message);
+};
+
 export const authService = {
-  login: async (
-    email: string,
-    password: string,
-  ): Promise<AxiosResponse<LoginResponse>> => {
-    try {
-      const response = await api.post<LoginResponse>("/auth/login", {
-        email,
-        password,
-      });
-      return response;
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Login failed. Please check your credentials.";
-      throw new Error(message);
-    }
+  login: async (email: string, password: string): Promise<SupabaseAuthResult> => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+    throwIfError(error);
+
+    if (!data.session) throw new Error("Supabase did not create a session.");
+    return await mapSupabaseSession(data.session);
   },
 
   loginWithGoogle: async (
-    userData: object,
-  ): Promise<AxiosResponse<LoginResponse>> => {
-    try {
-      const response = await api.post<LoginResponse>("/auth/google", userData);
-      return response;
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Login failed. Please try again.";
-      throw new Error(message);
+    accountType?: RegisterData["role"],
+  ): Promise<void> => {
+    if (accountType) {
+      localStorage.setItem("pending_account_type", accountType);
+    } else {
+      localStorage.removeItem("pending_account_type");
     }
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) localStorage.removeItem("pending_account_type");
+    throwIfError(error);
   },
 
-  register: async (
-    userData: RegisterData,
-  ): Promise<AxiosResponse<LoginResponse>> => {
-    try {
-      const registrationData = {
-        name: userData.name?.trim() || "",
-        email: userData.email?.trim().toLowerCase() || "",
-        phone: userData.phone?.trim() || "",
-        password: userData.password || "",
-        role: userData.role || "user",
-        ...(userData.avatar && { avatar: userData.avatar }),
-      };
+  completeUserProfile: async (name: string, phone: string): Promise<User> => {
+    const {
+      data: { user: currentUser },
+    } = await supabase.auth.getUser();
+    const { error: authError } = await supabase.auth.updateUser({
+      data: {
+        ...(currentUser?.user_metadata || {}),
+        full_name: name.trim(),
+        name: name.trim(),
+        phone: phone.trim(),
+      },
+    });
+    throwIfError(authError);
 
-      const response = await api.post<LoginResponse>(
-        "/auth/register",
-        registrationData,
-      );
-      return response;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const backendMessage =
-          error.response?.data?.error ||
-          "Registration failed. Please try again.";
-        throw new Error(backendMessage);
-      }
+    const { data, error } = await supabase.rpc("complete_user_profile", {
+      p_name: name.trim(),
+      p_phone: phone.trim(),
+    });
+    throwIfError(error);
 
-      throw new Error("An unexpected error occurred.");
-    }
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("No signed-in user was found.");
+    const profile = data as DatabaseProfile;
+    const mapped = mapSupabaseUser(user);
+    return {
+      ...mapped,
+      _id: profile.id || mapped._id,
+      name: profile.name || mapped.name,
+      phone: profile.phone || mapped.phone,
+      role: profile.role || mapped.role,
+    };
   },
 
-  verifyEmail: async (
-    userId: string,
-    token: string,
-  ): Promise<AxiosResponse<unknown>> => {
-    try {
-      const response = await api.get(`/auth/verify-email/${userId}/${token}`);
-      return response.data; // This should be { success: true, message: "..." }
-    } catch (error: unknown) {
-      const axiosError = error as {
-        response?: { data?: { error?: string; message?: string } };
-      };
-      throw new Error(
-        axiosError.response?.data?.error ||
-          axiosError.response?.data?.message ||
-          "Email verification failed",
-      );
-    }
+  register: async (userData: RegisterData) => {
+    const { data, error } = await supabase.auth.signUp({
+      email: userData.email.trim().toLowerCase(),
+      password: userData.password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: {
+          full_name: userData.name.trim(),
+          name: userData.name.trim(),
+          phone: userData.phone.trim(),
+          account_type: userData.role,
+        },
+      },
+    });
+    throwIfError(error);
+
+    return {
+      success: true,
+      requiresVerification: !data.session,
+      auth: data.session ? await mapSupabaseSession(data.session) : undefined,
+    };
   },
-  resendVerificationEmail: async (userId: string) => {
-    const response = await api.post("/auth/resend-verification", { userId });
-    return response.data;
-  },
+
   sendPasswordResetEmail: async (email: string) => {
-    return api.post(`/auth/forgot-password`, { email: email });
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      email.trim().toLowerCase(),
+      { redirectTo: `${window.location.origin}/reset-password` },
+    );
+    throwIfError(error);
+  },
+
+  resetPassword: async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    throwIfError(error);
   },
 
   changePassword: async (oldPassword: string, newPassword: string) => {
-    return api.post(`/auth/change-password`, {
-      oldPassword,
-      newPassword,
-      confirmPassword: newPassword,
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    throwIfError(userError);
+
+    const email = userData.user?.email;
+    if (!email) throw new Error("No email is associated with this account.");
+
+    const { error: loginError } = await supabase.auth.signInWithPassword({
+      email,
+      password: oldPassword,
     });
+    throwIfError(loginError);
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    throwIfError(error);
   },
 
-  resetPassword: async (userId: string, token: string, password: string) => {
-    return api.post(`/auth/reset-password`, {
-      userId,
-      token,
-      password,
-      confirmPassword: password,
+  logout: async (): Promise<void> => {
+    const { error } = await supabase.auth.signOut();
+    throwIfError(error);
+  },
+
+  validateToken: async (): Promise<{
+    valid: boolean;
+    user?: User;
+    accessToken?: string;
+  }> => {
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session) return { valid: false };
+
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) return { valid: false };
+
+    return {
+      valid: true,
+      user: await resolveSupabaseUser(data.user),
+      accessToken: session.access_token,
+    };
+  },
+
+  updateProfile: async (updates: Partial<User>): Promise<User> => {
+    const { data, error } = await supabase.auth.updateUser({
+      data: {
+        ...(updates.name !== undefined && {
+          full_name: updates.name,
+          name: updates.name,
+        }),
+        ...(updates.phone !== undefined && { phone: updates.phone }),
+        ...(updates.avatar !== undefined && { avatar_url: updates.avatar }),
+      },
     });
+    throwIfError(error);
+    if (!data.user) throw new Error("Profile update did not return a user.");
+    return await resolveSupabaseUser(data.user);
   },
 
-  logout: (): void => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  verifyEmail: async () => {
+    const { data, error } = await supabase.auth.getUser();
+    throwIfError(error);
+    return {
+      success: Boolean(data.user?.email_confirmed_at),
+      message: data.user?.email_confirmed_at
+        ? "Email verified successfully."
+        : "Email verification is still pending.",
+    };
   },
 
-  getCurrentUser: (): User | null => {
-    if (typeof window === "undefined") return null;
-    const user = localStorage.getItem("user");
-    return user ? JSON.parse(user) : null;
-  },
+  resendVerificationEmail: async () => {
+    const { data, error: userError } = await supabase.auth.getUser();
+    throwIfError(userError);
+    const email = data.user?.email;
+    if (!email) throw new Error("Please sign in again to resend verification.");
 
-  getToken: (): string | null => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("token");
-  },
-
-  isAuthenticated: (): boolean => {
-    if (typeof window === "undefined") return false;
-    return !!localStorage.getItem("token");
-  },
-  validateToken: async (): Promise<{ valid: boolean; user?: User }> => {
-    try {
-      const response = await api.get("/auth/validate");
-      return {
-        valid: true,
-        user: response.data.user,
-      };
-    } catch {
-      return {
-        valid: false,
-      };
-    }
-  },
-  updateProfile: async (
-    updates: Partial<User>,
-  ): Promise<AxiosResponse<User>> => {
-    try {
-      const response = await api.put<User>("/users/profile", updates);
-      return response;
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Profile update failed. Please try again.";
-      throw new Error(message);
-    }
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    });
+    throwIfError(error);
   },
 };
