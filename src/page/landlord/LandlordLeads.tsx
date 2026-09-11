@@ -16,6 +16,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import DashboardSummaryDecoration from "@/components/common/DashboardSummaryDecoration";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -58,22 +59,6 @@ const whatsappUrl = (phone: string, renterName: string, propertyTitle: string) =
   const digits = phone.replace(/\D/g, "").replace(/^0/, "234");
   const message = `Hello ${renterName}, I am following up on your enquiry about ${propertyTitle} on LagosRentHelp.`;
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
-};
-
-const SummaryDecoration = ({ tone }: { tone: "sky" | "green" | "amber" | "violet" }) => {
-  const colors = {
-    sky: "border-sky-200/20 bg-sky-200/10",
-    green: "border-emerald-200/20 bg-emerald-200/10",
-    amber: "border-amber-200/20 bg-amber-200/10",
-    violet: "border-violet-200/20 bg-violet-200/10",
-  }[tone];
-
-  return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-36 overflow-hidden">
-      <span className={`absolute -right-10 -top-12 h-32 w-32 rounded-full border-[24px] ${colors}`} />
-      <span className={`absolute -bottom-14 right-7 h-28 w-28 rounded-full border-[22px] ${colors}`} />
-    </div>
-  );
 };
 
 const LandlordLeads = () => {
@@ -127,7 +112,7 @@ const LandlordLeads = () => {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summary.map(({ label, value, tone, icon: Icon, iconClass }) => (
           <Card key={label} className="relative overflow-hidden border-[#143f2b] bg-[#143f2b] text-white shadow-lg shadow-[#143f2b]/20 ring-1 ring-white/20">
-            <SummaryDecoration tone={tone} />
+            <DashboardSummaryDecoration tone={tone} />
             <CardContent className="relative z-10 flex items-center gap-4 p-6">
               <span className={`rounded-xl p-3 shadow-inner ring-1 ${iconClass}`}><Icon className="h-7 w-7" strokeWidth={2} /></span>
               <div><p className="text-2xl font-bold">{value}</p><p className="text-sm text-white/85">{label}</p></div>

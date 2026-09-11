@@ -1,4 +1,5 @@
 import { Check, CreditCard, Gift, ShieldCheck, Sparkles } from "lucide-react";
+import DashboardSummaryDecoration from "@/components/common/DashboardSummaryDecoration";
 import { Card, CardContent } from "@/components/ui/card";
 
 const features = [
@@ -12,8 +13,10 @@ const features = [
 const LandlordSubscription = () => (
   <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
     <div className="w-full space-y-6">
-      <section className="overflow-hidden rounded-3xl bg-[#153f2b] px-6 py-10 text-white sm:px-10">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+      <section className="relative overflow-hidden rounded-3xl bg-[#143f2b] px-6 py-10 text-white sm:px-10">
+        <div className="absolute inset-y-0 right-[18%] hidden w-44 sm:block"><DashboardSummaryDecoration tone="green" /></div>
+        <DashboardSummaryDecoration tone="sky" />
+        <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-semibold"><Gift className="h-4 w-4" />Free access</span>
             <h2 className="mt-5 text-3xl font-bold sm:text-4xl">LagosRentHelp is free for landlords right now.</h2>

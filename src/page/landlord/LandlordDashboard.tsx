@@ -16,26 +16,12 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import DashboardSummaryDecoration from "@/components/common/DashboardSummaryDecoration";
 import { landlordService, type LandlordProfile } from "@/services/landlordService";
 import type { Property } from "@/types";
 
 const formatPrice = (value: number) =>
   new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(value);
-
-const SummaryDecoration = ({ tone }: { tone: "sky" | "green" | "amber" }) => {
-  const colors = {
-    sky: "border-sky-200/20 bg-sky-200/10",
-    green: "border-emerald-200/20 bg-emerald-200/10",
-    amber: "border-amber-200/20 bg-amber-200/10",
-  }[tone];
-
-  return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-44 overflow-hidden">
-      <span className={`absolute -right-11 -top-12 h-36 w-36 rounded-full border-[26px] ${colors}`} />
-      <span className={`absolute -bottom-14 right-8 h-32 w-32 rounded-full border-[24px] ${colors}`} />
-    </div>
-  );
-};
 
 const LandlordDashboard = () => {
   const [listings, setListings] = useState<Property[]>([]);
@@ -128,9 +114,9 @@ const LandlordDashboard = () => {
       </div>
 
       <div className="mb-8 grid gap-4 sm:grid-cols-3">
-        <Card className="relative overflow-hidden border-[#143f2b] bg-[#143f2b] text-white shadow-lg shadow-[#143f2b]/20 ring-1 ring-white/20"><SummaryDecoration tone="sky" /><CardContent className="relative z-10 flex items-center gap-4 p-6"><span className="rounded-xl bg-sky-300/20 p-3 shadow-inner ring-1 ring-sky-100/20"><ClipboardList className="h-7 w-7 text-sky-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{listings.length}</p><p className="text-sm text-white/85">Total listings</p></div></CardContent></Card>
-        <Card className="relative overflow-hidden border-[#143f2b] bg-[#143f2b] text-white shadow-lg shadow-[#143f2b]/20 ring-1 ring-white/20"><SummaryDecoration tone="green" /><CardContent className="relative z-10 flex items-center gap-4 p-6"><span className="rounded-xl bg-emerald-300/20 p-3 shadow-inner ring-1 ring-emerald-100/20"><BadgeCheck className="h-7 w-7 text-emerald-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{counts.available}</p><p className="text-sm text-white/85">Available</p></div></CardContent></Card>
-        <Card className="relative overflow-hidden border-[#143f2b] bg-[#143f2b] text-white shadow-lg shadow-[#143f2b]/20 ring-1 ring-white/20"><SummaryDecoration tone="amber" /><CardContent className="relative z-10 flex items-center gap-4 p-6"><span className="rounded-xl bg-amber-300/20 p-3 shadow-inner ring-1 ring-amber-100/20"><KeyRound className="h-7 w-7 text-amber-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{counts.rented}</p><p className="text-sm text-white/85">Rented</p></div></CardContent></Card>
+        <Card className="relative overflow-hidden border-[#143f2b] bg-[#143f2b] text-white shadow-lg shadow-[#143f2b]/20 ring-1 ring-white/20"><DashboardSummaryDecoration tone="sky" /><CardContent className="relative z-10 flex items-center gap-4 p-6"><span className="rounded-xl bg-sky-300/20 p-3 shadow-inner ring-1 ring-sky-100/20"><ClipboardList className="h-7 w-7 text-sky-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{listings.length}</p><p className="text-sm text-white/85">Total listings</p></div></CardContent></Card>
+        <Card className="relative overflow-hidden border-[#143f2b] bg-[#143f2b] text-white shadow-lg shadow-[#143f2b]/20 ring-1 ring-white/20"><DashboardSummaryDecoration tone="green" /><CardContent className="relative z-10 flex items-center gap-4 p-6"><span className="rounded-xl bg-emerald-300/20 p-3 shadow-inner ring-1 ring-emerald-100/20"><BadgeCheck className="h-7 w-7 text-emerald-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{counts.available}</p><p className="text-sm text-white/85">Available</p></div></CardContent></Card>
+        <Card className="relative overflow-hidden border-[#143f2b] bg-[#143f2b] text-white shadow-lg shadow-[#143f2b]/20 ring-1 ring-white/20"><DashboardSummaryDecoration tone="amber" /><CardContent className="relative z-10 flex items-center gap-4 p-6"><span className="rounded-xl bg-amber-300/20 p-3 shadow-inner ring-1 ring-amber-100/20"><KeyRound className="h-7 w-7 text-amber-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{counts.rented}</p><p className="text-sm text-white/85">Rented</p></div></CardContent></Card>
       </div>
 
       <div className="mb-8 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
