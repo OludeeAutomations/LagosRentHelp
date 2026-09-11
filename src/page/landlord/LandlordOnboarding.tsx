@@ -67,7 +67,7 @@ const LandlordOnboarding = () => {
   });
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?._id) return;
     void landlordService.getProfile().then((profile) => {
       if (!profile) return;
       setForm((current) => ({
@@ -80,7 +80,7 @@ const LandlordOnboarding = () => {
         bio: profile.bio,
       }));
     }).catch(() => undefined);
-  }, [user?.id]);
+  }, [user?._id]);
 
   const update = (field: keyof typeof form, value: string) =>
     setForm((current) => ({ ...current, [field]: value }));
@@ -238,7 +238,7 @@ const LandlordOnboarding = () => {
             <div className="space-y-2"><Label htmlFor="residentialAddress">Residential or office address *</Label><Input id="residentialAddress" value={form.residentialAddress} onChange={(event) => update("residentialAddress", event.target.value)} /></div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2"><Label htmlFor="state">State *</Label><select id="state" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.state} onChange={(event) => update("state", event.target.value)}><option value="">Select state</option>{NIGERIAN_STATES.map((state) => <option key={state} value={state}>{state}</option>)}</select></div>
-              <div className="space-y-2"><Label htmlFor="localGovernment">Local government area *</Label><Input id="localGovernment" placeholder="Enter your LGA" value={form.localGovernment} onChange={(event) => update("localGovernment", event.target.value)} /></div>
+              <div className="space-y-2"><Label htmlFor="localGovernment">Lagos local government area *</Label><select id="localGovernment" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.localGovernment} onChange={(event) => update("localGovernment", event.target.value)}><option value="">Select Lagos LGA</option>{LAGOS_LOCAL_GOVERNMENTS.map((lga) => <option key={lga} value={lga}>{lga}</option>)}</select></div>
             </div>
             <div className="space-y-2"><Label htmlFor="bio">Short description</Label><Textarea id="bio" rows={3} value={form.bio} onChange={(event) => update("bio", event.target.value)} /></div>
           </section>
@@ -272,7 +272,7 @@ const LandlordOnboarding = () => {
 
         {step === 3 && (
           <section className="space-y-5">
-            <div><h2 className="text-lg font-semibold text-gray-950">Lagos property ownership</h2><p className="mt-1 text-sm text-gray-500">Provide one document that connects you to a property in Lagos.</p></div>
+            <div><h2 className="text-lg font-semibold text-gray-950">Lagos property ownership</h2><p className="mt-1 text-sm text-gray-500">Upload a primary title document showing the registered owner's name and the Lagos property details. Land Use Charge receipts and survey plans are supporting evidence only and are not accepted by themselves.</p></div>
             <div className="space-y-2"><Label htmlFor="propertyAddress">Lagos property address *</Label><Textarea id="propertyAddress" rows={3} placeholder="Full address of the property" value={form.propertyAddress} onChange={(event) => update("propertyAddress", event.target.value)} /></div>
             <div className="space-y-2"><Label htmlFor="propertyLocalGovernment">Property local government area *</Label><select id="propertyLocalGovernment" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.propertyLocalGovernment} onChange={(event) => update("propertyLocalGovernment", event.target.value)}><option value="">Select Lagos LGA</option>{LAGOS_LOCAL_GOVERNMENTS.map((lga) => <option key={lga} value={lga}>{lga}</option>)}</select></div>
             <div className="space-y-2"><Label htmlFor="ownershipDocumentType">Proof of ownership *</Label><select id="ownershipDocumentType" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.ownershipDocumentType} onChange={(event) => update("ownershipDocumentType", event.target.value)}><option value="">Select document type</option>{OWNERSHIP_DOCUMENT_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></div>
@@ -281,7 +281,7 @@ const LandlordOnboarding = () => {
               <label htmlFor="ownershipDocument" className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-200 px-5 py-8 text-center transition-colors hover:border-[#129B36] hover:bg-green-50/40">
                 <FileUp className="mb-2 h-7 w-7 text-[#129B36]" strokeWidth={1.7} />
                 <span className="max-w-full truncate text-sm font-medium text-gray-900">{ownershipDocument?.name || "Upload ownership evidence"}</span>
-                <span className="mt-1 text-xs text-gray-500">PDF, JPG, PNG or WebP, maximum 5 MB</span>
+                <span className="mt-1 text-xs text-gray-500">Clear PDF, JPG, PNG or WebP, maximum 5 MB</span>
               </label>
               <Input id="ownershipDocument" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={(event) => chooseFile("ownership", event.target.files)} />
             </div>

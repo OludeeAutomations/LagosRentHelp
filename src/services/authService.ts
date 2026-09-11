@@ -24,6 +24,8 @@ const allowedRoles: User["role"][] = [
   "super_admin",
 ];
 
+const PRIMARY_ADMIN_EMAIL = "info@lagosrenthelp.ng";
+
 const getRole = (authUser: SupabaseUser): User["role"] => {
   // user_metadata is editable by the user, so elevated roles must only come
   // from trusted app_metadata.
@@ -85,7 +87,17 @@ type DatabaseProfile = {
 
 const resolveSupabaseUser = async (authUser: SupabaseUser): Promise<User> => {
   const fallback = mapSupabaseUser(authUser);
-  const { data, error } = await supabase.rpc("ensure_my_profile");
+  let { data, error } = await supabase.rpc(
+    authUser.email?.toLowerCase() === PRIMARY_ADMIN_EMAIL
+      ? "claim_primary_admin"
+      : "ensure_my_profile",
+  );
+
+  // Keep sign-in compatible while the administrator migration is being
+  // installed. The database remains the source of truth for elevated roles.
+  if (error && authUser.email?.toLowerCase() === PRIMARY_ADMIN_EMAIL) {
+    ({ data, error } = await supabase.rpc("ensure_my_profile"));
+  }
 
   // The fallback keeps authentication usable until the landlord SQL migration
   // has been installed. Database writes remain protected by RLS.

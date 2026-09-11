@@ -65,6 +65,8 @@ create table if not exists public.landlord_verifications (
     ownership_document_type in (
       'certificate_of_occupancy',
       'deed_of_assignment',
+      'governors_consent',
+      'land_certificate',
       'land_use_charge',
       'survey_plan',
       'other_ownership_document'
@@ -383,6 +385,8 @@ begin
   if p_ownership_document_type not in (
     'certificate_of_occupancy',
     'deed_of_assignment',
+    'governors_consent',
+    'land_certificate',
     'land_use_charge',
     'survey_plan',
     'other_ownership_document'

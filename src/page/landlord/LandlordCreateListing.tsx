@@ -16,6 +16,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { landlordService, type LandlordListingInput } from "@/services/landlordService";
+import {
+  ACCOMMODATION_TYPES,
+  EMPLOYMENT_TYPES,
+  INCOME_BANDS,
+  LEASE_DURATIONS,
+  MOVE_IN_WINDOWS,
+  YES_NO_OPTIONS,
+} from "@/lib/rentalMatching";
 
 type FormState = Omit<LandlordListingInput, "images" | "amenities"> & {
   amenities: string;
@@ -33,6 +41,16 @@ const initialForm: FormState = {
   bathrooms: 1,
   area: 1,
   amenities: "",
+  tenantMaxOccupants: 2,
+  tenantEmploymentType: "any",
+  tenantMinIncomeBand: 0,
+  tenantGuarantorRequired: false,
+  tenantMinLeaseMonths: 12,
+  tenantPetsAllowed: false,
+  tenantSmokingAllowed: false,
+  tenantMoveInWindow: "flexible",
+  tenantAccommodationType: "private",
+  tenantGenderPreference: "any",
 };
 
 const LandlordCreateListing = () => {
@@ -42,7 +60,7 @@ const LandlordCreateListing = () => {
   const [submitting, setSubmitting] = useState(false);
   const [open, setOpen] = useState(false);
 
-  const update = (field: keyof FormState, value: string | number) =>
+  const update = (field: keyof FormState, value: string | number | boolean) =>
     setForm((current) => ({ ...current, [field]: value }));
 
   const chooseImages = (files: FileList | null) => {
@@ -123,6 +141,17 @@ const LandlordCreateListing = () => {
             <div className="space-y-2"><Label htmlFor="bathrooms">Bathrooms</Label><Input id="bathrooms" type="number" min="0" value={form.bathrooms} onChange={(e) => update("bathrooms", Number(e.target.value))} /></div>
             <div className="space-y-2"><Label htmlFor="area">Area (sqm)</Label><Input id="area" type="number" min="1" value={form.area} onChange={(e) => update("area", Number(e.target.value))} /></div>
             <div className="space-y-2"><Label htmlFor="amenities">Amenities</Label><Input id="amenities" placeholder="Parking, water, security" value={form.amenities} onChange={(e) => update("amenities", e.target.value)} /></div>
+            <div className="border-t pt-5 sm:col-span-2"><h3 className="text-lg font-semibold">Tenant requirements</h3><p className="mt-1 text-sm text-gray-500">These private requirements help rank the listing for compatible renters. They do not hide the listing.</p></div>
+            <div className="space-y-2"><Label htmlFor="tenantMaxOccupants">Maximum occupants</Label><select id="tenantMaxOccupants" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.tenantMaxOccupants} onChange={(e) => update("tenantMaxOccupants", Number(e.target.value))}>{Array.from({ length: 10 }, (_, index) => index + 1).map((count) => <option key={count} value={count}>{count}</option>)}</select></div>
+            <div className="space-y-2"><Label htmlFor="tenantEmploymentType">Employment arrangement</Label><select id="tenantEmploymentType" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.tenantEmploymentType} onChange={(e) => update("tenantEmploymentType", e.target.value)}><option value="any">Any employment arrangement</option>{EMPLOYMENT_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></div>
+            <div className="space-y-2"><Label htmlFor="tenantMinIncomeBand">Minimum monthly income</Label><select id="tenantMinIncomeBand" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.tenantMinIncomeBand} onChange={(e) => update("tenantMinIncomeBand", Number(e.target.value))}><option value={0}>No minimum selected</option>{INCOME_BANDS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></div>
+            <div className="space-y-2"><Label htmlFor="tenantGuarantorRequired">Guarantor required?</Label><select id="tenantGuarantorRequired" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={String(form.tenantGuarantorRequired)} onChange={(e) => update("tenantGuarantorRequired", e.target.value === "true")}>{YES_NO_OPTIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></div>
+            <div className="space-y-2"><Label htmlFor="tenantMinLeaseMonths">Minimum lease duration</Label><select id="tenantMinLeaseMonths" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.tenantMinLeaseMonths} onChange={(e) => update("tenantMinLeaseMonths", Number(e.target.value))}>{LEASE_DURATIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></div>
+            <div className="space-y-2"><Label htmlFor="tenantMoveInWindow">Preferred move-in timing</Label><select id="tenantMoveInWindow" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.tenantMoveInWindow} onChange={(e) => update("tenantMoveInWindow", e.target.value)}>{MOVE_IN_WINDOWS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></div>
+            <div className="space-y-2"><Label htmlFor="tenantPetsAllowed">Pets allowed?</Label><select id="tenantPetsAllowed" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={String(form.tenantPetsAllowed)} onChange={(e) => update("tenantPetsAllowed", e.target.value === "true")}>{YES_NO_OPTIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></div>
+            <div className="space-y-2"><Label htmlFor="tenantSmokingAllowed">Smoking allowed?</Label><select id="tenantSmokingAllowed" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={String(form.tenantSmokingAllowed)} onChange={(e) => update("tenantSmokingAllowed", e.target.value === "true")}>{YES_NO_OPTIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></div>
+            <div className="space-y-2"><Label htmlFor="tenantAccommodationType">Accommodation arrangement</Label><select id="tenantAccommodationType" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.tenantAccommodationType} onChange={(e) => update("tenantAccommodationType", e.target.value)}>{ACCOMMODATION_TYPES.filter((item) => item.value !== "any").map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></div>
+            {form.tenantAccommodationType === "shared" && <div className="space-y-2"><Label htmlFor="tenantGenderPreference">Roommate gender preference</Label><select id="tenantGenderPreference" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.tenantGenderPreference} onChange={(e) => update("tenantGenderPreference", e.target.value)}><option value="any">No preference</option><option value="female">Woman</option><option value="male">Man</option></select></div>}
             <div className="space-y-2 sm:col-span-2"><Label htmlFor="images">Property images * (maximum 8)</Label><label htmlFor="images" className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-gray-600 hover:border-[#129B36]"><ImagePlus className="h-6 w-6" />{images.length ? `${images.length} image(s) selected` : "Choose images"}</label><Input id="images" type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={(e) => chooseImages(e.target.files)} /></div>
                 <div className="flex gap-3 sm:col-span-2"><Button type="button" variant="outline" className="flex-1" onClick={() => setOpen(false)}>Cancel</Button><Button type="submit" disabled={submitting} className="flex-1 bg-[#129B36] hover:bg-[#0e7d2b]">{submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Submit for review</Button></div>
               </form>

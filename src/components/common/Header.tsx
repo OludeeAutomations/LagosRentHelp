@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import { User as UserIcon, LogIn, Heart, Building2, Shield, Settings, LogOut } from "lucide-react";
+import { User as UserIcon, LogIn, Heart, Building2, Shield, ShieldCheck, Settings, LogOut } from "lucide-react";
 import HeaderMobileMenu from "./header/HeaderMobileMenu";
 import HeaderNavLink from "./header/HeaderNavLink";
 import HeaderActionButton from "./header/HeaderActionButton";
@@ -145,12 +145,20 @@ const Header: React.FC = () => {
                     />
 
                     {(user.role === "admin" || user.role === "super_admin") && (
-                      <HeaderActionButton
-                        to="/admin/properties"
-                        icon={Building2}
-                        label="Manage Properties"
-                        onClick={closeMenu}
-                      />
+                      <>
+                        <HeaderActionButton
+                          to="/admin/verifications"
+                          icon={ShieldCheck}
+                          label="Verify Landlords"
+                          onClick={closeMenu}
+                        />
+                        <HeaderActionButton
+                          to="/admin/properties"
+                          icon={Building2}
+                          label="Manage Properties"
+                          onClick={closeMenu}
+                        />
+                      </>
                     )}
 
                     {user.role === "landlord" ? (
@@ -161,12 +169,20 @@ const Header: React.FC = () => {
                         onClick={closeMenu}
                       />
                     ) : user.role === "user" ? (
-                      <HeaderActionButton
-                        to="/landlord/onboarding"
-                        icon={Building2}
-                        label="List Your Property"
-                        onClick={closeMenu}
-                      />
+                      <>
+                        <HeaderActionButton
+                          to="/renter/preferences"
+                          icon={Settings}
+                          label="Rental Preferences"
+                          onClick={closeMenu}
+                        />
+                        <HeaderActionButton
+                          to="/landlord/onboarding"
+                          icon={Building2}
+                          label="List Your Property"
+                          onClick={closeMenu}
+                        />
+                      </>
                     ) : null}
 
                     {user.role === "super_admin" && (

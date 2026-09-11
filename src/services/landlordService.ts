@@ -58,6 +58,16 @@ export interface LandlordListingInput {
   area: number;
   amenities: string[];
   images: File[];
+  tenantMaxOccupants: number;
+  tenantEmploymentType: string;
+  tenantMinIncomeBand: number;
+  tenantGuarantorRequired: boolean;
+  tenantMinLeaseMonths: number;
+  tenantPetsAllowed: boolean;
+  tenantSmokingAllowed: boolean;
+  tenantMoveInWindow: string;
+  tenantAccommodationType: string;
+  tenantGenderPreference: string;
 }
 
 type ProfileRpcResult = {
@@ -295,6 +305,16 @@ export const landlordService = {
       throw new Error("Complete landlord onboarding before creating a listing.");
     }
 
+    const { data: landlordProfile, error: verificationError } = await supabase
+      .from("landlord_profiles")
+      .select("verification_status")
+      .eq("user_id", profile.id)
+      .maybeSingle();
+    if (verificationError) throw new Error(verificationError.message);
+    if (landlordProfile?.verification_status !== "verified") {
+      throw new Error("Your ownership verification must be approved before you can create a listing.");
+    }
+
     const imageUrls = await uploadImages(input.images);
     const { data, error } = await supabase
       .from("properties")
@@ -316,6 +336,19 @@ export const landlordService = {
         owner_id: profile.id,
         contact_user_id: profile.id,
         created_by: profile.id,
+        tenant_max_occupants: input.tenantMaxOccupants,
+        tenant_employment_type: input.tenantEmploymentType,
+        tenant_min_income_band: input.tenantMinIncomeBand,
+        tenant_guarantor_required: input.tenantGuarantorRequired,
+        tenant_min_lease_months: input.tenantMinLeaseMonths,
+        tenant_pets_allowed: input.tenantPetsAllowed,
+        tenant_smoking_allowed: input.tenantSmokingAllowed,
+        tenant_move_in_window: input.tenantMoveInWindow,
+        tenant_accommodation_type: input.tenantAccommodationType,
+        tenant_gender_preference:
+          input.tenantAccommodationType === "shared"
+            ? input.tenantGenderPreference
+            : "any",
       })
       .select(PUBLIC_PROPERTY_COLUMNS)
       .single();

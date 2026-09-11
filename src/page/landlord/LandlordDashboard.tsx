@@ -125,7 +125,11 @@ const LandlordDashboard = () => {
             </p>
           )}
         </div>
-        <Button asChild className="bg-[#129B36] hover:bg-[#0e7d2b]"><Link to="/landlord/listings/new"><Plus className="mr-2 h-4 w-4" />Add listing</Link></Button>
+        {profile?.verificationStatus === "verified" ? (
+          <Button asChild className="bg-[#129B36] hover:bg-[#0e7d2b]"><Link to="/landlord/listings/new"><Plus className="mr-2 h-4 w-4" />Add listing</Link></Button>
+        ) : (
+          <Button disabled title="Ownership verification must be approved first"><Plus className="mr-2 h-4 w-4" />Awaiting verification</Button>
+        )}
       </div>
 
       <div className="mb-8 grid gap-4 sm:grid-cols-3">
@@ -269,7 +273,11 @@ const LandlordDashboard = () => {
               <div className="rounded-lg border border-dashed p-5 text-center">
                 <p className="font-medium">Start building your portfolio</p>
                 <p className="mt-1 text-sm text-gray-500">Add your first listing to unlock performance insights.</p>
-                <Button asChild variant="link"><Link to="/landlord/listings/new">Create a listing</Link></Button>
+                {profile?.verificationStatus === "verified" ? (
+                  <Button asChild variant="link"><Link to="/landlord/listings/new">Create a listing</Link></Button>
+                ) : (
+                  <p className="mt-3 text-sm font-medium text-amber-700">You can create listings after ownership verification is approved.</p>
+                )}
               </div>
             ) : (
               <>

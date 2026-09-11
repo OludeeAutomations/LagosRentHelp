@@ -147,9 +147,34 @@ export const propertyService = {
     const { data, error, count } = await query;
     if (error) throw new Error(error.message);
 
+    const mappedProperties = (data as PublicPropertyRow[]).map(mapPublicProperty);
+    const { data: sessionData } = await supabase.auth.getSession();
+    const { data: matchRows } = sessionData.session
+      ? await supabase.rpc("get_recommended_property_matches")
+      : { data: null };
+    const matchMap = new Map(
+      ((matchRows || []) as Array<{
+        property_id: string;
+        match_score: number;
+        match_reasons: string[] | null;
+      }>).map((row) => [row.property_id, row]),
+    );
+    const personalizedProperties = mappedProperties
+      .map((property) => {
+        const match = matchMap.get(property._id);
+        return match
+          ? {
+              ...property,
+              matchScore: match.match_score,
+              matchReasons: match.match_reasons || [],
+            }
+          : property;
+      })
+      .sort((first, second) => (second.matchScore || 0) - (first.matchScore || 0));
+
     return {
       success: true,
-      data: (data as PublicPropertyRow[]).map(mapPublicProperty),
+      data: personalizedProperties,
       pagination: {
         page,
         limit,

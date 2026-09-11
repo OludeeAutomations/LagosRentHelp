@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/types/index.ts
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare global {
   interface Window {
     google: typeof google;
@@ -76,6 +75,7 @@ export interface Property {
   approvalNote?: string;
   isFeatured: boolean;
   createdAt: string;
+  updatedAt?: string;
 
   status: "available" | "rented" | "pending";
   // Backend fields
@@ -88,6 +88,8 @@ export interface Property {
   };
   availableFrom?: string;
   minimumStay?: number;
+  matchScore?: number;
+  matchReasons?: string[];
 }
 
 export interface Agent {

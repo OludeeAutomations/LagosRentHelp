@@ -7,6 +7,7 @@ import {
   User as UserIcon,
   Building2,
   Shield,
+  ShieldCheck,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -62,14 +63,22 @@ const HeaderUserMenu: React.FC<HeaderUserMenuProps> = ({
           <Separator className="my-2 sm:my-3" />
           <div className="space-y-1 sm:space-y-2">
             {(user.role === "admin" || user.role === "super_admin") && (
-              <Link to="/admin/properties">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-xs sm:text-sm font-normal">
-                  <Building2 className="h-4 w-4 mr-2" />
-                  Manage Properties
-                </Button>
-              </Link>
+              <>
+                <Link to="/admin/verifications">
+                  <Button variant="ghost" className="w-full justify-start text-xs sm:text-sm font-normal">
+                    <ShieldCheck className="h-4 w-4 mr-2" />
+                    Verify Landlords
+                  </Button>
+                </Link>
+                <Link to="/admin/properties">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-xs sm:text-sm font-normal">
+                    <Building2 className="h-4 w-4 mr-2" />
+                    Manage Properties
+                  </Button>
+                </Link>
+              </>
             )}
 
             {user.role === "landlord" ? (
@@ -82,14 +91,22 @@ const HeaderUserMenu: React.FC<HeaderUserMenuProps> = ({
                 </Button>
               </Link>
             ) : user.role === "user" ? (
-              <Link to="/landlord/onboarding">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-xs sm:text-sm font-normal">
-                  <Building2 className="h-4 w-4 mr-2" />
-                  List Your Property
-                </Button>
-              </Link>
+              <>
+                <Link to="/renter/preferences">
+                  <Button variant="ghost" className="w-full justify-start text-xs sm:text-sm font-normal">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Rental Preferences
+                  </Button>
+                </Link>
+                <Link to="/landlord/onboarding">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-xs sm:text-sm font-normal">
+                    <Building2 className="h-4 w-4 mr-2" />
+                    List Your Property
+                  </Button>
+                </Link>
+              </>
             ) : null}
 
             {user.role === "super_admin" && (

@@ -113,6 +113,9 @@ const Register: React.FC = () => {
       const result = await registerUser(formData);
 
       if (result.success) {
+        if (data.accountType === "user") {
+          localStorage.setItem("needs_renter_preferences", "true");
+        }
         if (result.requiresVerification) {
           toast.success(
             "Registration successful! Please check your email for verification."
@@ -120,7 +123,7 @@ const Register: React.FC = () => {
           navigate("/verify-email");
         } else {
           toast.success("Your account is ready.");
-          navigate(data.accountType === "landlord" ? "/landlord/onboarding" : "/");
+          navigate(data.accountType === "landlord" ? "/landlord/onboarding" : "/renter/preferences");
         }
       } else {
         toast.error(result.error || "Registration failed");
@@ -139,6 +142,9 @@ const Register: React.FC = () => {
     setIsGoogleLoading(true);
     setError(null);
     try {
+      if (accountType === "user") {
+        localStorage.setItem("needs_renter_preferences", "true");
+      }
       await loginWithGoogle(accountType);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Google signup failed.";
@@ -187,7 +193,7 @@ const Register: React.FC = () => {
     <AuthLayout
       title="Create Account"
       subtitle="Join thousands of users finding their perfect home"
-      contentClassName="max-w-2xl">
+      contentClassName="max-w-xl">
       <Form {...form}>
         <motion.form
           onSubmit={form.handleSubmit(onSubmit)}

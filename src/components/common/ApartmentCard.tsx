@@ -42,13 +42,12 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
     isFeatured,
     status,
     views,
+    matchScore,
+    matchReasons,
   } = property;
 
 const mainImage = images?.[0] 
 const amenities = useAmenities(rawAmenities);
-
-console.log("--------------------------")
-console.log(images)
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("en-NG", {
@@ -92,6 +91,9 @@ console.log(images)
         <div className="absolute top-3 left-3 space-y-1">
           {isFeatured && (
             <Badge className="bg-green-600 text-white border-0">Featured</Badge>
+          )}
+          {typeof matchScore === "number" && (
+            <Badge className="border-0 bg-[#129B36] text-white">{matchScore}% match</Badge>
           )}
           <Badge
             variant={listingType === "rent" ? "default" : "secondary"}
@@ -144,6 +146,11 @@ console.log(images)
       </CardHeader>
 
       <CardContent className="pb-4">
+        {matchReasons && matchReasons.length > 0 && (
+          <p className="mb-3 line-clamp-2 text-xs font-medium text-green-700">
+            {matchReasons.slice(0, 3).join(" · ")}
+          </p>
+        )}
         {/* Property Features */}
         <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
           <div className="flex items-center gap-2">

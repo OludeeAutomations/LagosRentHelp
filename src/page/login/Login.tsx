@@ -50,8 +50,12 @@ const Login: React.FC = () => {
       await login(data.email, data.password);
       toast.success("Welcome back!");
       const signedInUser = useAuthStore.getState().user;
-      if (signedInUser?.role === "landlord") {
+      if (signedInUser?.role === "admin" || signedInUser?.role === "super_admin") {
+        navigate("/admin/verifications");
+      } else if (signedInUser?.role === "landlord") {
         navigate("/landlord");
+      } else if (localStorage.getItem("needs_renter_preferences") === "true") {
+        navigate("/renter/preferences");
       } else {
         navigate(signedInUser?.phone ? "/" : "/complete-profile");
       }

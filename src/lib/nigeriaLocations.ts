@@ -63,8 +63,7 @@ export const LAGOS_LOCAL_GOVERNMENTS = [
 
 export const OWNERSHIP_DOCUMENT_TYPES = [
   { value: "certificate_of_occupancy", label: "Certificate of Occupancy (C of O)" },
-  { value: "deed_of_assignment", label: "Deed of Assignment" },
-  { value: "land_use_charge", label: "Lagos Land Use Charge receipt" },
-  { value: "survey_plan", label: "Registered Survey Plan" },
-  { value: "other_ownership_document", label: "Other ownership document" },
+  { value: "deed_of_assignment", label: "Registered Deed of Assignment" },
+  { value: "governors_consent", label: "Governor's Consent" },
+  { value: "land_certificate", label: "Lagos State Land Certificate" },
 ] as const;

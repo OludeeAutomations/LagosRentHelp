@@ -24,8 +24,10 @@ const PropertySections: React.FC<PropertySectionsProps> = ({
 }) => {
   // Helper function to sort by date and limit to max 5 properties
   const getLatestProperties = (properties: Property[], max = 5): Property[] => {
-    // Sort by createdAt date (newest first)
+    // Prefer personalized matches, then keep equally matched homes newest-first.
     const sortedProperties = [...properties].sort((a, b) => {
+      const matchDifference = (b.matchScore || 0) - (a.matchScore || 0);
+      if (matchDifference) return matchDifference;
       const dateA = new Date(a.createdAt || a.updatedAt || 0);
       const dateB = new Date(b.createdAt || b.updatedAt || 0);
       return dateB.getTime() - dateA.getTime();
@@ -39,6 +41,9 @@ const PropertySections: React.FC<PropertySectionsProps> = ({
   const latestAllProperties = getLatestProperties(allProperties, 5);
   const latestRentProperties = getLatestProperties(rentProperties, 5);
   const latestShortLetProperties = getLatestProperties(shortLetProperties, 5);
+  const hasPersonalizedMatches = allProperties.some(
+    (property) => typeof property.matchScore === "number",
+  );
 
   if (loading) {
     return (
@@ -116,8 +121,8 @@ const PropertySections: React.FC<PropertySectionsProps> = ({
       {/* All Properties Section */}
       <section className="px-4 md:px-6 lg:px-8">
         <SectionHeader
-          title="Featured Properties"
-          subtitle="Discover our latest curated selection of premium properties"
+          title={hasPersonalizedMatches ? "Recommended for You" : "Featured Properties"}
+          subtitle={hasPersonalizedMatches ? "Approved homes ranked using your private rental preferences" : "Discover our latest curated selection of premium properties"}
           viewAllLink="/search"
           count={latestAllProperties.length}
           total={allProperties.length}

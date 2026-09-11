@@ -28,12 +28,19 @@ import ForgotPassword from "./page/login/ForgotPassword";
 import ResetPassword from "./page/login/ResetPassword";
 import { Toaster } from "sonner";
 import Favorites from "./page/user/Favorites";
+import RenterPreferencesPage from "./page/user/RenterPreferencesPage";
 import PropertyManagementPage from "./page/admin/PropertyManagementPage";
 import PropertyEditorPage from "./page/admin/PropertyEditorPage";
 import AdminAccountsPage from "./page/admin/AdminAccountsPage";
+import LandlordVerificationPage from "./page/admin/LandlordVerificationPage";
 import AuthCallback from "./page/login/AuthCallback";
 import { useAuthStore } from "./stores/authStore";
-import { AuthenticatedRoute, LandlordRoute } from "./components/common/RoleRoute";
+import {
+  AdminRoute,
+  AuthenticatedRoute,
+  LandlordRoute,
+  SuperAdminRoute,
+} from "./components/common/RoleRoute";
 import LandlordOnboarding from "./page/landlord/LandlordOnboarding";
 import LandlordDashboard from "./page/landlord/LandlordDashboard";
 import LandlordCreateListing from "./page/landlord/LandlordCreateListing";
@@ -203,6 +210,7 @@ const AppContent: React.FC = () => {
                   </Layout>
                 }
               />
+              <Route path="/renter/preferences" element={<Layout><RenterPreferencesPage /></Layout>} />
               <Route
                 path="/landlord/onboarding"
                 element={
@@ -228,38 +236,15 @@ const AppContent: React.FC = () => {
                 </Layout>
               }
             />
-            <Route
-              path="/admin/properties"
-              element={
-                <Layout>
-                  <PropertyManagementPage />
-                </Layout>
-              }
-            />
-            <Route
-              path="/admin/properties/new"
-              element={
-                <Layout>
-                  <PropertyEditorPage />
-                </Layout>
-              }
-            />
-            <Route
-              path="/admin/properties/:id/edit"
-              element={
-                <Layout>
-                  <PropertyEditorPage />
-                </Layout>
-              }
-            />
-            <Route
-              path="/admin/accounts"
-              element={
-                <Layout>
-                  <AdminAccountsPage />
-                </Layout>
-              }
-            />
+            <Route element={<AdminRoute />}>
+              <Route path="/admin/verifications" element={<Layout><LandlordVerificationPage /></Layout>} />
+              <Route path="/admin/properties" element={<Layout><PropertyManagementPage /></Layout>} />
+              <Route path="/admin/properties/new" element={<Layout><PropertyEditorPage /></Layout>} />
+              <Route path="/admin/properties/:id/edit" element={<Layout><PropertyEditorPage /></Layout>} />
+            </Route>
+            <Route element={<SuperAdminRoute />}>
+              <Route path="/admin/accounts" element={<Layout><AdminAccountsPage /></Layout>} />
+            </Route>
             {/* 404 Page - Keep this at the end */}
             <Route
               path="*"

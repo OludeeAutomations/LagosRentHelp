@@ -28,6 +28,7 @@ const AuthCallback = () => {
 
         const auth = await mapSupabaseSession(session);
         const pendingAccountType = localStorage.getItem("pending_account_type");
+        const needsRenterPreferences = localStorage.getItem("needs_renter_preferences") === "true";
         localStorage.removeItem("pending_account_type");
         setUser(auth.user);
         setAccessToken(auth.accessToken);
@@ -35,8 +36,12 @@ const AuthCallback = () => {
         toast.success("Welcome back!");
         if (pendingAccountType === "landlord") {
           navigate("/landlord/onboarding", { replace: true });
+        } else if (auth.user.role === "admin" || auth.user.role === "super_admin") {
+          navigate("/admin/verifications", { replace: true });
         } else if (!auth.user.phone) {
           navigate("/complete-profile", { replace: true });
+        } else if (needsRenterPreferences) {
+          navigate("/renter/preferences", { replace: true });
         } else {
           navigate(auth.user.role === "landlord" ? "/landlord" : "/", { replace: true });
         }

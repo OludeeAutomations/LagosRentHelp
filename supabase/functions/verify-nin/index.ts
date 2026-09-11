@@ -107,6 +107,10 @@ Deno.serve(async (request) => {
     const providerBody = await providerResponse.json().catch(() => null) as Record<string, unknown> | null;
     const entity = providerBody?.entity as Record<string, unknown> | undefined;
     const verified = providerResponse.ok && Boolean(entity);
+    const firstName = String(entity?.firstname || entity?.first_name || "").trim();
+    const middleName = String(entity?.middlename || entity?.middle_name || "").trim();
+    const lastName = String(entity?.surname || entity?.lastname || entity?.last_name || "").trim();
+    const fullName = [firstName, middleName, lastName].filter(Boolean).join(" ");
 
     const { error: auditError } = await admin.from("nin_verification_attempts").insert({
       auth_user_id: authData.user.id,
@@ -114,6 +118,7 @@ Deno.serve(async (request) => {
       nin_last_four: nin.slice(-4),
       successful: verified,
       provider_status: providerResponse.status,
+      verified_name: verified ? fullName : null,
     });
     if (auditError) {
       return json({ error: "The verification result could not be saved. Please try again." }, 500, origin);
@@ -131,11 +136,6 @@ Deno.serve(async (request) => {
         origin,
       );
     }
-
-    const firstName = String(entity?.firstname || entity?.first_name || "").trim();
-    const middleName = String(entity?.middlename || entity?.middle_name || "").trim();
-    const lastName = String(entity?.surname || entity?.lastname || entity?.last_name || "").trim();
-    const fullName = [firstName, middleName, lastName].filter(Boolean).join(" ");
 
     return json({
       verified: true,

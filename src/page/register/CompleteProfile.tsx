@@ -28,7 +28,17 @@ const CompleteProfile = () => {
       const updatedUser = await authService.completeUserProfile(name, phone);
       setUser(updatedUser);
       toast.success("Profile completed.");
-      navigate(updatedUser.role === "landlord" ? "/landlord" : "/", { replace: true });
+      const needsRenterPreferences = localStorage.getItem("needs_renter_preferences") === "true";
+      navigate(
+        updatedUser.role === "admin" || updatedUser.role === "super_admin"
+          ? "/admin/verifications"
+          : updatedUser.role === "landlord"
+            ? "/landlord"
+            : needsRenterPreferences
+              ? "/renter/preferences"
+            : "/",
+        { replace: true },
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not save your profile.");
     } finally {
