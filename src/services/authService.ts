@@ -129,8 +129,23 @@ export const mapSupabaseSession = async (
   user: await resolveSupabaseUser(session.user),
 });
 
-const throwIfError = (error: { message: string } | null) => {
-  if (error) throw new Error(error.message);
+const DUPLICATE_PHONE_MESSAGE =
+  "This phone number is already linked to another account. Use a different number or sign in to the existing account.";
+
+const throwIfError = (
+  error: { message: string; code?: string; details?: string } | null,
+) => {
+  if (!error) return;
+
+  const databaseMessage = `${error.message} ${error.details || ""}`;
+  if (
+    databaseMessage.includes("users_phone_key") ||
+    (error.code === "23505" && databaseMessage.toLowerCase().includes("phone"))
+  ) {
+    throw new Error(DUPLICATE_PHONE_MESSAGE);
+  }
+
+  throw new Error(error.message);
 };
 
 export const authService = {

@@ -14,6 +14,7 @@ const CompleteProfile = () => {
   const { user, setUser } = useAuthStore();
   const [name, setName] = useState(user?.name || "");
   const [phone, setPhone] = useState(user?.phone || "");
+  const [phoneError, setPhoneError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const submit = async (event: React.FormEvent) => {
@@ -23,6 +24,7 @@ const CompleteProfile = () => {
       return;
     }
 
+    setPhoneError("");
     setSubmitting(true);
     try {
       const updatedUser = await authService.completeUserProfile(name, phone);
@@ -40,7 +42,11 @@ const CompleteProfile = () => {
         { replace: true },
       );
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not save your profile.");
+      const message = error instanceof Error ? error.message : "Could not save your profile.";
+      if (message.includes("phone number is already linked")) {
+        setPhoneError(message);
+      }
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -55,7 +61,8 @@ const CompleteProfile = () => {
         </div>
         <div className="space-y-2">
           <Label htmlFor="profilePhone">Phone number *</Label>
-          <div className="relative"><Phone className="absolute left-3 top-3 h-5 w-5 text-gray-400" /><Input id="profilePhone" className="pl-10" placeholder="+234..." value={phone} onChange={(event) => setPhone(event.target.value)} /></div>
+          <div className="relative"><Phone className="absolute left-3 top-3 h-5 w-5 text-gray-400" /><Input id="profilePhone" type="tel" inputMode="tel" autoComplete="tel" aria-invalid={Boolean(phoneError)} aria-describedby={phoneError ? "profilePhoneError" : undefined} className="pl-10" placeholder="+234..." value={phone} onChange={(event) => { setPhone(event.target.value); setPhoneError(""); }} /></div>
+          {phoneError && <p id="profilePhoneError" role="alert" className="text-sm text-red-600">{phoneError}</p>}
         </div>
         <Button type="submit" className="w-full bg-[#129B36] hover:bg-[#0e7d2b]" disabled={submitting}>
           {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
