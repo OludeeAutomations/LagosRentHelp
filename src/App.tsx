@@ -33,6 +33,7 @@ import PropertyManagementPage from "./page/admin/PropertyManagementPage";
 import PropertyEditorPage from "./page/admin/PropertyEditorPage";
 import AdminAccountsPage from "./page/admin/AdminAccountsPage";
 import LandlordVerificationPage from "./page/admin/LandlordVerificationPage";
+import AdminDashboardLayout from "./page/admin/AdminDashboardLayout";
 import AuthCallback from "./page/login/AuthCallback";
 import { useAuthStore } from "./stores/authStore";
 import {
@@ -237,13 +238,15 @@ const AppContent: React.FC = () => {
               }
             />
             <Route element={<AdminRoute />}>
-              <Route path="/admin/verifications" element={<Layout><LandlordVerificationPage /></Layout>} />
-              <Route path="/admin/properties" element={<Layout><PropertyManagementPage /></Layout>} />
-              <Route path="/admin/properties/new" element={<Layout><PropertyEditorPage /></Layout>} />
-              <Route path="/admin/properties/:id/edit" element={<Layout><PropertyEditorPage /></Layout>} />
-            </Route>
-            <Route element={<SuperAdminRoute />}>
-              <Route path="/admin/accounts" element={<Layout><AdminAccountsPage /></Layout>} />
+              <Route element={<AdminDashboardLayout />}>
+                <Route path="/admin/verifications" element={<LandlordVerificationPage />} />
+                <Route path="/admin/properties" element={<PropertyManagementPage />} />
+                <Route path="/admin/properties/new" element={<PropertyEditorPage />} />
+                <Route path="/admin/properties/:id/edit" element={<PropertyEditorPage />} />
+                <Route element={<SuperAdminRoute />}>
+                  <Route path="/admin/accounts" element={<AdminAccountsPage />} />
+                </Route>
+              </Route>
             </Route>
             {/* 404 Page - Keep this at the end */}
             <Route

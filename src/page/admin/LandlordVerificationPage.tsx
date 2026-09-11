@@ -133,8 +133,8 @@ const LandlordVerificationPage = () => {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto max-w-7xl space-y-6 px-4">
+    <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-7xl space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="mb-2 flex items-center gap-2 text-[#129B36]">

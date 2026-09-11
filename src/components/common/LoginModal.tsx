@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { useLoginModalStore } from "@/stores/modalStore";
 import { Eye, EyeOff, ArrowRight, Info } from "lucide-react";
+import GoogleLogo from "@/components/common/GoogleLogo";
 
 export const LoginModal = () => {
   const [email, setEmail] = useState("");
@@ -11,7 +12,7 @@ export const LoginModal = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const { login } = useAuthStore();
+  const { login, loginWithGoogle } = useAuthStore();
   const { isOpen, message, closeLoginModal, executeRetry } =
     useLoginModalStore();
 
@@ -27,13 +28,25 @@ export const LoginModal = () => {
       } catch (retryError) {
         console.error("Retry failed", retryError);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsLoading(false);
-      setError(
-        err?.response?.data?.error ||
-          err?.message ||
-          "Login failed. Please try again.",
+      setError(err instanceof Error ? err.message : "Login failed. Please try again.");
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      localStorage.setItem(
+        "oauth_return_to",
+        `${window.location.pathname}${window.location.search}`,
       );
+      await loginWithGoogle();
+    } catch (err: unknown) {
+      localStorage.removeItem("oauth_return_to");
+      setIsLoading(false);
+      setError(err instanceof Error ? err.message : "Google sign-in failed. Please try again.");
     }
   };
 
@@ -153,6 +166,21 @@ export const LoginModal = () => {
                 )}
               </button>
             </div>
+
+            <div className="flex items-center gap-3 py-1">
+              <span className="h-px flex-1 bg-gray-200" />
+              <span className="text-xs font-medium uppercase text-gray-400">or</span>
+              <span className="h-px flex-1 bg-gray-200" />
+            </div>
+
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={() => void handleGoogleSignIn()}
+              className="flex h-[42px] w-full items-center justify-center gap-3 rounded-[10px] border border-gray-200 bg-white text-[14px] font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-55">
+              <GoogleLogo />
+              Continue with Google
+            </button>
           </form>
         </div>
       </div>

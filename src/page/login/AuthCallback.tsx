@@ -29,17 +29,24 @@ const AuthCallback = () => {
         const auth = await mapSupabaseSession(session);
         const pendingAccountType = localStorage.getItem("pending_account_type");
         const needsRenterPreferences = localStorage.getItem("needs_renter_preferences") === "true";
+        const storedReturnTo = localStorage.getItem("oauth_return_to");
+        const returnTo = storedReturnTo?.startsWith("/") && !storedReturnTo.startsWith("//")
+          ? storedReturnTo
+          : null;
         localStorage.removeItem("pending_account_type");
+        localStorage.removeItem("oauth_return_to");
         setUser(auth.user);
         setAccessToken(auth.accessToken);
 
         toast.success("Welcome back!");
         if (pendingAccountType === "landlord") {
           navigate("/landlord/onboarding", { replace: true });
-        } else if (auth.user.role === "admin" || auth.user.role === "super_admin") {
-          navigate("/admin/verifications", { replace: true });
         } else if (!auth.user.phone) {
           navigate("/complete-profile", { replace: true });
+        } else if (returnTo && returnTo !== "/auth/callback") {
+          navigate(returnTo, { replace: true });
+        } else if (auth.user.role === "admin" || auth.user.role === "super_admin") {
+          navigate("/admin/verifications", { replace: true });
         } else if (needsRenterPreferences) {
           navigate("/renter/preferences", { replace: true });
         } else {

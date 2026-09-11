@@ -5,6 +5,7 @@ import axios, {
   AxiosRequestHeaders,
   AxiosResponse,
 } from "axios";
+import { supabase } from "@/lib/supabase";
 export type ApiResponse<T> = {
   success: boolean;
   data: T;
@@ -30,14 +31,6 @@ const api: AxiosInstance = axios.create({
   },
 });
 
-const getAccessToken = () => {
-  try {
-    const persisted = JSON.parse(localStorage.getItem("auth-storage") || "{}");
-    return persisted?.state?.accessToken || null;
-  } catch {
-    return null;
-  }
-};
 const setAccessToken = (token: string) => {
   localStorage.setItem("accessToken", token);
   // Dispatch event so authStore can update its state and persistence
@@ -76,15 +69,12 @@ function onRefreshFailed(error: unknown) {
 
 async function refreshAccessToken(): Promise<string> {
   try {
-    const response = await axios.post(
-      `${API_BASE_URL}/auth/refresh`,
-      {},
-      { withCredentials: true },
-    );
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error || !data.session?.access_token) {
+      throw error || new Error("No active Supabase session");
+    }
 
-    const newToken = response.data?.accessToken;
-    if (!newToken) throw new Error("No access token in refresh response");
-
+    const newToken = data.session.access_token;
     setAccessToken(newToken);
     return newToken;
   } catch (error) {
@@ -94,7 +84,7 @@ async function refreshAccessToken(): Promise<string> {
 }
 
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  async (config: InternalAxiosRequestConfig) => {
     if (config.data instanceof FormData) {
       if (config.headers) {
         if (typeof config.headers.set === "function") {
@@ -105,7 +95,10 @@ api.interceptors.request.use(
       }
     }
 
-    const token = getAccessToken();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const token = session?.access_token;
     if (token) {
       if (!config.headers) {
         config.headers = new axios.AxiosHeaders();
