@@ -6,6 +6,7 @@
 /* Custom CSS Variables */
 :root {
   --font-heading: "Poppins", sans-serif;
+  --font-display: "Manrope", sans-serif;
   --font-body: "Inter", sans-serif;
   --radius: 0.625rem;
   --background: oklch(1 0 0);

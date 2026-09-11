@@ -7,6 +7,7 @@ import {
   BedSingle,
   Building2,
   CheckCircle2,
+  ClipboardPlus,
   FileSearch,
   Home as HomeIcon,
   Hotel,
@@ -20,7 +21,6 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import PropertySections from "@/components/common/PropertySections";
-import LagosHousingAnimation from "@/components/common/LagosHousingAnimation";
 import { Button } from "@/components/ui/button";
 import { LAGOS_LOCAL_GOVERNMENTS } from "@/lib/nigeriaLocations";
 import { useAuthStore } from "@/stores/authStore";
@@ -92,14 +92,14 @@ const Home = () => {
 
   return (
     <div className="overflow-hidden bg-white text-gray-950">
-      <section className="bg-[#f4f6f4] p-3 sm:p-4 lg:p-5">
+      <section className="bg-white p-3 sm:p-4 lg:p-5">
         <div className="mx-auto grid max-w-[1600px] overflow-hidden rounded-[1.4rem] bg-white shadow-[0_18px_60px_rgba(15,55,35,0.08)] lg:min-h-[720px] lg:grid-cols-2">
           <div className="flex bg-[#173f2a] px-6 py-10 text-white sm:px-10 sm:py-12 lg:px-12 lg:py-14 xl:px-16">
             <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="flex w-full flex-col">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-green-100">
+              <span className="inline-flex w-fit self-start items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-green-100">
                 <MapPin className="h-4 w-4" />Made for renting in Lagos
               </span>
-              <h1 className="mt-6 max-w-2xl text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl xl:text-6xl">
+              <h1 className="mt-6 max-w-2xl text-4xl font-extrabold leading-[1.05] tracking-[-0.035em] [font-family:var(--font-display)] sm:text-5xl xl:text-6xl">
                 Find a Lagos home with <span className="text-green-300">more confidence.</span>
               </h1>
               <p className="mt-5 max-w-xl text-base leading-7 text-green-50/80 sm:text-lg sm:leading-8">
@@ -107,7 +107,7 @@ const Home = () => {
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <a href="#listings" className="inline-flex items-center gap-2 rounded-xl bg-[#18a83f] px-6 py-3 font-semibold text-white transition hover:bg-[#129B36]">Explore listings <ArrowRight className="h-4 w-4" /></a>
-                <Link to="/register" className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white px-6 py-3 font-semibold text-[#173f2a] transition hover:bg-green-50"><Building2 className="h-4 w-4" />List a property</Link>
+                <Link to="/register" className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white px-6 py-3 font-semibold text-[#173f2a] transition hover:bg-green-50"><ClipboardPlus className="h-[18px] w-[18px]" strokeWidth={1.9} />List a property</Link>
               </div>
               <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-sm text-green-50/80">
                 <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-300" />Reviewed landlords</span>
@@ -124,12 +124,7 @@ const Home = () => {
             </motion.div>
           </div>
 
-          <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.55, delay: 0.08 }} className="relative flex min-h-[430px] min-w-0 items-center justify-center bg-white px-5 py-10 sm:px-10 lg:min-h-full lg:px-12">
-              <div className="relative w-full max-w-[680px] overflow-visible">
-                <LagosHousingAnimation />
-                <span className="pointer-events-none absolute left-5 top-[18%] rounded-full border border-white/20 bg-black/45 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur">Eko Bridge, Lagos</span>
-              </div>
-          </motion.div>
+          <div aria-hidden="true" className="hidden bg-white lg:block" />
         </div>
       </section>
 
