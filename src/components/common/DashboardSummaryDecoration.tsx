@@ -24,8 +24,8 @@ const DashboardSummaryBanner = ({
 }: DashboardSummaryBannerProps) => (
   <section className="relative overflow-hidden rounded-3xl bg-[#143f2b] px-6 py-8 text-white shadow-sm sm:px-8 sm:py-10">
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-      <span className="absolute -right-20 -top-28 h-72 w-72 rounded-full border-[44px] border-sky-200/[0.05] bg-sky-200/[0.02] sm:h-80 sm:w-80 sm:border-[50px]" />
-      <span className="absolute -bottom-32 right-20 h-64 w-64 rounded-full border-[42px] border-sky-200/[0.05] bg-sky-200/[0.02] sm:h-72 sm:w-72 sm:border-[48px]" />
+      <span className="absolute -right-24 -top-24 h-80 w-80 rounded-full border-[48px] border-sky-200/[0.05] bg-sky-200/[0.02] sm:-right-28 sm:-top-32 sm:h-96 sm:w-96 sm:border-[56px]" />
+      <span className="absolute -bottom-28 right-6 h-80 w-80 rounded-full border-[48px] border-sky-200/[0.05] bg-sky-200/[0.02] sm:-bottom-36 sm:right-20 sm:h-96 sm:w-96 sm:border-[56px]" />
     </div>
 
     <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
