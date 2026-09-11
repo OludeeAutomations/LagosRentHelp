@@ -108,9 +108,9 @@ const Home = () => {
 
   return (
     <div className="overflow-hidden bg-white text-gray-950">
-      <section className="bg-white p-3 sm:p-4 lg:p-5">
-        <div className="mx-auto grid max-w-[1600px] gap-6 lg:grid-cols-2 lg:items-stretch">
-          <div className="order-2 flex w-full bg-white px-6 py-10 text-gray-950 sm:px-10 sm:py-12 lg:px-12 lg:py-14 xl:px-16">
+      <section className="bg-white px-4 pb-8 pt-10 sm:px-6 sm:pb-10 sm:pt-12 lg:px-8 lg:pb-12 lg:pt-14">
+        <div className="mx-auto grid max-w-[1600px] gap-3 lg:grid-cols-2 lg:items-stretch">
+          <div className="order-2 flex w-full bg-white px-4 py-6 text-gray-950 sm:px-6 sm:py-8 lg:pl-6 lg:pr-8 lg:py-10 xl:pl-8 xl:pr-12">
             <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="flex w-full flex-col">
               <span className="inline-flex w-fit self-start items-center gap-2 rounded-full border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-[#173f2a]">
                 <MapPin className="h-4 w-4" />Made for renting in Lagos
@@ -140,22 +140,24 @@ const Home = () => {
             </motion.div>
           </div>
 
-          <div className="order-1 relative min-h-[520px] overflow-hidden rounded-2xl bg-white lg:min-h-0" aria-roledescription="carousel" aria-label="LagosRentHelp highlights">
-            {heroSlides.map((slide, index) => (
-              <img
-                key={slide.src}
-                src={slide.src}
-                alt={index === activeHeroSlide ? slide.alt : ""}
-                aria-hidden={index !== activeHeroSlide}
-                loading={index === 0 ? "eager" : "lazy"}
-                className={`absolute inset-0 h-full w-full rounded-2xl object-contain transition-opacity duration-700 ${index === activeHeroSlide ? "opacity-100" : "opacity-0"}`}
-              />
-            ))}
-
-            <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2 rounded-full bg-black/35 px-3 py-2 backdrop-blur-sm">
+          <div className="order-1 flex h-[min(720px,125vw)] items-stretch justify-center bg-white lg:h-auto lg:justify-end" aria-roledescription="carousel" aria-label="LagosRentHelp highlights">
+            <div className="relative h-full max-w-full aspect-[4/5] overflow-hidden rounded-2xl border border-gray-200 bg-white">
               {heroSlides.map((slide, index) => (
-                <button key={slide.src} type="button" onClick={() => setActiveHeroSlide(index)} className={`h-2 rounded-full transition-all ${index === activeHeroSlide ? "w-6 bg-white" : "w-2 bg-white/55 hover:bg-white/80"}`} aria-label={`Show carousel image ${index + 1}`} aria-current={index === activeHeroSlide ? "true" : undefined} />
+                <img
+                  key={slide.src}
+                  src={slide.src}
+                  alt={index === activeHeroSlide ? slide.alt : ""}
+                  aria-hidden={index !== activeHeroSlide}
+                  loading={index === 0 ? "eager" : "lazy"}
+                  className={`absolute inset-0 h-full w-full rounded-2xl object-cover transition-opacity duration-700 ${index === activeHeroSlide ? "opacity-100" : "opacity-0"}`}
+                />
               ))}
+
+              <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2 rounded-full bg-black/35 px-3 py-2 backdrop-blur-sm">
+                {heroSlides.map((slide, index) => (
+                  <button key={slide.src} type="button" onClick={() => setActiveHeroSlide(index)} className={`h-2 rounded-full transition-all ${index === activeHeroSlide ? "w-6 bg-white" : "w-2 bg-white/55 hover:bg-white/80"}`} aria-label={`Show carousel image ${index + 1}`} aria-current={index === activeHeroSlide ? "true" : undefined} />
+                ))}
+              </div>
             </div>
           </div>
         </div>
