@@ -5,11 +5,11 @@ export const DASHBOARD_SUMMARY_CARD_CLASS =
 
 const DashboardSummaryDecoration = ({ tone, compact = false }: { tone: DecorationTone; compact?: boolean }) => {
   const colors = {
-    sky: "border-sky-200/10 bg-sky-200/5",
-    green: "border-emerald-200/10 bg-emerald-200/5",
-    amber: "border-amber-200/10 bg-amber-200/5",
-    violet: "border-violet-200/10 bg-violet-200/5",
-    rose: "border-rose-200/10 bg-rose-200/5",
+    sky: "border-sky-200/[0.05] bg-sky-200/[0.02]",
+    green: "border-emerald-200/[0.05] bg-emerald-200/[0.02]",
+    amber: "border-amber-200/[0.05] bg-amber-200/[0.02]",
+    violet: "border-violet-200/[0.05] bg-violet-200/[0.02]",
+    rose: "border-rose-200/[0.05] bg-rose-200/[0.02]",
   }[tone];
 
   return (
