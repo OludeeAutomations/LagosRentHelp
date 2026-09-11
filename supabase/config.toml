@@ -1,0 +1,4 @@
+[functions.verify-nin]
+# The function validates the bearer token with supabase.auth.getUser(). Keeping
+# gateway verification off also allows browser CORS preflight requests through.
+verify_jwt = false

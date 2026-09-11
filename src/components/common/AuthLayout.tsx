@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -12,6 +13,7 @@ interface AuthLayoutProps {
   sideTitle?: string;
   sideSubtitle?: string;
   sideIcon?: React.ElementType;
+  contentClassName?: string;
 }
 
 const AuthLayout: React.FC<AuthLayoutProps> = ({
@@ -21,12 +23,13 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   sideTitle = "Find Your Perfect Home",
   sideSubtitle = "Join thousands of happy renters across Lagos",
   sideIcon: SideIcon = Heart,
+  contentClassName,
 }) => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Left Side - Form */}
       <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24">
-        <div className="mx-auto w-full max-w-md">
+        <div className={cn("mx-auto w-full max-w-md", contentClassName)}>
           {/* Header */}
           <div className="text-center mb-8">
             <Link to="/" className="inline-flex items-center space-x-2 mb-6">

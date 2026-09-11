@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { NIGERIAN_STATES } from "@/lib/nigeriaLocations";
 import { landlordService } from "@/services/landlordService";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -21,6 +22,8 @@ const LandlordProfile = () => {
     businessName: "",
     whatsappNumber: user?.phone || "",
     residentialAddress: "",
+    state: "",
+    localGovernment: "",
     bio: "",
   });
 
@@ -33,6 +36,8 @@ const LandlordProfile = () => {
           businessName: profile.businessName,
           whatsappNumber: profile.whatsappNumber,
           residentialAddress: profile.residentialAddress,
+          state: profile.state,
+          localGovernment: profile.localGovernment,
           bio: profile.bio,
         });
         setVerificationStatus(profile.verificationStatus);
@@ -51,14 +56,14 @@ const LandlordProfile = () => {
 
   const save = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!form.businessName.trim() || !form.whatsappNumber.trim() || !form.residentialAddress.trim()) {
+    if (!form.businessName.trim() || !form.whatsappNumber.trim() || !form.residentialAddress.trim() || !form.state || !form.localGovernment.trim()) {
       toast.error("Complete all required fields.");
       return;
     }
 
     setSaving(true);
     try {
-      await landlordService.completeOnboarding(form);
+      await landlordService.updateProfile(form);
       if (user) setUser({ ...user, phone: form.whatsappNumber.trim() });
       toast.success("Profile updated successfully.");
     } catch (error) {
@@ -82,6 +87,10 @@ const LandlordProfile = () => {
               <div className="space-y-2"><Label htmlFor="profileBusinessName">Display or business name *</Label><Input id="profileBusinessName" value={form.businessName} onChange={(event) => update("businessName", event.target.value)} /></div>
               <div className="space-y-2"><Label htmlFor="profileWhatsapp">WhatsApp number *</Label><Input id="profileWhatsapp" placeholder="+234..." value={form.whatsappNumber} onChange={(event) => update("whatsappNumber", event.target.value)} /></div>
               <div className="space-y-2"><Label htmlFor="profileAddress">Residential or office address *</Label><Input id="profileAddress" value={form.residentialAddress} onChange={(event) => update("residentialAddress", event.target.value)} /><p className="text-xs text-gray-500">This address remains private.</p></div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2"><Label htmlFor="profileState">State *</Label><select id="profileState" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.state} onChange={(event) => update("state", event.target.value)}><option value="">Select state</option>{NIGERIAN_STATES.map((state) => <option key={state} value={state}>{state}</option>)}</select></div>
+                <div className="space-y-2"><Label htmlFor="profileLocalGovernment">Local government area *</Label><Input id="profileLocalGovernment" value={form.localGovernment} onChange={(event) => update("localGovernment", event.target.value)} /></div>
+              </div>
               <div className="space-y-2"><Label htmlFor="profileBio">Short description</Label><Textarea id="profileBio" rows={5} value={form.bio} onChange={(event) => update("bio", event.target.value)} /></div>
               <Button type="submit" disabled={saving} className="bg-[#129B36] hover:bg-[#0e7d2b]">{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save changes</Button>
             </form>
