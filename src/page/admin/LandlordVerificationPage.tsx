@@ -311,7 +311,7 @@ const LandlordVerificationPage = () => {
 
         <Dialog open={Boolean(selectedApplication)} onOpenChange={(open) => !open && setSelectedApplication(null)}>
           {selectedApplication && (
-            <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl lg:max-w-6xl">
               <DialogHeader>
                 <div className="flex flex-wrap items-center gap-3 pr-8">
                   <DialogTitle>{selectedApplication.businessName || selectedApplication.name}</DialogTitle>
