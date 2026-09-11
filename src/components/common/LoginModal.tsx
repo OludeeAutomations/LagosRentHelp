@@ -65,7 +65,7 @@ export const LoginModal = () => {
 
   return (
     <div className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-[1px] w-full max-w-[420px] overflow-hidden border border-gray-100 shadow-2xl">
+      <div className="bg-white rounded-[20px] w-full max-w-[420px] overflow-hidden border border-gray-100 shadow-2xl">
         {/* Header */}
         <div className="bg-[#129B36] px-7 pt-7 pb-6 flex flex-col items-center gap-3.5">
           {/* Replace the svg below with your actual logo */}

@@ -112,7 +112,7 @@ const Home = () => {
     <div className="overflow-hidden bg-white text-gray-950">
       <section className="bg-white p-3 sm:p-4 lg:p-5">
         <div className="mx-auto grid max-w-[1600px] gap-6 lg:grid-cols-2 lg:items-stretch">
-          <div className="flex w-full overflow-hidden rounded-[1px] bg-[#173f2a] px-6 py-10 text-white shadow-[0_18px_60px_rgba(15,55,35,0.08)] sm:px-10 sm:py-12 lg:px-12 lg:py-14 xl:px-16">
+          <div className="flex w-full overflow-hidden rounded-[1.4rem] bg-[#173f2a] px-6 py-10 text-white shadow-[0_18px_60px_rgba(15,55,35,0.08)] sm:px-10 sm:py-12 lg:px-12 lg:py-14 xl:px-16">
             <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="flex w-full flex-col">
               <span className="inline-flex w-fit self-start items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-green-100">
                 <MapPin className="h-4 w-4" />Made for renting in Lagos
@@ -142,7 +142,7 @@ const Home = () => {
             </motion.div>
           </div>
 
-          <div className="relative min-h-[520px] overflow-hidden rounded-[1px] bg-white lg:min-h-0" aria-roledescription="carousel" aria-label="LagosRentHelp highlights">
+          <div className="relative min-h-[520px] overflow-hidden rounded-[1.4rem] bg-white lg:min-h-0" aria-roledescription="carousel" aria-label="LagosRentHelp highlights">
             {heroSlides.map((slide, index) => (
               <img
                 key={slide.src}
@@ -150,7 +150,7 @@ const Home = () => {
                 alt={index === activeHeroSlide ? slide.alt : ""}
                 aria-hidden={index !== activeHeroSlide}
                 loading={index === 0 ? "eager" : "lazy"}
-                className={`absolute inset-0 h-full w-full rounded-[1px] object-contain transition-opacity duration-700 ${index === activeHeroSlide ? "opacity-100" : "opacity-0"}`}
+                className={`absolute inset-0 h-full w-full rounded-[1.4rem] object-contain transition-opacity duration-700 ${index === activeHeroSlide ? "opacity-100" : "opacity-0"}`}
               />
             ))}
 

@@ -63,8 +63,8 @@ const About = () => (
         </motion.div>
 
         <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.55, delay: 0.1 }} className="relative">
-          <div className="overflow-hidden rounded-[1px] border border-white/15 bg-white/10 p-2 shadow-2xl shadow-black/20">
-            <img src="/gettyimages-923379128-612x612.jpg" alt="A view across Lagos" className="h-[420px] w-full rounded-[1px] object-cover" />
+          <div className="overflow-hidden rounded-[2rem] border border-white/15 bg-white/10 p-2 shadow-2xl shadow-black/20">
+            <img src="/gettyimages-923379128-612x612.jpg" alt="A view across Lagos" className="h-[420px] w-full rounded-[1.55rem] object-cover" />
           </div>
           <div className="absolute -bottom-5 left-5 right-5 rounded-2xl border border-white/20 bg-white/95 p-4 text-gray-950 shadow-xl backdrop-blur sm:left-auto sm:w-72">
             <div className="flex items-center gap-3">
