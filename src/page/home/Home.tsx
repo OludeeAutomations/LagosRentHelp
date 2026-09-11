@@ -92,45 +92,44 @@ const Home = () => {
 
   return (
     <div className="overflow-hidden bg-white text-gray-950">
-      <section className="relative isolate overflow-hidden bg-[#173f2a] text-white">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_15%_15%,rgba(34,197,94,0.24),transparent_32%),radial-gradient(circle_at_85%_80%,rgba(255,255,255,0.1),transparent_34%)]" />
-        <div className="relative mx-auto max-w-7xl px-4 pb-14 pt-14 sm:px-6 md:pb-20 md:pt-20 lg:px-8">
-          <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_.95fr]">
-            <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+      <section className="bg-[#f4f6f4] p-3 sm:p-4 lg:p-5">
+        <div className="mx-auto grid max-w-[1600px] overflow-hidden rounded-[1.4rem] bg-white shadow-[0_18px_60px_rgba(15,55,35,0.08)] lg:min-h-[720px] lg:grid-cols-2">
+          <div className="flex bg-[#173f2a] px-6 py-10 text-white sm:px-10 sm:py-12 lg:px-12 lg:py-14 xl:px-16">
+            <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="flex w-full flex-col">
               <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-green-100">
                 <MapPin className="h-4 w-4" />Made for renting in Lagos
               </span>
-              <h1 className="mt-6 max-w-3xl text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
+              <h1 className="mt-6 max-w-2xl text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl xl:text-6xl">
                 Find a Lagos home with <span className="text-green-300">more confidence.</span>
               </h1>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-green-50/80">
+              <p className="mt-5 max-w-xl text-base leading-7 text-green-50/80 sm:text-lg sm:leading-8">
                 Browse homes from verified landlords, get recommendations shaped around your needs, and connect through a platform that reviews identity and ownership evidence.
               </p>
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="mt-7 flex flex-wrap gap-3">
                 <a href="#listings" className="inline-flex items-center gap-2 rounded-xl bg-[#18a83f] px-6 py-3 font-semibold text-white transition hover:bg-[#129B36]">Explore listings <ArrowRight className="h-4 w-4" /></a>
                 <Link to="/register" className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white px-6 py-3 font-semibold text-[#173f2a] transition hover:bg-green-50"><Building2 className="h-4 w-4" />List a property</Link>
               </div>
-              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-green-50/80">
+              <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-sm text-green-50/80">
                 <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-300" />Reviewed landlords</span>
                 <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-300" />Private matching</span>
                 <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-300" />Lagos-focused search</span>
               </div>
-            </motion.div>
 
-            <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.55, delay: 0.08 }} className="relative mt-10 min-w-0 lg:mt-0">
-              <div className="relative overflow-visible">
-                <LagosHousingAnimation />
-                <span className="pointer-events-none absolute left-5 top-[18%] rounded-full border border-white/20 bg-black/45 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur">Eko Bridge, Lagos</span>
-              </div>
+              <form onSubmit={handleSearch} className="mt-9 grid gap-3 rounded-2xl border border-white/15 bg-white/[0.08] p-4 sm:grid-cols-2 sm:p-5">
+                <label className="space-y-1.5 sm:col-span-2"><span className="text-xs font-semibold uppercase tracking-wide text-green-50/80">Location</span><select value={selectedLga} onChange={(event) => setSelectedLga(event.target.value)} className="h-12 w-full rounded-xl border border-white/20 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-green-300 focus:ring-2 focus:ring-green-300/30"><option value="">All Lagos LGAs</option>{LAGOS_LOCAL_GOVERNMENTS.map((lga) => <option key={lga} value={lga}>{lga}</option>)}</select></label>
+                <label className="space-y-1.5"><span className="text-xs font-semibold uppercase tracking-wide text-green-50/80">Property type</span><select value={selectedType} onChange={(event) => setSelectedType(event.target.value)} className="h-12 w-full rounded-xl border border-white/20 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-green-300 focus:ring-2 focus:ring-green-300/30"><option value="">All property types</option>{propertyTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}</select></label>
+                <label className="space-y-1.5"><span className="text-xs font-semibold uppercase tracking-wide text-green-50/80">Budget</span><select value={priceRange} onChange={(event) => setPriceRange(event.target.value)} className="h-12 w-full rounded-xl border border-white/20 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-green-300 focus:ring-2 focus:ring-green-300/30">{priceBands.map((band) => <option key={band.value} value={band.value}>{band.label}</option>)}</select></label>
+                <Button type="submit" className="h-12 rounded-xl bg-[#18a83f] px-6 shadow-lg shadow-black/10 hover:bg-[#129B36] sm:col-span-2"><Search className="h-4 w-4" />Search homes</Button>
+              </form>
             </motion.div>
           </div>
 
-          <form onSubmit={handleSearch} className="relative mt-16 grid gap-3 rounded-2xl border border-white/20 bg-white/10 p-4 text-white shadow-2xl shadow-black/20 backdrop-blur-xl sm:p-5 lg:grid-cols-[1.15fr_1fr_1fr_auto]">
-            <label className="space-y-1.5"><span className="text-xs font-semibold uppercase tracking-wide text-green-50/80">Location</span><select value={selectedLga} onChange={(event) => setSelectedLga(event.target.value)} className="h-12 w-full rounded-xl border border-white/20 bg-white/95 px-3 text-sm text-gray-950 outline-none transition focus:border-green-300 focus:ring-2 focus:ring-green-300/30"><option value="">All Lagos LGAs</option>{LAGOS_LOCAL_GOVERNMENTS.map((lga) => <option key={lga} value={lga}>{lga}</option>)}</select></label>
-            <label className="space-y-1.5"><span className="text-xs font-semibold uppercase tracking-wide text-green-50/80">Property type</span><select value={selectedType} onChange={(event) => setSelectedType(event.target.value)} className="h-12 w-full rounded-xl border border-white/20 bg-white/95 px-3 text-sm text-gray-950 outline-none transition focus:border-green-300 focus:ring-2 focus:ring-green-300/30"><option value="">All property types</option>{propertyTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}</select></label>
-            <label className="space-y-1.5"><span className="text-xs font-semibold uppercase tracking-wide text-green-50/80">Budget</span><select value={priceRange} onChange={(event) => setPriceRange(event.target.value)} className="h-12 w-full rounded-xl border border-white/20 bg-white/95 px-3 text-sm text-gray-950 outline-none transition focus:border-green-300 focus:ring-2 focus:ring-green-300/30">{priceBands.map((band) => <option key={band.value} value={band.value}>{band.label}</option>)}</select></label>
-            <Button type="submit" className="h-12 self-end rounded-xl bg-[#18a83f] px-6 shadow-lg shadow-black/10 hover:bg-[#129B36]"><Search className="h-4 w-4" />Search homes</Button>
-          </form>
+          <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.55, delay: 0.08 }} className="relative flex min-h-[430px] min-w-0 items-center justify-center bg-white px-5 py-10 sm:px-10 lg:min-h-full lg:px-12">
+              <div className="relative w-full max-w-[680px] overflow-visible">
+                <LagosHousingAnimation />
+                <span className="pointer-events-none absolute left-5 top-[18%] rounded-full border border-white/20 bg-black/45 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur">Eko Bridge, Lagos</span>
+              </div>
+          </motion.div>
         </div>
       </section>
 
