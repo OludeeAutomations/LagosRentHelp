@@ -203,10 +203,6 @@ const LandlordDashboardLayout = () => {
               aria-label="Toggle dashboard menu">
               {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
-            <Link to="/landlord" className="flex items-center gap-2 font-bold lg:hidden">
-              <img src="/icon.png" alt="" className="h-9 w-9" />
-              <span className="hidden sm:inline">Landlord Portal</span>
-            </Link>
             <div className="hidden lg:block">
               <h1 className="text-xl font-bold text-gray-900">{pageHeader.title}</h1>
               <p className="text-sm text-gray-500">{pageHeader.description}</p>

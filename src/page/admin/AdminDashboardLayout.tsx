@@ -157,10 +157,6 @@ const AdminDashboardLayout = () => {
             <Button variant="ghost" size="icon" className="shrink-0 lg:hidden" onClick={() => setMobileOpen((open) => !open)} aria-label="Toggle admin menu">
               {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
-            <Link to="/admin/verifications" className="flex items-center gap-2 font-bold lg:hidden">
-              <img src="/icon.png" alt="" className="h-9 w-9" />
-              <span className="hidden sm:inline">Admin Portal</span>
-            </Link>
             <div className="hidden lg:block">
               <h1 className="text-xl font-bold text-gray-900">{pageHeader.title}</h1>
               <p className="text-sm text-gray-500">{pageHeader.description}</p>
