@@ -126,7 +126,7 @@ const LandlordLeads = () => {
     <main className="w-full space-y-6 px-4 py-8 sm:px-6 lg:px-10">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summary.map(({ label, value, tone, icon: Icon, iconClass }) => (
-          <Card key={label} className="relative overflow-hidden border-[#41614F] bg-[linear-gradient(135deg,#41614F_0%,#4f765f_100%)] text-white shadow-lg shadow-[#41614F]/20 ring-1 ring-white/20">
+          <Card key={label} className="relative overflow-hidden border-[#143f2b] bg-[#143f2b] text-white shadow-lg shadow-[#143f2b]/20 ring-1 ring-white/20">
             <SummaryDecoration tone={tone} />
             <CardContent className="relative z-10 flex items-center gap-4 p-6">
               <span className={`rounded-xl p-3 shadow-inner ring-1 ${iconClass}`}><Icon className="h-7 w-7" strokeWidth={2} /></span>
