@@ -90,16 +90,14 @@ const LandlordDashboard = () => {
           <h1 className="text-3xl font-bold">
             Welcome, {profile?.businessName || "Landlord"}
           </h1>
-          {profile && (
+          {profile && profile.verificationStatus !== "verified" && (
             <p className="mt-1 text-sm text-gray-500">
               Verification:{" "}
               <span
                 className={`font-semibold capitalize ${
-                  profile.verificationStatus === "verified"
-                    ? "text-green-600"
-                    : profile.verificationStatus === "rejected"
-                      ? "text-red-600"
-                      : "text-amber-500"
+                  profile.verificationStatus === "rejected"
+                    ? "text-red-600"
+                    : "text-amber-500"
                 }`}>
                 {profile.verificationStatus}
               </span>
