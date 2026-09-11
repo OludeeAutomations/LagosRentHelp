@@ -16,7 +16,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import DashboardSummaryDecoration, { DASHBOARD_SUMMARY_CARD_CLASS, DASHBOARD_SUMMARY_CONTENT_CLASS } from "@/components/common/DashboardSummaryDecoration";
+import DashboardSummaryDecoration, { DASHBOARD_SUMMARY_CARD_CLASS } from "@/components/common/DashboardSummaryDecoration";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -112,8 +112,8 @@ const LandlordLeads = () => {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summary.map(({ label, value, tone, icon: Icon, iconClass }) => (
           <Card key={label} className={DASHBOARD_SUMMARY_CARD_CLASS}>
-            <DashboardSummaryDecoration tone={tone} />
-            <CardContent className={DASHBOARD_SUMMARY_CONTENT_CLASS}>
+            <DashboardSummaryDecoration tone={tone} compact />
+            <CardContent className="relative z-10 flex flex-1 items-center gap-4 p-6">
               <span className={`rounded-xl p-3 shadow-inner ring-1 ${iconClass}`}><Icon className="h-7 w-7" strokeWidth={2} /></span>
               <div><p className="text-2xl font-bold">{value}</p><p className="text-sm text-white/85">{label}</p></div>
             </CardContent>
