@@ -187,7 +187,7 @@ const Register: React.FC = () => {
     <AuthLayout
       title="Create Account"
       subtitle="Join thousands of users finding their perfect home"
-      contentClassName="max-w-xl">
+      contentClassName="max-w-2xl">
       <Form {...form}>
         <motion.form
           onSubmit={form.handleSubmit(onSubmit)}
