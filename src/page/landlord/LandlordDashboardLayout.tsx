@@ -52,6 +52,8 @@ const LandlordDashboardLayout = () => {
 
   const pageHeader = location.pathname === "/landlord/listings/new"
     ? { title: "Add New Listing", description: "Create and publish a new property listing" }
+    : /^\/landlord\/listings\/[^/]+\/edit$/.test(location.pathname)
+      ? { title: "Edit Listing", description: "Update your property details and renter requirements" }
     : location.pathname === "/landlord/listings"
       ? { title: "My Listings", description: "Manage all your submitted properties" }
       : location.pathname === "/landlord/profile"

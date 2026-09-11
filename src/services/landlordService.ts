@@ -70,6 +70,59 @@ export interface LandlordListingInput {
   tenantGenderPreference: string;
 }
 
+export interface LandlordListing extends Property {
+  tenantMaxOccupants: number;
+  tenantEmploymentType: string;
+  tenantMinIncomeBand: number;
+  tenantGuarantorRequired: boolean;
+  tenantMinLeaseMonths: number;
+  tenantPetsAllowed: boolean;
+  tenantSmokingAllowed: boolean;
+  tenantMoveInWindow: string;
+  tenantAccommodationType: string;
+  tenantGenderPreference: string;
+}
+
+type LandlordPropertyRow = PublicPropertyRow & {
+  tenant_max_occupants: number;
+  tenant_employment_type: string;
+  tenant_min_income_band: number;
+  tenant_guarantor_required: boolean;
+  tenant_min_lease_months: number;
+  tenant_pets_allowed: boolean;
+  tenant_smoking_allowed: boolean;
+  tenant_move_in_window: string;
+  tenant_accommodation_type: string;
+  tenant_gender_preference: string;
+};
+
+const LANDLORD_PROPERTY_COLUMNS = `${PUBLIC_PROPERTY_COLUMNS},
+  tenant_max_occupants,
+  tenant_employment_type,
+  tenant_min_income_band,
+  tenant_guarantor_required,
+  tenant_min_lease_months,
+  tenant_pets_allowed,
+  tenant_smoking_allowed,
+  tenant_move_in_window,
+  tenant_accommodation_type,
+  tenant_gender_preference
+`;
+
+const mapLandlordProperty = (row: LandlordPropertyRow): LandlordListing => ({
+  ...mapPublicProperty(row),
+  tenantMaxOccupants: row.tenant_max_occupants,
+  tenantEmploymentType: row.tenant_employment_type,
+  tenantMinIncomeBand: row.tenant_min_income_band,
+  tenantGuarantorRequired: row.tenant_guarantor_required,
+  tenantMinLeaseMonths: row.tenant_min_lease_months,
+  tenantPetsAllowed: row.tenant_pets_allowed,
+  tenantSmokingAllowed: row.tenant_smoking_allowed,
+  tenantMoveInWindow: row.tenant_move_in_window,
+  tenantAccommodationType: row.tenant_accommodation_type,
+  tenantGenderPreference: row.tenant_gender_preference,
+});
+
 type ProfileRpcResult = {
   id: string;
   role: User["role"];
@@ -290,13 +343,24 @@ export const landlordService = {
     };
   },
 
-  getMyListings: async (): Promise<Property[]> => {
+  getMyListings: async (): Promise<LandlordListing[]> => {
     const { data, error } = await supabase
       .rpc("get_my_properties")
-      .select(PUBLIC_PROPERTY_COLUMNS)
+      .select(LANDLORD_PROPERTY_COLUMNS)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return (data as PublicPropertyRow[]).map(mapPublicProperty);
+    return (data as LandlordPropertyRow[]).map(mapLandlordProperty);
+  },
+
+  getMyListingById: async (id: string): Promise<LandlordListing> => {
+    const { data, error } = await supabase
+      .rpc("get_my_properties")
+      .select(LANDLORD_PROPERTY_COLUMNS)
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error("Listing not found or you do not have permission to edit it.");
+    return mapLandlordProperty(data as LandlordPropertyRow);
   },
 
   createListing: async (input: LandlordListingInput): Promise<Property> => {
@@ -388,6 +452,57 @@ export const landlordService = {
       .update({ status })
       .eq("id", id);
     if (error) throw new Error(error.message);
+  },
+
+  updateListing: async (
+    id: string,
+    input: LandlordListingInput,
+  ): Promise<LandlordListing> => {
+    const profile = await ensureProfile();
+    if (profile.role !== "landlord") {
+      throw new Error("Only landlords can update their listings.");
+    }
+
+    const imageUrls = input.images.length ? await uploadImages(input.images) : null;
+    const { data, error } = await supabase
+      .from("properties")
+      .update({
+        title: input.title.trim(),
+        description: input.description.trim(),
+        price: input.price,
+        total_package_price: input.totalPackagePrice,
+        location: input.location.trim(),
+        type: input.type,
+        listing_type: input.listingType,
+        bedrooms: input.bedrooms,
+        bathrooms: input.bathrooms,
+        area: input.area,
+        amenities: input.amenities,
+        ...(imageUrls ? { images: imageUrls } : {}),
+        tenant_max_occupants: input.tenantMaxOccupants,
+        tenant_employment_type: input.tenantEmploymentType,
+        tenant_min_income_band: input.tenantMinIncomeBand,
+        tenant_guarantor_required: input.tenantGuarantorRequired,
+        tenant_min_lease_months: input.tenantMinLeaseMonths,
+        tenant_pets_allowed: input.tenantPetsAllowed,
+        tenant_smoking_allowed: input.tenantSmokingAllowed,
+        tenant_move_in_window: input.tenantMoveInWindow,
+        tenant_accommodation_type: input.tenantAccommodationType,
+        tenant_gender_preference:
+          input.tenantAccommodationType === "shared"
+            ? input.tenantGenderPreference
+            : "any",
+      })
+      .eq("id", id)
+      .eq("created_by", profile.id)
+      .select(LANDLORD_PROPERTY_COLUMNS)
+      .single();
+
+    if (error?.code === "23505") {
+      throw new Error("Another listing already uses these property details.");
+    }
+    if (error) throw new Error(error.message);
+    return mapLandlordProperty(data as LandlordPropertyRow);
   },
 
   deleteListing: async (id: string): Promise<void> => {

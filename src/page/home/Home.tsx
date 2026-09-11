@@ -14,7 +14,6 @@ import {
   MapPin,
   Paintbrush,
   Search,
-  ShieldCheck,
   SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
@@ -119,12 +118,9 @@ const Home = () => {
             </motion.div>
 
             <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.55, delay: 0.08 }} className="relative mt-10 min-w-0 lg:mt-0">
-              <div className="relative overflow-visible rounded-[2rem] border border-white/15 bg-white/10 p-2 shadow-2xl shadow-black/25">
+              <div className="relative overflow-visible">
                 <LagosHousingAnimation />
-                <span className="pointer-events-none absolute left-5 top-5 rounded-full border border-white/20 bg-black/45 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur">Eko Bridge, Lagos</span>
-              </div>
-              <div className="absolute -bottom-5 left-4 rounded-2xl border border-gray-100 bg-white p-4 text-gray-950 shadow-xl sm:left-6 lg:-left-6">
-                <div className="flex items-center gap-3"><span className="rounded-xl bg-green-50 p-3 text-[#129B36]"><ShieldCheck className="h-6 w-6" /></span><div><p className="font-semibold">Verified landlord flow</p><p className="text-sm text-gray-500">Identity and ownership reviewed.</p></div></div>
+                <span className="pointer-events-none absolute left-5 top-[18%] rounded-full border border-white/20 bg-black/45 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur">Eko Bridge, Lagos</span>
               </div>
             </motion.div>
           </div>

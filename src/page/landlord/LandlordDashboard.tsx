@@ -16,7 +16,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import DashboardSummaryDecoration from "@/components/common/DashboardSummaryDecoration";
+import DashboardSummaryDecoration, { DASHBOARD_SUMMARY_CARD_CLASS } from "@/components/common/DashboardSummaryDecoration";
 import { landlordService, type LandlordProfile } from "@/services/landlordService";
 import type { Property } from "@/types";
 
@@ -87,8 +87,10 @@ const LandlordDashboard = () => {
     <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
       <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-3xl font-bold">
-            Welcome, {profile?.businessName || "Landlord"}
+          <h1 className="flex flex-wrap items-center gap-x-2 text-2xl sm:text-[1.7rem]">
+            <span className="font-bold">Welcome,</span>
+            <span className="font-medium">{profile?.businessName || "Landlord"}</span>
+            <span aria-hidden="true">👋🏽</span>
           </h1>
           {profile && profile.verificationStatus !== "verified" && (
             <p className="mt-1 text-sm text-gray-500">
@@ -112,9 +114,9 @@ const LandlordDashboard = () => {
       </div>
 
       <div className="mb-8 grid gap-4 sm:grid-cols-3">
-        <Card className="relative overflow-hidden border-[#143f2b] bg-[#143f2b] text-white shadow-lg shadow-[#143f2b]/20 ring-1 ring-white/20"><DashboardSummaryDecoration tone="sky" /><CardContent className="relative z-10 flex items-center gap-4 p-6"><span className="rounded-xl bg-sky-300/20 p-3 shadow-inner ring-1 ring-sky-100/20"><ClipboardList className="h-7 w-7 text-sky-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{listings.length}</p><p className="text-sm text-white/85">Total listings</p></div></CardContent></Card>
-        <Card className="relative overflow-hidden border-[#143f2b] bg-[#143f2b] text-white shadow-lg shadow-[#143f2b]/20 ring-1 ring-white/20"><DashboardSummaryDecoration tone="green" /><CardContent className="relative z-10 flex items-center gap-4 p-6"><span className="rounded-xl bg-emerald-300/20 p-3 shadow-inner ring-1 ring-emerald-100/20"><BadgeCheck className="h-7 w-7 text-emerald-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{counts.available}</p><p className="text-sm text-white/85">Available</p></div></CardContent></Card>
-        <Card className="relative overflow-hidden border-[#143f2b] bg-[#143f2b] text-white shadow-lg shadow-[#143f2b]/20 ring-1 ring-white/20"><DashboardSummaryDecoration tone="amber" /><CardContent className="relative z-10 flex items-center gap-4 p-6"><span className="rounded-xl bg-amber-300/20 p-3 shadow-inner ring-1 ring-amber-100/20"><KeyRound className="h-7 w-7 text-amber-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{counts.rented}</p><p className="text-sm text-white/85">Rented</p></div></CardContent></Card>
+        <Card className={DASHBOARD_SUMMARY_CARD_CLASS}><DashboardSummaryDecoration tone="sky" /><CardContent className="relative z-10 flex flex-1 items-center gap-4 p-6"><span className="rounded-xl bg-sky-300/20 p-3 shadow-inner ring-1 ring-sky-100/20"><ClipboardList className="h-7 w-7 text-sky-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{listings.length}</p><p className="text-sm text-white/85">Total listings</p></div></CardContent></Card>
+        <Card className={DASHBOARD_SUMMARY_CARD_CLASS}><DashboardSummaryDecoration tone="green" /><CardContent className="relative z-10 flex flex-1 items-center gap-4 p-6"><span className="rounded-xl bg-emerald-300/20 p-3 shadow-inner ring-1 ring-emerald-100/20"><BadgeCheck className="h-7 w-7 text-emerald-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{counts.available}</p><p className="text-sm text-white/85">Available</p></div></CardContent></Card>
+        <Card className={DASHBOARD_SUMMARY_CARD_CLASS}><DashboardSummaryDecoration tone="amber" /><CardContent className="relative z-10 flex flex-1 items-center gap-4 p-6"><span className="rounded-xl bg-amber-300/20 p-3 shadow-inner ring-1 ring-amber-100/20"><KeyRound className="h-7 w-7 text-amber-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{counts.rented}</p><p className="text-sm text-white/85">Rented</p></div></CardContent></Card>
       </div>
 
       <div className="mb-8 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">

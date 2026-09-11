@@ -20,10 +20,11 @@ const PropertyContactCard: React.FC<PropertyContactCardProps> = ({
 }) => {
   const contactImage =
     contact?.photo || contact?.avatar || contact?.idPhoto ||
-    (contact as any)?.userId?.avatar ||
-    (contact as any)?.userId?.avatarUrl ||
-    (contact as any)?.userId?.photo ||
+    contact?.userId?.avatar ||
+    contact?.userId?.avatarUrl ||
+    contact?.userId?.photo ||
     "/icon.png";
+  const callableNumber = contact?.phone || contact?.whatsappNumber || contact?.whatsapp;
 
   return (
     <Card>
@@ -71,7 +72,7 @@ const PropertyContactCard: React.FC<PropertyContactCardProps> = ({
             variant="outline"
             className="w-full border-green-600 text-green-600 hover:bg-green-50 text-lg py-3"
             onClick={onCall}
-            disabled={!contact?.phone}>
+            disabled={!callableNumber}>
             <Phone className="mr-2 h-5 w-5" /> Call Owner
           </Button>
         </div>

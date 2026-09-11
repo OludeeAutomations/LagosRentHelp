@@ -90,13 +90,14 @@ const PropertyDetails: React.FC = () => {
       return;
     }
 
-    if (rawContact) {
+    const rawContactNumber = rawContact?.phone || rawContact?.whatsappNumber || rawContact?.whatsapp;
+    if (rawContact && rawContactNumber) {
       setResolvedContact(rawContact);
       return;
     }
 
-    resolvePropertyContact(property._id);
-  }, [property, rawContact]);
+    if (user) resolvePropertyContact(property._id);
+  }, [property, rawContact, user]);
 
   const gallery = usePropertyImageGallery({
     imageCount: property?.images?.length || 0,
@@ -158,7 +159,8 @@ const PropertyDetails: React.FC = () => {
       return;
     }
 
-    if (!contact?.phone) {
+    const phoneNumber = contact?.phone || contact?.whatsappNumber || contact?.whatsapp;
+    if (!phoneNumber) {
       toast.error("Phone number not available");
       return;
     }
@@ -167,7 +169,7 @@ const PropertyDetails: React.FC = () => {
       void landlordLeadService.record(property._id, "phone").catch(console.error);
     }
 
-    window.location.href = `tel:${contact.phone}`;
+    window.location.href = `tel:${phoneNumber.replace(/[^\d+]/g, "")}`;
   };
 
   const handleToggleFavorite = () => {

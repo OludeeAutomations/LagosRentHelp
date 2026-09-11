@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import DashboardSummaryDecoration from "@/components/common/DashboardSummaryDecoration";
+import DashboardSummaryDecoration, { DASHBOARD_SUMMARY_CARD_CLASS } from "@/components/common/DashboardSummaryDecoration";
 import {
   Dialog,
   DialogContent,
@@ -207,23 +207,23 @@ const LandlordVerificationPage = () => {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <Card className="relative overflow-hidden border-[#143f2b] bg-[#143f2b] text-white shadow-lg shadow-[#143f2b]/20 ring-1 ring-white/20">
+          <Card className={DASHBOARD_SUMMARY_CARD_CLASS}>
             <DashboardSummaryDecoration tone="amber" />
-            <CardContent className="relative z-10 flex items-center gap-4 p-6">
+            <CardContent className="relative z-10 flex flex-1 items-center gap-4 p-6">
               <span className="rounded-xl bg-amber-300/20 p-3 shadow-inner ring-1 ring-amber-100/20"><Clock3 className="h-7 w-7 text-amber-100" strokeWidth={2} /></span>
               <div><p className="text-2xl font-bold">{counts.pending}</p><p className="text-sm text-white/85">Pending review</p></div>
             </CardContent>
           </Card>
-          <Card className="relative overflow-hidden border-[#143f2b] bg-[#143f2b] text-white shadow-lg shadow-[#143f2b]/20 ring-1 ring-white/20">
+          <Card className={DASHBOARD_SUMMARY_CARD_CLASS}>
             <DashboardSummaryDecoration tone="green" />
-            <CardContent className="relative z-10 flex items-center gap-4 p-6">
+            <CardContent className="relative z-10 flex flex-1 items-center gap-4 p-6">
               <span className="rounded-xl bg-emerald-300/20 p-3 shadow-inner ring-1 ring-emerald-100/20"><BadgeCheck className="h-7 w-7 text-emerald-100" strokeWidth={2} /></span>
               <div><p className="text-2xl font-bold">{counts.verified}</p><p className="text-sm text-white/85">Verified</p></div>
             </CardContent>
           </Card>
-          <Card className="relative overflow-hidden border-[#143f2b] bg-[#143f2b] text-white shadow-lg shadow-[#143f2b]/20 ring-1 ring-white/20">
+          <Card className={DASHBOARD_SUMMARY_CARD_CLASS}>
             <DashboardSummaryDecoration tone="rose" />
-            <CardContent className="relative z-10 flex items-center gap-4 p-6">
+            <CardContent className="relative z-10 flex flex-1 items-center gap-4 p-6">
               <span className="rounded-xl bg-rose-300/20 p-3 shadow-inner ring-1 ring-rose-100/20"><XCircle className="h-7 w-7 text-rose-100" strokeWidth={2} /></span>
               <div><p className="text-2xl font-bold">{counts.rejected}</p><p className="text-sm text-white/85">Rejected</p></div>
             </CardContent>

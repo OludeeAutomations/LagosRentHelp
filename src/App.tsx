@@ -231,6 +231,7 @@ const AppContent: React.FC = () => {
                   <Route path="/landlord" element={<LandlordDashboard />} />
                   <Route path="/landlord/listings" element={<LandlordListings />} />
                   <Route path="/landlord/listings/new" element={<LandlordCreateListing />} />
+                  <Route path="/landlord/listings/:listingId/edit" element={<LandlordCreateListing />} />
                   <Route path="/landlord/leads" element={<LandlordLeads />} />
                   <Route path="/landlord/subscription" element={<LandlordSubscription />} />
                   <Route path="/landlord/profile" element={<LandlordProfile />} />

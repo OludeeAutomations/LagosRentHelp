@@ -1,5 +1,8 @@
 type DecorationTone = "sky" | "green" | "amber" | "violet" | "rose";
 
+export const DASHBOARD_SUMMARY_CARD_CLASS =
+  "relative min-h-[210px] overflow-hidden border-[#143f2b] bg-[#143f2b] text-white shadow-lg shadow-[#143f2b]/20 ring-1 ring-white/20";
+
 const DashboardSummaryDecoration = ({ tone }: { tone: DecorationTone }) => {
   const colors = {
     sky: "border-sky-200/20 bg-sky-200/10",

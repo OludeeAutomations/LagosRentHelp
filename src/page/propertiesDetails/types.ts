@@ -11,4 +11,9 @@ export interface ListingContact {
   verificationStatus?: "pending" | "verified" | "rejected";
   state?: string;
   city?: string;
+  userId?: {
+    avatar?: string;
+    avatarUrl?: string;
+    photo?: string;
+  };
 }

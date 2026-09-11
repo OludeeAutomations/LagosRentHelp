@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FileSearch2, FileStack, Plus, Trash2 } from "lucide-react";
+import { FileSearch2, FileStack, Pencil, Plus, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -67,7 +67,7 @@ const LandlordListings = () => {
                 <div key={listing._id} className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center">
                   <img src={listing.images[0] || "/placeholder.svg"} alt="" className="h-24 w-full rounded-lg object-cover sm:w-32" />
                   <div className="min-w-0 flex-1"><h3 className="truncate font-semibold">{listing.title}</h3><p className="text-sm text-gray-500">{listing.location} · {formatPrice(listing.price)}</p><div className="mt-2 flex gap-2"><Badge variant="secondary" className="capitalize">{listing.status}</Badge></div></div>
-                  <div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => void changeStatus(listing)}>Mark {listing.status === "rented" ? "available" : "rented"}</Button><Button size="icon" variant="outline" aria-label="Delete listing" onClick={() => void remove(listing)}><Trash2 className="h-4 w-4 text-red-600" /></Button></div>
+                  <div className="flex flex-wrap gap-2"><Button asChild size="sm" variant="outline"><Link to={`/landlord/listings/${listing._id}/edit`}><Pencil className="mr-1.5 h-4 w-4" />Edit</Link></Button><Button size="sm" variant="outline" onClick={() => void changeStatus(listing)}>Mark {listing.status === "rented" ? "available" : "rented"}</Button><Button size="icon" variant="outline" aria-label="Delete listing" onClick={() => void remove(listing)}><Trash2 className="h-4 w-4 text-red-600" /></Button></div>
                 </div>
               ))}
             </div>
