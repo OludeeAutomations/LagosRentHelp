@@ -3,11 +3,16 @@ import { motion } from "framer-motion";
 import {
   ArrowRight,
   BadgeCheck,
+  BedDouble,
+  BedSingle,
   Building2,
   CheckCircle2,
   FileSearch,
   Home as HomeIcon,
+  Hotel,
+  KeyRound,
   MapPin,
+  Paintbrush,
   Search,
   ShieldCheck,
   SlidersHorizontal,
@@ -16,19 +21,20 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import PropertySections from "@/components/common/PropertySections";
+import LagosHousingAnimation from "@/components/common/LagosHousingAnimation";
 import { Button } from "@/components/ui/button";
 import { LAGOS_LOCAL_GOVERNMENTS } from "@/lib/nigeriaLocations";
 import { useAuthStore } from "@/stores/authStore";
 import { usePropertyStore } from "@/stores/propertyStore";
 
 const propertyTypes = [
-  { value: "1-bedroom", label: "1 bedroom" },
-  { value: "2-bedroom", label: "2 bedrooms" },
-  { value: "3-bedroom", label: "3 bedrooms" },
-  { value: "duplex", label: "Duplex" },
-  { value: "studio", label: "Studio" },
-  { value: "mini-flat", label: "Mini flat" },
-  { value: "short-let", label: "Short let" },
+  { value: "1-bedroom", label: "1 bedroom", icon: BedSingle },
+  { value: "2-bedroom", label: "2 bedrooms", icon: BedDouble },
+  { value: "3-bedroom", label: "3 bedrooms", icon: Building2 },
+  { value: "duplex", label: "Duplex", icon: HomeIcon },
+  { value: "studio", label: "Studio", icon: Paintbrush },
+  { value: "mini-flat", label: "Mini flat", icon: KeyRound },
+  { value: "short-let", label: "Short let", icon: Hotel },
 ];
 
 const priceBands = [
@@ -87,46 +93,47 @@ const Home = () => {
 
   return (
     <div className="overflow-hidden bg-white text-gray-950">
-      <section className="relative bg-[#f3f7f4]">
-        <div className="absolute inset-x-0 bottom-0 h-32 bg-white" />
-        <div className="relative mx-auto max-w-7xl px-4 pb-8 pt-14 sm:px-6 md:pt-20 lg:px-8">
+      <section className="relative isolate overflow-hidden bg-[#173f2a] text-white">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_15%_15%,rgba(34,197,94,0.24),transparent_32%),radial-gradient(circle_at_85%_80%,rgba(255,255,255,0.1),transparent_34%)]" />
+        <div className="relative mx-auto max-w-7xl px-4 pb-14 pt-14 sm:px-6 md:pb-20 md:pt-20 lg:px-8">
           <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_.95fr]">
             <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-              <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-white px-4 py-2 text-sm font-semibold text-[#129B36] shadow-sm">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-green-100">
                 <MapPin className="h-4 w-4" />Made for renting in Lagos
               </span>
               <h1 className="mt-6 max-w-3xl text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
-                Find a Lagos home with <span className="text-[#129B36]">more confidence.</span>
+                Find a Lagos home with <span className="text-green-300">more confidence.</span>
               </h1>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-green-50/80">
                 Browse homes from verified landlords, get recommendations shaped around your needs, and connect through a platform that reviews identity and ownership evidence.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <a href="#listings" className="inline-flex items-center gap-2 rounded-xl bg-[#129B36] px-6 py-3 font-semibold text-white transition hover:bg-[#0e7d2b]">Explore listings <ArrowRight className="h-4 w-4" /></a>
-                <Link to="/register" className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-6 py-3 font-semibold transition hover:bg-gray-50"><Building2 className="h-4 w-4" />List a property</Link>
+                <a href="#listings" className="inline-flex items-center gap-2 rounded-xl bg-[#18a83f] px-6 py-3 font-semibold text-white transition hover:bg-[#129B36]">Explore listings <ArrowRight className="h-4 w-4" /></a>
+                <Link to="/register" className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white px-6 py-3 font-semibold text-[#173f2a] transition hover:bg-green-50"><Building2 className="h-4 w-4" />List a property</Link>
               </div>
-              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-gray-600">
-                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#129B36]" />Reviewed landlords</span>
-                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#129B36]" />Private matching</span>
-                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#129B36]" />Lagos-focused search</span>
+              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-green-50/80">
+                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-300" />Reviewed landlords</span>
+                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-300" />Private matching</span>
+                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-300" />Lagos-focused search</span>
               </div>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.55, delay: 0.08 }} className="relative hidden lg:block">
-              <div className="overflow-hidden rounded-[2rem] bg-[#173f2a] p-2 shadow-2xl shadow-green-950/20">
-                <img src="/istockphoto-1145244310-612x612.jpg" alt="Homes and city life in Lagos" className="h-[475px] w-full rounded-[1.55rem] object-cover" />
+            <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.55, delay: 0.08 }} className="relative min-w-0">
+              <div className="relative overflow-hidden rounded-[2rem] border border-white/15 bg-white/10 p-2 shadow-2xl shadow-black/25">
+                <LagosHousingAnimation />
+                <span className="pointer-events-none absolute left-5 top-5 rounded-full border border-white/20 bg-black/45 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur">Living in Lagos</span>
               </div>
-              <div className="absolute -bottom-5 -left-6 rounded-2xl border border-gray-100 bg-white p-4 shadow-xl">
+              <div className="absolute -bottom-5 left-4 rounded-2xl border border-gray-100 bg-white p-4 text-gray-950 shadow-xl sm:left-6 lg:-left-6">
                 <div className="flex items-center gap-3"><span className="rounded-xl bg-green-50 p-3 text-[#129B36]"><ShieldCheck className="h-6 w-6" /></span><div><p className="font-semibold">Verified landlord flow</p><p className="text-sm text-gray-500">Identity and ownership reviewed.</p></div></div>
               </div>
             </motion.div>
           </div>
 
-          <form onSubmit={handleSearch} className="relative mt-14 grid gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-xl shadow-gray-900/5 sm:p-5 lg:grid-cols-[1.15fr_1fr_1fr_auto]">
-            <label className="space-y-1.5"><span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Location</span><select value={selectedLga} onChange={(event) => setSelectedLga(event.target.value)} className="h-12 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm outline-none focus:border-[#129B36]"><option value="">All Lagos LGAs</option>{LAGOS_LOCAL_GOVERNMENTS.map((lga) => <option key={lga} value={lga}>{lga}</option>)}</select></label>
-            <label className="space-y-1.5"><span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Property type</span><select value={selectedType} onChange={(event) => setSelectedType(event.target.value)} className="h-12 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm outline-none focus:border-[#129B36]"><option value="">All property types</option>{propertyTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}</select></label>
-            <label className="space-y-1.5"><span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Budget</span><select value={priceRange} onChange={(event) => setPriceRange(event.target.value)} className="h-12 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm outline-none focus:border-[#129B36]">{priceBands.map((band) => <option key={band.value} value={band.value}>{band.label}</option>)}</select></label>
-            <Button type="submit" className="h-12 self-end rounded-xl bg-[#129B36] px-6 hover:bg-[#0e7d2b]"><Search className="h-4 w-4" />Search homes</Button>
+          <form onSubmit={handleSearch} className="relative mt-16 grid gap-3 rounded-2xl border border-white/20 bg-white/10 p-4 text-white shadow-2xl shadow-black/20 backdrop-blur-xl sm:p-5 lg:grid-cols-[1.15fr_1fr_1fr_auto]">
+            <label className="space-y-1.5"><span className="text-xs font-semibold uppercase tracking-wide text-green-50/80">Location</span><select value={selectedLga} onChange={(event) => setSelectedLga(event.target.value)} className="h-12 w-full rounded-xl border border-white/20 bg-white/95 px-3 text-sm text-gray-950 outline-none transition focus:border-green-300 focus:ring-2 focus:ring-green-300/30"><option value="">All Lagos LGAs</option>{LAGOS_LOCAL_GOVERNMENTS.map((lga) => <option key={lga} value={lga}>{lga}</option>)}</select></label>
+            <label className="space-y-1.5"><span className="text-xs font-semibold uppercase tracking-wide text-green-50/80">Property type</span><select value={selectedType} onChange={(event) => setSelectedType(event.target.value)} className="h-12 w-full rounded-xl border border-white/20 bg-white/95 px-3 text-sm text-gray-950 outline-none transition focus:border-green-300 focus:ring-2 focus:ring-green-300/30"><option value="">All property types</option>{propertyTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}</select></label>
+            <label className="space-y-1.5"><span className="text-xs font-semibold uppercase tracking-wide text-green-50/80">Budget</span><select value={priceRange} onChange={(event) => setPriceRange(event.target.value)} className="h-12 w-full rounded-xl border border-white/20 bg-white/95 px-3 text-sm text-gray-950 outline-none transition focus:border-green-300 focus:ring-2 focus:ring-green-300/30">{priceBands.map((band) => <option key={band.value} value={band.value}>{band.label}</option>)}</select></label>
+            <Button type="submit" className="h-12 self-end rounded-xl bg-[#18a83f] px-6 shadow-lg shadow-black/10 hover:bg-[#129B36]"><Search className="h-4 w-4" />Search homes</Button>
           </form>
         </div>
       </section>
@@ -141,12 +148,12 @@ const Home = () => {
 
       <section className="bg-[#f7f9f7] py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+          <div>
             <div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#129B36]">Browse your way</p><h2 className="mt-2 text-3xl font-bold">Start with the home you need.</h2></div>
-            <Link to="/search" className="inline-flex items-center gap-2 font-semibold text-[#129B36]">View every listing <ArrowRight className="h-4 w-4" /></Link>
           </div>
           <div className="mt-8 flex flex-wrap gap-3">
-            {propertyTypes.map((type) => <button key={type.value} onClick={() => navigate(`/search?type=${type.value}`)} className="rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium shadow-sm transition hover:border-[#129B36] hover:text-[#129B36]">{type.label}</button>)}
+            {propertyTypes.map(({ value, label, icon: Icon }) => <button key={value} onClick={() => navigate(`/search?type=${value}`)} className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium shadow-sm transition hover:border-[#129B36] hover:text-[#129B36]"><Icon className="h-4 w-4 text-[#129B36]" strokeWidth={1.9} />{label}</button>)}
+            <Link to="/search" className="inline-flex items-center gap-2 rounded-full border border-[#129B36] bg-[#129B36] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0e7d2b]">View every listing <ArrowRight className="h-4 w-4" /></Link>
           </div>
         </div>
       </section>

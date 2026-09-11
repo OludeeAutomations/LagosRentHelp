@@ -11,7 +11,7 @@ const features = [
 
 const LandlordSubscription = () => (
   <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="w-full space-y-6">
       <section className="overflow-hidden rounded-3xl bg-[#153f2b] px-6 py-10 text-white sm:px-10">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">

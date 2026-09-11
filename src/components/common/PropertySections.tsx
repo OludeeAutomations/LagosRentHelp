@@ -95,7 +95,7 @@ const PropertySections: React.FC<PropertySectionsProps> = ({
   );
 
   const PropertyGrid = ({ properties }: { properties: Property[] }) => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {properties.length === 0 ? (
         <div className="col-span-full text-center py-12">
           <p className="text-gray-500 text-lg">No properties found</p>
@@ -119,7 +119,7 @@ const PropertySections: React.FC<PropertySectionsProps> = ({
   return (
     <div className="space-y-16">
       {/* All Properties Section */}
-      <section className="px-4 md:px-6 lg:px-8">
+      <section>
         <SectionHeader
           title={hasPersonalizedMatches ? "Recommended for You" : "Featured Properties"}
           subtitle={hasPersonalizedMatches ? "Approved homes ranked using your private rental preferences" : "Discover our latest curated selection of premium properties"}
@@ -131,7 +131,7 @@ const PropertySections: React.FC<PropertySectionsProps> = ({
       </section>
 
       {/* Rent Properties Section */}
-      <section className="px-4 md:px-6 lg:px-8">
+      <section>
         <SectionHeader
           title="Latest Rentals"
           subtitle="Find your perfect long-term rental home"
@@ -143,7 +143,7 @@ const PropertySections: React.FC<PropertySectionsProps> = ({
       </section>
 
       {/* Short-let Properties Section */}
-      <section className="px-4 md:px-6 lg:px-8">
+      <section>
         <SectionHeader
           title="New Short-let Apartments"
           subtitle="Perfect for vacations and short stays"

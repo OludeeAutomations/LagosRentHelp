@@ -6,7 +6,6 @@ import {
   Loader2,
   LockKeyhole,
   ShieldCheck,
-  Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { accountSecurityService, type TotpEnrollment, type TotpFactor } from "@/services/accountSecurityService";
 import { useAuthStore } from "@/stores/authStore";
+
+const GooglePlayMark = () => (
+  <svg viewBox="0 0 512 512" aria-hidden="true" className="h-8 w-8 shrink-0">
+    <path fill="#00d7fe" d="M47 28c-8 8-13 20-13 35v386c0 15 5 27 13 35l3 3 216-216v-5L50 25l-3 3Z" />
+    <path fill="#00f076" d="m338 343-72-72v-5l72-72 3 2 85 48c24 13 24 35 0 49l-85 48-3 2Z" />
+    <path fill="#ffce00" d="m341 341-75-75L47 485c13 14 34 15 58 2l236-134v-12Z" />
+    <path fill="#ff3a44" d="M341 196 105 62C81 48 60 50 47 64l219 207 75-75Z" />
+  </svg>
+);
 
 const DashboardSecuritySettings = () => {
   const user = useAuthStore((state) => state.user);
@@ -163,8 +171,14 @@ const DashboardSecuritySettings = () => {
             <div>
               <p className="text-sm font-medium text-gray-900">Get Google Authenticator</p>
               <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-                <a href="https://apps.apple.com/app/google-authenticator/id388497605" target="_blank" rel="noreferrer" className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold hover:bg-gray-50"><Apple className="h-5 w-5" />Download for iPhone</a>
-                <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" target="_blank" rel="noreferrer" className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold hover:bg-gray-50"><Smartphone className="h-5 w-5" />Download for Android</a>
+                <a href="https://apps.apple.com/app/google-authenticator/id388497605" target="_blank" rel="noreferrer" aria-label="Download Google Authenticator on the App Store" className="inline-flex min-h-14 flex-1 items-center justify-center gap-3 rounded-xl bg-black px-5 py-2.5 text-white transition hover:bg-gray-800">
+                  <Apple className="h-8 w-8 shrink-0 fill-white" />
+                  <span className="text-left"><span className="block text-[9px] font-medium leading-none tracking-wide">Download on the</span><span className="mt-1 block text-lg font-semibold leading-none">App Store</span></span>
+                </a>
+                <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" target="_blank" rel="noreferrer" aria-label="Get Google Authenticator on Google Play" className="inline-flex min-h-14 flex-1 items-center justify-center gap-3 rounded-xl bg-black px-5 py-2.5 text-white transition hover:bg-gray-800">
+                  <GooglePlayMark />
+                  <span className="text-left"><span className="block text-[9px] font-medium leading-none tracking-wider">GET IT ON</span><span className="mt-1 block text-lg font-semibold leading-none">Google Play</span></span>
+                </a>
               </div>
             </div>
 

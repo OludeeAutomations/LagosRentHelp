@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
+  BadgeCheck,
+  Clock3,
+  Contact,
   Mail,
   MessageCircle,
   Phone,
@@ -57,6 +60,22 @@ const whatsappUrl = (phone: string, renterName: string, propertyTitle: string) =
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
 };
 
+const SummaryDecoration = ({ tone }: { tone: "sky" | "green" | "amber" | "violet" }) => {
+  const colors = {
+    sky: "border-sky-200/20 bg-sky-200/10",
+    green: "border-emerald-200/20 bg-emerald-200/10",
+    amber: "border-amber-200/20 bg-amber-200/10",
+    violet: "border-violet-200/20 bg-violet-200/10",
+  }[tone];
+
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-36 overflow-hidden">
+      <span className={`absolute -right-10 -top-12 h-32 w-32 rounded-full border-[24px] ${colors}`} />
+      <span className={`absolute -bottom-14 right-7 h-28 w-28 rounded-full border-[22px] ${colors}`} />
+    </div>
+  );
+};
+
 const LandlordLeads = () => {
   const [result, setResult] = useState<LandlordLeadResult>(emptyResult);
   const [loading, setLoading] = useState(true);
@@ -97,20 +116,21 @@ const LandlordLeads = () => {
 
   const pageCount = Math.max(1, Math.ceil(result.filteredTotal / PAGE_SIZE));
   const summary = [
-    { label: "All leads", value: result.total, tone: "bg-slate-900 text-white" },
-    { label: "New", value: result.newCount, tone: "bg-amber-50 text-amber-700" },
-    { label: "Contacted", value: result.contactedCount, tone: "bg-blue-50 text-blue-700" },
-    { label: "Qualified", value: result.qualifiedCount, tone: "bg-green-50 text-green-700" },
+    { label: "All leads", value: result.total, tone: "sky" as const, icon: UsersRound, iconClass: "bg-sky-300/20 text-sky-100 ring-sky-100/20" },
+    { label: "New", value: result.newCount, tone: "amber" as const, icon: Clock3, iconClass: "bg-amber-300/20 text-amber-100 ring-amber-100/20" },
+    { label: "Contacted", value: result.contactedCount, tone: "violet" as const, icon: Contact, iconClass: "bg-violet-300/20 text-violet-100 ring-violet-100/20" },
+    { label: "Qualified", value: result.qualifiedCount, tone: "green" as const, icon: BadgeCheck, iconClass: "bg-emerald-300/20 text-emerald-100 ring-emerald-100/20" },
   ];
 
   return (
     <main className="w-full space-y-6 px-4 py-8 sm:px-6 lg:px-10">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {summary.map((item) => (
-          <Card key={item.label}>
-            <CardContent className="flex items-center justify-between p-5">
-              <div><p className="text-sm text-gray-500">{item.label}</p><p className="mt-1 text-3xl font-bold text-gray-950">{item.value}</p></div>
-              <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${item.tone}`}><UsersRound className="h-5 w-5" /></span>
+        {summary.map(({ label, value, tone, icon: Icon, iconClass }) => (
+          <Card key={label} className="relative overflow-hidden border-[#41614F] bg-[linear-gradient(135deg,#41614F_0%,#4f765f_100%)] text-white shadow-lg shadow-[#41614F]/20 ring-1 ring-white/20">
+            <SummaryDecoration tone={tone} />
+            <CardContent className="relative z-10 flex items-center gap-4 p-6">
+              <span className={`rounded-xl p-3 shadow-inner ring-1 ${iconClass}`}><Icon className="h-7 w-7" strokeWidth={2} /></span>
+              <div><p className="text-2xl font-bold">{value}</p><p className="text-sm text-white/85">{label}</p></div>
             </CardContent>
           </Card>
         ))}

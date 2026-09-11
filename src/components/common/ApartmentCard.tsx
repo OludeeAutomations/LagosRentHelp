@@ -46,8 +46,8 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
     matchReasons,
   } = property;
 
-const mainImage = images?.[0] 
-const amenities = useAmenities(rawAmenities);
+  const mainImage = images?.[0] || "/placeholder.svg";
+  const amenities = useAmenities(rawAmenities);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("en-NG", {
@@ -78,17 +78,17 @@ const amenities = useAmenities(rawAmenities);
   };
 
   return (
-    <Card className="group overflow-hidden transition-all duration-300 hover:shadow-lg border-green-100 hover:border-green-300">
+    <Card className="group h-full gap-0 overflow-hidden border-green-100 py-0 transition-all duration-300 hover:border-green-300 hover:shadow-lg">
       {/* Image Section */}
       <div className="relative overflow-hidden">
         <img
           src={mainImage}
           alt={title}
-          className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+          className="aspect-[16/10] w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
 
         {/* Badges */}
-        <div className="absolute top-3 left-3 space-y-1">
+        <div className="absolute left-3 top-3 flex max-w-[calc(100%-4.5rem)] flex-wrap gap-1.5">
           {isFeatured && (
             <Badge className="bg-green-600 text-white border-0">Featured</Badge>
           )}
@@ -125,16 +125,16 @@ const amenities = useAmenities(rawAmenities);
         )}
       </div>
 
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <h3 className="font-semibold text-lg line-clamp-1 text-gray-900">
+      <CardHeader className="gap-0 px-5 pb-3 pt-5">
+        <div className="flex flex-col gap-2 min-[360px]:flex-row min-[360px]:items-start min-[360px]:justify-between">
+          <h3 className="min-w-0 text-lg font-semibold leading-6 text-gray-900 line-clamp-2">
             {title}
           </h3>
-          <div className="text-right">
-            <div className=" text-xs md:text-sm font-bold text-green-600">
+          <div className="shrink-0 min-[360px]:text-right">
+            <div className="text-base font-bold text-green-600">
               {formatPrice(price)}
             </div>
-            <div className="text-sm text-gray-500">{getRentalPeriod()}</div>
+            <div className="text-xs text-gray-500">{getRentalPeriod()}</div>
           </div>
         </div>
 
@@ -145,15 +145,15 @@ const amenities = useAmenities(rawAmenities);
         </div>
       </CardHeader>
 
-      <CardContent className="pb-4">
+      <CardContent className="flex-1 px-5 pb-4">
         {matchReasons && matchReasons.length > 0 && (
           <p className="mb-3 line-clamp-2 text-xs font-medium text-green-700">
             {matchReasons.slice(0, 3).join(" · ")}
           </p>
         )}
         {/* Property Features */}
-        <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
-          <div className="flex items-center gap-2">
+        <div className="mb-3 text-sm text-gray-600">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <div className="flex items-center gap-1">
               <Bed className="h-4 w-4" />
               <span>
@@ -210,16 +210,16 @@ const amenities = useAmenities(rawAmenities);
       </CardContent>
 
       {showActions && (
-        <CardFooter className="flex justify-between pt-0">
+        <CardFooter className="mt-auto grid grid-cols-1 gap-2 px-5 pb-5 pt-0 min-[340px]:grid-cols-2">
           <Button
             variant="outline"
             asChild
-            className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50">
+            className="w-full border-gray-300 text-gray-700 hover:bg-gray-50">
             <Link to={`/properties/${_id}`}>View Details</Link>
           </Button>
           <Button
             asChild
-            className="flex-1 ml-2 bg-green-600 hover:bg-green-700 text-white">
+            className="w-full bg-green-600 text-white hover:bg-green-700">
             <Link to={`/properties/${_id}`}>View Contact</Link>
           </Button>
         </CardFooter>
