@@ -7,6 +7,8 @@ import {
   BedSingle,
   Building2,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   ClipboardPlus,
   FileSearch,
   Home as HomeIcon,
@@ -44,6 +46,13 @@ const priceBands = [
   { value: "over-5m", label: "Above ₦5 million" },
 ];
 
+const heroSlides = [
+  { src: "/hero-carousel/imagine-home.jfif", alt: "Imagine coming home to this LagosRentHelp campaign" },
+  { src: "/hero-carousel/budget-options.jfif", alt: "LagosRentHelp homes for different budgets" },
+  { src: "/hero-carousel/easy-house-hunting.jfif", alt: "A relaxed renter using LagosRentHelp" },
+  { src: "/hero-carousel/verified-listings.jfif", alt: "Verified listings only on LagosRentHelp" },
+];
+
 const Home = () => {
   const navigate = useNavigate();
   const { properties, fetchProperties, loading } = usePropertyStore();
@@ -51,11 +60,20 @@ const Home = () => {
   const [selectedLga, setSelectedLga] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [priceRange, setPriceRange] = useState("");
+  const [activeHeroSlide, setActiveHeroSlide] = useState(0);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     void fetchProperties();
   }, [fetchProperties]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setActiveHeroSlide((current) => (current + 1) % heroSlides.length);
+    }, 5000);
+
+    return () => window.clearInterval(interval);
+  }, []);
 
   const rentProperties = properties.filter((property) => property.listingType === "rent");
   const shortLetProperties = properties.filter((property) => property.listingType === "short-let");
@@ -93,8 +111,8 @@ const Home = () => {
   return (
     <div className="overflow-hidden bg-white text-gray-950">
       <section className="bg-white p-3 sm:p-4 lg:p-5">
-        <div className="mx-auto grid max-w-[1600px] overflow-hidden rounded-[1.4rem] bg-white shadow-[0_18px_60px_rgba(15,55,35,0.08)] lg:min-h-[720px] lg:grid-cols-2">
-          <div className="flex bg-[#173f2a] px-6 py-10 text-white sm:px-10 sm:py-12 lg:px-12 lg:py-14 xl:px-16">
+        <div className="mx-auto grid max-w-[1600px] gap-6 lg:grid-cols-2 lg:items-stretch">
+          <div className="flex w-full overflow-hidden rounded-[1.4rem] bg-[#173f2a] px-6 py-10 text-white shadow-[0_18px_60px_rgba(15,55,35,0.08)] sm:px-10 sm:py-12 lg:px-12 lg:py-14 xl:px-16">
             <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="flex w-full flex-col">
               <span className="inline-flex w-fit self-start items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-green-100">
                 <MapPin className="h-4 w-4" />Made for renting in Lagos
@@ -124,7 +142,31 @@ const Home = () => {
             </motion.div>
           </div>
 
-          <div aria-hidden="true" className="hidden bg-white lg:block" />
+          <div className="relative min-h-[520px] overflow-hidden rounded-[1.4rem] bg-white lg:min-h-0" aria-roledescription="carousel" aria-label="LagosRentHelp highlights">
+            {heroSlides.map((slide, index) => (
+              <img
+                key={slide.src}
+                src={slide.src}
+                alt={index === activeHeroSlide ? slide.alt : ""}
+                aria-hidden={index !== activeHeroSlide}
+                loading={index === 0 ? "eager" : "lazy"}
+                className={`absolute inset-0 h-full w-full rounded-[1.4rem] object-contain transition-opacity duration-700 ${index === activeHeroSlide ? "opacity-100" : "opacity-0"}`}
+              />
+            ))}
+
+            <button type="button" onClick={() => setActiveHeroSlide((current) => (current - 1 + heroSlides.length) % heroSlides.length)} className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-[#173f2a] shadow-lg transition hover:bg-white" aria-label="Previous carousel image">
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button type="button" onClick={() => setActiveHeroSlide((current) => (current + 1) % heroSlides.length)} className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-[#173f2a] shadow-lg transition hover:bg-white" aria-label="Next carousel image">
+              <ChevronRight className="h-5 w-5" />
+            </button>
+
+            <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2 rounded-full bg-black/35 px-3 py-2 backdrop-blur-sm">
+              {heroSlides.map((slide, index) => (
+                <button key={slide.src} type="button" onClick={() => setActiveHeroSlide(index)} className={`h-2 rounded-full transition-all ${index === activeHeroSlide ? "w-6 bg-white" : "w-2 bg-white/55 hover:bg-white/80"}`} aria-label={`Show carousel image ${index + 1}`} aria-current={index === activeHeroSlide ? "true" : undefined} />
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
