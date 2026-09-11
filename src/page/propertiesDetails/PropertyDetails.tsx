@@ -297,10 +297,10 @@ const PropertyDetails: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold text-green-600">
-                    N{property.price.toLocaleString()}
+                    ₦{(property.totalPackagePrice > 0 ? property.totalPackagePrice : property.price).toLocaleString()}
                   </div>
                   <span className="text-gray-500 capitalize">
-                    /{property.listingType === "rent" ? "year" : "day"}
+                    {property.totalPackagePrice > 0 ? "Total package" : property.listingType === "rent" ? "Annual rent" : "Per day"}
                   </span>
                 </div>
               </div>

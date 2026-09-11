@@ -14,11 +14,11 @@ const LagosHousingAnimation = () => (
     <img
       src="/eko-bridge-mosaic.png"
       alt="Colourful mosaic artwork of the Lagos bridge and surrounding city"
-      className="absolute inset-0 h-full w-full object-contain object-center drop-shadow-[0_18px_24px_rgba(7,29,23,0.35)]"
+      className="absolute inset-0 h-full w-full object-cover object-top drop-shadow-[0_18px_24px_rgba(7,29,23,0.35)]"
       style={{ clipPath: "inset(15% 0 0 round 1.55rem)" }}
     />
-    <img src="/eko-bridge-mosaic.png" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 h-full w-full object-contain object-center drop-shadow-[0_8px_6px_rgba(7,29,23,0.3)]" style={{ clipPath: "polygon(64.4% 3.5%, 67.4% 3.5%, 69.2% 16%, 65.8% 16%)" }} />
-    <img src="/eko-bridge-mosaic.png" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 h-full w-full object-contain object-center drop-shadow-[0_8px_6px_rgba(7,29,23,0.3)]" style={{ clipPath: "polygon(73.1% 3.5%, 75.7% 3.5%, 73.7% 16%, 70.5% 16%)" }} />
+    <img src="/eko-bridge-mosaic.png" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 h-full w-full object-cover object-top drop-shadow-[0_8px_6px_rgba(7,29,23,0.3)]" style={{ clipPath: "polygon(64.4% 3.5%, 67.4% 3.5%, 69.2% 16%, 65.8% 16%)" }} />
+    <img src="/eko-bridge-mosaic.png" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 h-full w-full object-cover object-top drop-shadow-[0_8px_6px_rgba(7,29,23,0.3)]" style={{ clipPath: "polygon(73.1% 3.5%, 75.7% 3.5%, 73.7% 16%, 70.5% 16%)" }} />
     <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 top-[15%] rounded-[1.55rem] ring-1 ring-inset ring-white/20" />
     <LocationPulse className="left-[20%] top-[40%]" delay="0s" />
     <LocationPulse className="left-[42%] top-[34%]" delay=".65s" />

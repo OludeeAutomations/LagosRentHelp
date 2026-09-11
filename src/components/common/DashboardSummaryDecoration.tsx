@@ -13,9 +13,9 @@ const DashboardSummaryDecoration = ({ tone }: { tone: DecorationTone }) => {
   }[tone];
 
   return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-44 overflow-hidden">
-      <span className={`absolute -right-11 -top-12 h-36 w-36 rounded-full border-[26px] ${colors}`} />
-      <span className={`absolute -bottom-14 right-8 h-32 w-32 rounded-full border-[24px] ${colors}`} />
+    <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-56 overflow-hidden">
+      <span className={`absolute -right-12 -top-16 h-48 w-48 rounded-full border-[32px] ${colors}`} />
+      <span className={`absolute -bottom-[4.5rem] right-2 h-48 w-48 rounded-full border-[32px] ${colors}`} />
     </div>
   );
 };

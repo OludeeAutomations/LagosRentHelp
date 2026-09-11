@@ -32,6 +32,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
     _id,
     title,
     price,
+    totalPackagePrice,
     location,
     bedrooms,
     bathrooms,
@@ -57,16 +58,13 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
     }).format(price);
   };
 
-  const getRentalPeriod = () => {
-    switch (listingType) {
-      case "rent":
-        return "/month";
-      case "short-let":
-        return "/night";
-      default:
-        return "";
-    }
-  };
+  const hasPackagePrice = totalPackagePrice > 0;
+  const displayPrice = hasPackagePrice ? totalPackagePrice : price;
+  const priceLabel = hasPackagePrice
+    ? "Total package"
+    : listingType === "short-let"
+      ? "Per night"
+      : "Annual rent";
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -132,9 +130,9 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           </h3>
           <div className="shrink-0 min-[360px]:text-right">
             <div className="text-base font-bold text-green-600">
-              {formatPrice(price)}
+              {formatPrice(displayPrice)}
             </div>
-            <div className="text-xs text-gray-500">{getRentalPeriod()}</div>
+            <div className="text-xs text-gray-500">{priceLabel}</div>
           </div>
         </div>
 

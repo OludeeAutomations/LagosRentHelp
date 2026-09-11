@@ -149,6 +149,10 @@ const LandlordCreateListing = () => {
       toast.error("Enter a valid rent price.");
       return;
     }
+    if (form.totalPackagePrice <= 0) {
+      toast.error("Enter the total package price renters will pay upfront.");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -215,7 +219,7 @@ const LandlordCreateListing = () => {
             <div className="space-y-2"><Label htmlFor="listingType">Listing type</Label><select id="listingType" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.listingType} onChange={(e) => update("listingType", e.target.value)}><option value="rent">Annual rent</option><option value="short-let">Short let</option></select></div>
             <div className="space-y-2"><Label htmlFor="type">Property type</Label><select id="type" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.type} onChange={(e) => update("type", e.target.value)}><option value="1-bedroom">1 bedroom</option><option value="2-bedroom">2 bedrooms</option><option value="3-bedroom">3 bedrooms</option><option value="duplex">Duplex</option><option value="studio">Studio</option><option value="mini-flat">Mini flat</option><option value="short-let">Short let</option></select></div>
             <div className="space-y-2"><Label htmlFor="price">Rent price (₦) *</Label><Input id="price" type="number" min="1" value={form.price || ""} onChange={(e) => update("price", Number(e.target.value))} /></div>
-            <div className="space-y-2"><Label htmlFor="totalPackagePrice">Total package price (₦)</Label><Input id="totalPackagePrice" type="number" min="0" value={form.totalPackagePrice || ""} onChange={(e) => update("totalPackagePrice", Number(e.target.value))} /></div>
+            <div className="space-y-2"><Label htmlFor="totalPackagePrice">Total package price (₦) *</Label><Input id="totalPackagePrice" type="number" min="1" value={form.totalPackagePrice || ""} onChange={(e) => update("totalPackagePrice", Number(e.target.value))} /></div>
             <div className="space-y-2"><Label htmlFor="bedrooms">Bedrooms</Label><Input id="bedrooms" type="number" min="0" value={form.bedrooms} onChange={(e) => update("bedrooms", Number(e.target.value))} /></div>
             <div className="space-y-2"><Label htmlFor="bathrooms">Bathrooms</Label><Input id="bathrooms" type="number" min="0" value={form.bathrooms} onChange={(e) => update("bathrooms", Number(e.target.value))} /></div>
             <div className="space-y-2"><Label htmlFor="area">Area (sqm)</Label><Input id="area" type="number" min="1" value={form.area} onChange={(e) => update("area", Number(e.target.value))} /></div>

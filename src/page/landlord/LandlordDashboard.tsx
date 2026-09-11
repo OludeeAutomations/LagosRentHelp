@@ -86,13 +86,8 @@ const LandlordDashboard = () => {
   return (
     <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
       <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="flex flex-wrap items-center gap-x-2 text-2xl sm:text-[1.7rem]">
-            <span className="font-bold">Welcome,</span>
-            <span className="font-medium">{profile?.businessName || "Landlord"}</span>
-            <span aria-hidden="true">👋🏽</span>
-          </h1>
-          {profile && profile.verificationStatus !== "verified" && (
+        {profile && profile.verificationStatus !== "verified" && (
+          <div>
             <p className="mt-1 text-sm text-gray-500">
               Verification:{" "}
               <span
@@ -104,12 +99,12 @@ const LandlordDashboard = () => {
                 {profile.verificationStatus}
               </span>
             </p>
-          )}
-        </div>
+          </div>
+        )}
         {profile?.verificationStatus === "verified" ? (
-          <Button asChild className="bg-[#129B36] hover:bg-[#0e7d2b]"><Link to="/landlord/listings/new"><Plus className="mr-2 h-4 w-4" />Add listing</Link></Button>
+          <Button asChild className="bg-[#129B36] hover:bg-[#0e7d2b] sm:ml-auto"><Link to="/landlord/listings/new"><Plus className="mr-2 h-4 w-4" />Add listing</Link></Button>
         ) : (
-          <Button disabled title="Ownership verification must be approved first"><Plus className="mr-2 h-4 w-4" />Awaiting verification</Button>
+          <Button disabled className="sm:ml-auto" title="Ownership verification must be approved first"><Plus className="mr-2 h-4 w-4" />Awaiting verification</Button>
         )}
       </div>
 
