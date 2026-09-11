@@ -14,8 +14,8 @@ const LandlordSubscription = () => (
     <div className="w-full space-y-6">
       <section className="relative overflow-hidden rounded-3xl bg-[#143f2b] px-6 py-10 text-white sm:px-10">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-          <span className="absolute -right-20 -top-28 h-72 w-72 rounded-full border-[44px] border-sky-200/20 bg-sky-200/10 sm:h-80 sm:w-80 sm:border-[50px]" />
-          <span className="absolute -bottom-32 right-20 h-64 w-64 rounded-full border-[42px] border-sky-200/20 bg-sky-200/10 sm:h-72 sm:w-72 sm:border-[48px]" />
+          <span className="absolute -right-20 -top-28 h-72 w-72 rounded-full border-[44px] border-sky-200/10 bg-sky-200/5 sm:h-80 sm:w-80 sm:border-[50px]" />
+          <span className="absolute -bottom-32 right-20 h-64 w-64 rounded-full border-[42px] border-sky-200/10 bg-sky-200/5 sm:h-72 sm:w-72 sm:border-[48px]" />
         </div>
         <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
