@@ -3,6 +3,9 @@ import {
   CheckCircle2,
   BadgeCheck,
   Clock3,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
   ExternalLink,
   FileText,
   Loader2,
@@ -12,13 +15,23 @@ import {
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   adminVerificationService,
   type LandlordVerificationApplication,
   type VerificationStatus,
 } from "@/services/adminVerificationService";
+
+const PAGE_SIZE = 10;
 
 const documentLabels: Record<string, string> = {
   certificate_of_occupancy: "Certificate of Occupancy (C of O)",
@@ -67,6 +80,9 @@ const LandlordVerificationPage = () => {
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
   const [openingPath, setOpeningPath] = useState<string | null>(null);
+  const [selectedApplication, setSelectedApplication] = useState<LandlordVerificationApplication | null>(null);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
   const loadApplications = useCallback(async () => {
     setLoading(true);
@@ -96,6 +112,37 @@ const LandlordVerificationPage = () => {
     }),
     [summaryApplications],
   );
+
+  const matchingApplications = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return applications;
+    return applications.filter((application) =>
+      [
+        application.businessName,
+        application.name,
+        application.email,
+        application.phone,
+        application.whatsappNumber,
+        application.propertyAddress,
+        application.propertyLocalGovernment,
+        application.verifiedIdentityName,
+      ].some((value) => value?.toLowerCase().includes(term)),
+    );
+  }, [applications, search]);
+
+  const totalPages = Math.max(1, Math.ceil(matchingApplications.length / PAGE_SIZE));
+  const paginatedApplications = matchingApplications.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE,
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [filter, search]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   const openPrivateDocument = async (path: string) => {
     const previewWindow = window.open("", "_blank");
@@ -143,6 +190,7 @@ const LandlordVerificationPage = () => {
         decision === "verified" ? "Landlord verified." : "Application rejected.",
       );
       await loadApplications();
+      setSelectedApplication(null);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Review could not be saved.");
     } finally {
@@ -152,7 +200,7 @@ const LandlordVerificationPage = () => {
 
   return (
     <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
-      <div className="mx-auto max-w-7xl space-y-6">
+      <div className="w-full space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-950">Admin review</h2>
           <div className="flex gap-3">
@@ -201,71 +249,127 @@ const LandlordVerificationPage = () => {
         ) : applications.length === 0 ? (
           <Card><CardContent className="py-16 text-center text-gray-500">No {filter === "all" ? "" : `${filter} `}applications found.</CardContent></Card>
         ) : (
-          <div className="space-y-5">
-            {applications.map((application) => (
-              <Card key={application.userId} className="overflow-hidden">
-                <CardHeader className="border-b bg-white">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <CardTitle>{application.businessName || application.name}</CardTitle>
-                      <p className="mt-1 text-sm text-gray-500">{application.name} · {application.email} · {application.whatsappNumber || application.phone}</p>
-                    </div>
-                    <Badge variant="outline" className={`capitalize ${statusStyles[application.verificationStatus]}`}>{application.verificationStatus}</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6 p-6">
-                  <div className="grid gap-5 lg:grid-cols-3">
-                    <section className="rounded-lg border p-4">
-                      <h2 className="flex items-center gap-2 font-semibold"><BadgeCheck className="h-5 w-5 text-[#129B36]" />Identity</h2>
-                      <dl className="mt-3 space-y-2 text-sm">
-                        <div><dt className="text-gray-500">Verified NIN name</dt><dd className="font-medium">{application.verifiedIdentityName || "Name unavailable for older submission"}</dd></div>
-                        <div><dt className="text-gray-500">NIN</dt><dd className="font-medium">•••••••{application.ninLastFour}</dd></div>
-                        <div><dt className="text-gray-500">Residential address</dt><dd className="font-medium">{application.residentialAddress}, {application.localGovernment}, {application.state}</dd></div>
-                      </dl>
-                      <Button variant="outline" className="mt-4 w-full" disabled={openingPath === application.identityImagePath} onClick={() => void openPrivateDocument(application.identityImagePath)}>
-                        {openingPath === application.identityImagePath ? <Loader2 className="animate-spin" /> : <ExternalLink />} View identity photo
-                      </Button>
-                    </section>
+          <Card className="overflow-hidden">
+            <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="font-semibold text-gray-950">Verification applications</h3>
+                <p className="text-sm text-gray-500">{matchingApplications.length} application{matchingApplications.length === 1 ? "" : "s"}</p>
+              </div>
+              <Input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search landlord, email, phone or LGA"
+                className="w-full sm:max-w-sm"
+              />
+            </div>
 
-                    <section className="rounded-lg border p-4 lg:col-span-2">
-                      <h2 className="flex items-center gap-2 font-semibold"><FileText className="h-5 w-5 text-[#129B36]" />Ownership evidence</h2>
-                      <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
-                        <div><dt className="text-gray-500">Document type</dt><dd className="font-medium">{documentLabels[application.ownershipDocumentType] || application.ownershipDocumentType}</dd></div>
-                        <div><dt className="text-gray-500">Property LGA</dt><dd className="font-medium">{application.propertyLocalGovernment}</dd></div>
-                        <div className="sm:col-span-2"><dt className="text-gray-500">Property address</dt><dd className="font-medium">{application.propertyAddress}</dd></div>
-                      </dl>
-                      <Button variant="outline" className="mt-4" disabled={openingPath === application.ownershipDocumentPath} onClick={() => void openPrivateDocument(application.ownershipDocumentPath)}>
-                        {openingPath === application.ownershipDocumentPath ? <Loader2 className="animate-spin" /> : <ExternalLink />} Open ownership document
-                      </Button>
-                    </section>
-                  </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1050px] text-left text-sm">
+                <thead className="border-b bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                  <tr>
+                    <th className="px-5 py-4 font-semibold">Landlord</th>
+                    <th className="px-5 py-4 font-semibold">Contact</th>
+                    <th className="px-5 py-4 font-semibold">Verified identity</th>
+                    <th className="px-5 py-4 font-semibold">Property</th>
+                    <th className="px-5 py-4 font-semibold">Document</th>
+                    <th className="px-5 py-4 font-semibold">Submitted</th>
+                    <th className="px-5 py-4 font-semibold">Status</th>
+                    <th className="px-5 py-4 text-right font-semibold">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {paginatedApplications.length === 0 ? (
+                    <tr><td colSpan={8} className="px-5 py-12 text-center text-gray-500">No applications match your search.</td></tr>
+                  ) : paginatedApplications.map((application) => (
+                    <tr key={application.userId} className="bg-white hover:bg-gray-50/80">
+                      <td className="px-5 py-4"><p className="font-semibold text-gray-950">{application.businessName || application.name}</p><p className="mt-0.5 text-xs text-gray-500">{application.name}</p></td>
+                      <td className="px-5 py-4"><p>{application.email}</p><p className="mt-0.5 text-xs text-gray-500">{application.whatsappNumber || application.phone}</p></td>
+                      <td className="max-w-52 px-5 py-4"><p className="truncate font-medium">{application.verifiedIdentityName || "Name unavailable"}</p><p className="mt-0.5 text-xs text-gray-500">NIN •••••••{application.ninLastFour}</p></td>
+                      <td className="max-w-56 px-5 py-4"><p className="font-medium">{application.propertyLocalGovernment}</p><p className="mt-0.5 truncate text-xs text-gray-500">{application.propertyAddress}</p></td>
+                      <td className="max-w-52 px-5 py-4"><p className="truncate">{documentLabels[application.ownershipDocumentType] || application.ownershipDocumentType}</p></td>
+                      <td className="whitespace-nowrap px-5 py-4 text-gray-600">{formatDate(application.submittedAt)}</td>
+                      <td className="px-5 py-4"><Badge variant="outline" className={`capitalize ${statusStyles[application.verificationStatus]}`}>{application.verificationStatus}</Badge></td>
+                      <td className="px-5 py-4 text-right"><Button variant="outline" size="sm" onClick={() => setSelectedApplication(application)}><Eye className="h-4 w-4" /> Review</Button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-                  <div className="rounded-lg bg-amber-50 p-4 text-sm text-amber-950">
-                    Confirm that the document type is correct, the owner name matches the verified NIN name, the address/LGA matches, and the title or registration details look genuine. Land Use Charge receipts and survey plans are supporting evidence only.
-                  </div>
-
-                  <div className="space-y-3">
-                    <Textarea
-                      aria-label={`Review note for ${application.name}`}
-                      placeholder={application.verificationStatus === "rejected" ? application.verificationNote || "Reason for rejection" : "Internal review note (required when rejecting)"}
-                      value={notes[application.userId] || ""}
-                      onChange={(event) => setNotes((current) => ({ ...current, [application.userId]: event.target.value }))}
-                    />
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="text-xs text-gray-500">Submitted {formatDate(application.submittedAt)}{application.reviewedAt ? ` · Reviewed ${formatDate(application.reviewedAt)} by ${application.reviewerName || "administrator"}` : ""}</p>
-                      <div className="flex gap-2">
-                        <Button variant="destructive" disabled={actionId === application.userId} onClick={() => void review(application, "rejected")}><XCircle /> Reject</Button>
-                        <Button className="bg-[#129B36] hover:bg-[#0e7d2b]" disabled={actionId === application.userId} onClick={() => void review(application, "verified")}>
-                          {actionId === application.userId ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} Approve
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+            <div className="flex flex-col gap-3 border-t px-5 py-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-gray-500">
+                Showing {matchingApplications.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, matchingApplications.length)} of {matchingApplications.length}
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}><ChevronLeft className="h-4 w-4" /> Previous</Button>
+                <span className="flex items-center px-2 text-xs font-medium text-gray-600">Page {page} of {totalPages}</span>
+                <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>Next <ChevronRight className="h-4 w-4" /></Button>
+              </div>
+            </div>
+          </Card>
         )}
+
+        <Dialog open={Boolean(selectedApplication)} onOpenChange={(open) => !open && setSelectedApplication(null)}>
+          {selectedApplication && (
+            <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
+              <DialogHeader>
+                <div className="flex flex-wrap items-center gap-3 pr-8">
+                  <DialogTitle>{selectedApplication.businessName || selectedApplication.name}</DialogTitle>
+                  <Badge variant="outline" className={`capitalize ${statusStyles[selectedApplication.verificationStatus]}`}>{selectedApplication.verificationStatus}</Badge>
+                </div>
+                <DialogDescription>{selectedApplication.name} · {selectedApplication.email} · {selectedApplication.whatsappNumber || selectedApplication.phone}</DialogDescription>
+              </DialogHeader>
+
+              <div className="grid gap-5 lg:grid-cols-3">
+                <section className="rounded-lg border p-4">
+                  <h2 className="flex items-center gap-2 font-semibold"><BadgeCheck className="h-5 w-5 text-[#129B36]" />Identity</h2>
+                  <dl className="mt-3 space-y-2 text-sm">
+                    <div><dt className="text-gray-500">Verified NIN name</dt><dd className="font-medium">{selectedApplication.verifiedIdentityName || "Name unavailable for older submission"}</dd></div>
+                    <div><dt className="text-gray-500">NIN</dt><dd className="font-medium">•••••••{selectedApplication.ninLastFour}</dd></div>
+                    <div><dt className="text-gray-500">Residential address</dt><dd className="font-medium">{selectedApplication.residentialAddress}, {selectedApplication.localGovernment}, {selectedApplication.state}</dd></div>
+                  </dl>
+                  <Button variant="outline" className="mt-4 w-full" disabled={openingPath === selectedApplication.identityImagePath} onClick={() => void openPrivateDocument(selectedApplication.identityImagePath)}>
+                    {openingPath === selectedApplication.identityImagePath ? <Loader2 className="animate-spin" /> : <ExternalLink />} View identity photo
+                  </Button>
+                </section>
+
+                <section className="rounded-lg border p-4 lg:col-span-2">
+                  <h2 className="flex items-center gap-2 font-semibold"><FileText className="h-5 w-5 text-[#129B36]" />Ownership evidence</h2>
+                  <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+                    <div><dt className="text-gray-500">Document type</dt><dd className="font-medium">{documentLabels[selectedApplication.ownershipDocumentType] || selectedApplication.ownershipDocumentType}</dd></div>
+                    <div><dt className="text-gray-500">Property LGA</dt><dd className="font-medium">{selectedApplication.propertyLocalGovernment}</dd></div>
+                    <div className="sm:col-span-2"><dt className="text-gray-500">Property address</dt><dd className="font-medium">{selectedApplication.propertyAddress}</dd></div>
+                  </dl>
+                  <Button variant="outline" className="mt-4" disabled={openingPath === selectedApplication.ownershipDocumentPath} onClick={() => void openPrivateDocument(selectedApplication.ownershipDocumentPath)}>
+                    {openingPath === selectedApplication.ownershipDocumentPath ? <Loader2 className="animate-spin" /> : <ExternalLink />} Open ownership document
+                  </Button>
+                </section>
+              </div>
+
+              <div className="rounded-lg bg-amber-50 p-4 text-sm text-amber-950">
+                Confirm that the document type is correct, the owner name matches the verified NIN name, the address/LGA matches, and the title or registration details look genuine. Land Use Charge receipts and survey plans are supporting evidence only.
+              </div>
+
+              <div className="space-y-3">
+                <Textarea
+                  aria-label={`Review note for ${selectedApplication.name}`}
+                  placeholder={selectedApplication.verificationStatus === "rejected" ? selectedApplication.verificationNote || "Reason for rejection" : "Internal review note (required when rejecting)"}
+                  value={notes[selectedApplication.userId] || ""}
+                  onChange={(event) => setNotes((current) => ({ ...current, [selectedApplication.userId]: event.target.value }))}
+                />
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs text-gray-500">Submitted {formatDate(selectedApplication.submittedAt)}{selectedApplication.reviewedAt ? ` · Reviewed ${formatDate(selectedApplication.reviewedAt)} by ${selectedApplication.reviewerName || "administrator"}` : ""}</p>
+                  <div className="flex gap-2">
+                    <Button variant="destructive" disabled={actionId === selectedApplication.userId} onClick={() => void review(selectedApplication, "rejected")}><XCircle /> Reject</Button>
+                    <Button className="bg-[#129B36] hover:bg-[#0e7d2b]" disabled={actionId === selectedApplication.userId} onClick={() => void review(selectedApplication, "verified")}>
+                      {actionId === selectedApplication.userId ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} Approve
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          )}
+        </Dialog>
       </div>
     </main>
   );
