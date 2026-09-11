@@ -132,16 +132,24 @@ export const mapSupabaseSession = async (
 const DUPLICATE_PHONE_MESSAGE =
   "This phone number is already linked to another account. Use a different number or sign in to the existing account.";
 
+const isDuplicatePhoneError = (error: {
+  message: string;
+  code?: string;
+  details?: string;
+}) => {
+  const databaseMessage = `${error.message} ${error.details || ""}`;
+  return (
+    databaseMessage.includes("users_phone_key") ||
+    (error.code === "23505" && databaseMessage.toLowerCase().includes("phone"))
+  );
+};
+
 const throwIfError = (
   error: { message: string; code?: string; details?: string } | null,
 ) => {
   if (!error) return;
 
-  const databaseMessage = `${error.message} ${error.details || ""}`;
-  if (
-    databaseMessage.includes("users_phone_key") ||
-    (error.code === "23505" && databaseMessage.toLowerCase().includes("phone"))
-  ) {
+  if (isDuplicatePhoneError(error)) {
     throw new Error(DUPLICATE_PHONE_MESSAGE);
   }
 
@@ -197,6 +205,18 @@ export const authService = {
       p_name: name.trim(),
       p_phone: phone.trim(),
     });
+    if (error && isDuplicatePhoneError(error)) {
+      // Do not keep a rejected number in auth metadata; otherwise a later
+      // session can mistake this incomplete OAuth profile for a completed one.
+      await supabase.auth.updateUser({
+        data: {
+          ...(currentUser?.user_metadata || {}),
+          full_name: name.trim(),
+          name: name.trim(),
+          phone: "",
+        },
+      });
+    }
     throwIfError(error);
 
     const {

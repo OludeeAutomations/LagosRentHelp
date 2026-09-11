@@ -93,9 +93,17 @@ export const useAuthStore = create<AuthState>()(
 
         const {
           data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
+        } = supabase.auth.onAuthStateChange((event, session) => {
           if (!session) {
             set(createLoggedOutState());
+            return;
+          }
+
+          // Profile services update the store after metadata changes. Running
+          // ensure_my_profile here too races the completion RPC and can try to
+          // create the same public user twice.
+          if (event === "USER_UPDATED") {
+            set({ accessToken: session.access_token });
             return;
           }
 
