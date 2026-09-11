@@ -16,7 +16,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import DashboardSummaryDecoration, { DASHBOARD_SUMMARY_CARD_CLASS } from "@/components/common/DashboardSummaryDecoration";
+import { DASHBOARD_SUMMARY_CARD_CLASS } from "@/components/common/DashboardSummaryDecoration";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -101,21 +101,20 @@ const LandlordLeads = () => {
 
   const pageCount = Math.max(1, Math.ceil(result.filteredTotal / PAGE_SIZE));
   const summary = [
-    { label: "All leads", value: result.total, tone: "sky" as const, icon: UsersRound, iconClass: "bg-sky-300/20 text-sky-100 ring-sky-100/20" },
-    { label: "New", value: result.newCount, tone: "amber" as const, icon: Clock3, iconClass: "bg-amber-300/20 text-amber-100 ring-amber-100/20" },
-    { label: "Contacted", value: result.contactedCount, tone: "violet" as const, icon: Contact, iconClass: "bg-violet-300/20 text-violet-100 ring-violet-100/20" },
-    { label: "Qualified", value: result.qualifiedCount, tone: "green" as const, icon: BadgeCheck, iconClass: "bg-emerald-300/20 text-emerald-100 ring-emerald-100/20" },
+    { label: "All leads", value: result.total, icon: UsersRound, iconClass: "bg-sky-50 text-sky-700 ring-sky-200" },
+    { label: "New", value: result.newCount, icon: Clock3, iconClass: "bg-amber-50 text-amber-700 ring-amber-200" },
+    { label: "Contacted", value: result.contactedCount, icon: Contact, iconClass: "bg-violet-50 text-violet-700 ring-violet-200" },
+    { label: "Qualified", value: result.qualifiedCount, icon: BadgeCheck, iconClass: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
   ];
 
   return (
     <main className="w-full space-y-6 px-4 py-8 sm:px-6 lg:px-10">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {summary.map(({ label, value, tone, icon: Icon, iconClass }) => (
+        {summary.map(({ label, value, icon: Icon, iconClass }) => (
           <Card key={label} className={DASHBOARD_SUMMARY_CARD_CLASS}>
-            <DashboardSummaryDecoration tone={tone} compact />
-            <CardContent className="relative z-10 flex flex-1 items-center gap-4 p-6">
-              <span className={`rounded-xl p-3 shadow-inner ring-1 ${iconClass}`}><Icon className="h-7 w-7" strokeWidth={2} /></span>
-              <div><p className="text-2xl font-bold">{value}</p><p className="text-sm text-white/85">{label}</p></div>
+            <CardContent className="flex flex-1 items-center gap-4 p-6">
+              <span className={`rounded-xl p-3 ring-1 ${iconClass}`}><Icon className="h-7 w-7" strokeWidth={2} /></span>
+              <div><p className="text-2xl font-bold">{value}</p><p className="text-sm text-gray-500">{label}</p></div>
             </CardContent>
           </Card>
         ))}

@@ -53,6 +53,7 @@ export interface LandlordListingInput {
   location: string;
   type: Property["type"];
   listingType: Property["listingType"];
+  minimumStay: number;
   bedrooms: number;
   bathrooms: number;
   area: number;
@@ -409,6 +410,7 @@ export const landlordService = {
         location: input.location.trim(),
         type: input.type,
         listing_type: input.listingType,
+        minimum_stay: input.listingType === "short-let" ? input.minimumStay : null,
         bedrooms: input.bedrooms,
         bathrooms: input.bathrooms,
         area: input.area,
@@ -474,6 +476,7 @@ export const landlordService = {
         location: input.location.trim(),
         type: input.type,
         listing_type: input.listingType,
+        minimum_stay: input.listingType === "short-let" ? input.minimumStay : null,
         bedrooms: input.bedrooms,
         bathrooms: input.bathrooms,
         area: input.area,

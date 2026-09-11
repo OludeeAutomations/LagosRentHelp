@@ -323,6 +323,12 @@ const PropertyDetails: React.FC = () => {
                   <span className="text-gray-500 capitalize">
                     {property.totalPackagePrice > 0 ? "Total package" : property.listingType === "rent" ? "Annual rent" : "Per day"}
                   </span>
+                  {property.totalPackagePrice > 0 && (
+                    <p className="mt-2 text-sm font-medium text-gray-700">
+                      {property.listingType === "short-let" ? "Short-let amount" : "Annual rent"}: ₦{property.price.toLocaleString()}
+                      {property.listingType === "short-let" && ` for ${property.minimumStay || 1} ${(property.minimumStay || 1) === 1 ? "day" : "days"}`}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -441,6 +447,12 @@ const PropertyDetails: React.FC = () => {
                     {property.type}
                   </span>
                 </div>
+                {property.listingType === "short-let" && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Price duration</span>
+                    <span className="font-medium">{property.minimumStay || 1} {(property.minimumStay || 1) === 1 ? "day" : "days"}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-gray-500">Status</span>
                   <Badge

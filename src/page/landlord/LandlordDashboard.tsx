@@ -16,7 +16,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import DashboardSummaryDecoration, { DASHBOARD_SUMMARY_CARD_CLASS } from "@/components/common/DashboardSummaryDecoration";
+import { DASHBOARD_SUMMARY_CARD_CLASS } from "@/components/common/DashboardSummaryDecoration";
 import { landlordService, type LandlordProfile } from "@/services/landlordService";
 import type { Property } from "@/types";
 
@@ -102,16 +102,16 @@ const LandlordDashboard = () => {
           </div>
         )}
         {profile?.verificationStatus === "verified" ? (
-          <Button asChild className="bg-[#129B36] hover:bg-[#0e7d2b] sm:ml-auto"><Link to="/landlord/listings/new"><Plus className="mr-2 h-4 w-4" />Add listing</Link></Button>
+          <Button asChild className="self-end bg-[#129B36] hover:bg-[#0e7d2b] sm:ml-auto"><Link to="/landlord/listings/new"><Plus className="mr-2 h-4 w-4" />Add listing</Link></Button>
         ) : (
-          <Button disabled className="sm:ml-auto" title="Ownership verification must be approved first"><Plus className="mr-2 h-4 w-4" />Awaiting verification</Button>
+          <Button disabled className="self-end sm:ml-auto" title="Ownership verification must be approved first"><Plus className="mr-2 h-4 w-4" />Awaiting verification</Button>
         )}
       </div>
 
       <div className="mb-8 grid gap-4 sm:grid-cols-3">
-        <Card className={DASHBOARD_SUMMARY_CARD_CLASS}><DashboardSummaryDecoration tone="sky" /><CardContent className="relative z-10 flex flex-1 items-center gap-4 p-6"><span className="rounded-xl bg-sky-300/20 p-3 shadow-inner ring-1 ring-sky-100/20"><ClipboardList className="h-7 w-7 text-sky-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{listings.length}</p><p className="text-sm text-white/85">Total listings</p></div></CardContent></Card>
-        <Card className={DASHBOARD_SUMMARY_CARD_CLASS}><DashboardSummaryDecoration tone="green" /><CardContent className="relative z-10 flex flex-1 items-center gap-4 p-6"><span className="rounded-xl bg-emerald-300/20 p-3 shadow-inner ring-1 ring-emerald-100/20"><BadgeCheck className="h-7 w-7 text-emerald-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{counts.available}</p><p className="text-sm text-white/85">Available</p></div></CardContent></Card>
-        <Card className={DASHBOARD_SUMMARY_CARD_CLASS}><DashboardSummaryDecoration tone="amber" /><CardContent className="relative z-10 flex flex-1 items-center gap-4 p-6"><span className="rounded-xl bg-amber-300/20 p-3 shadow-inner ring-1 ring-amber-100/20"><KeyRound className="h-7 w-7 text-amber-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{counts.rented}</p><p className="text-sm text-white/85">Rented</p></div></CardContent></Card>
+        <Card className={DASHBOARD_SUMMARY_CARD_CLASS}><CardContent className="flex flex-1 items-center gap-4 p-6"><span className="rounded-xl bg-sky-50 p-3 ring-1 ring-sky-200"><ClipboardList className="h-7 w-7 text-sky-700" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{listings.length}</p><p className="text-sm text-gray-500">Total listings</p></div></CardContent></Card>
+        <Card className={DASHBOARD_SUMMARY_CARD_CLASS}><CardContent className="flex flex-1 items-center gap-4 p-6"><span className="rounded-xl bg-emerald-50 p-3 ring-1 ring-emerald-200"><BadgeCheck className="h-7 w-7 text-emerald-700" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{counts.available}</p><p className="text-sm text-gray-500">Available</p></div></CardContent></Card>
+        <Card className={DASHBOARD_SUMMARY_CARD_CLASS}><CardContent className="flex flex-1 items-center gap-4 p-6"><span className="rounded-xl bg-amber-50 p-3 ring-1 ring-amber-200"><KeyRound className="h-7 w-7 text-amber-700" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{counts.rented}</p><p className="text-sm text-gray-500">Rented</p></div></CardContent></Card>
       </div>
 
       <div className="mb-8 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
