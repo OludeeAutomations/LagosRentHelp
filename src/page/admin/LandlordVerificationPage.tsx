@@ -2,11 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
   BadgeCheck,
+  Clock3,
   ExternalLink,
   FileText,
   Loader2,
   RefreshCw,
-  ShieldCheck,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -44,8 +44,24 @@ const formatDate = (value: string | null) =>
       }).format(new Date(value))
     : "Not reviewed";
 
+const SummaryDecoration = ({ tone }: { tone: "amber" | "green" | "rose" }) => {
+  const colors = {
+    amber: "border-amber-200/20 bg-amber-200/10",
+    green: "border-emerald-200/20 bg-emerald-200/10",
+    rose: "border-rose-200/20 bg-rose-200/10",
+  }[tone];
+
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-44 overflow-hidden">
+      <span className={`absolute -right-11 -top-12 h-36 w-36 rounded-full border-[26px] ${colors}`} />
+      <span className={`absolute -bottom-14 right-8 h-32 w-32 rounded-full border-[24px] ${colors}`} />
+    </div>
+  );
+};
+
 const LandlordVerificationPage = () => {
   const [applications, setApplications] = useState<LandlordVerificationApplication[]>([]);
+  const [summaryApplications, setSummaryApplications] = useState<LandlordVerificationApplication[]>([]);
   const [filter, setFilter] = useState<"all" | VerificationStatus>("pending");
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -55,10 +71,12 @@ const LandlordVerificationPage = () => {
   const loadApplications = useCallback(async () => {
     setLoading(true);
     try {
-      const next = await adminVerificationService.getApplications(
-        filter === "all" ? undefined : filter,
-      );
+      const [next, all] = await Promise.all([
+        adminVerificationService.getApplications(filter === "all" ? undefined : filter),
+        filter === "all" ? Promise.resolve(null) : adminVerificationService.getApplications(),
+      ]);
       setApplications(next);
+      setSummaryApplications(all || next);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not load applications.");
     } finally {
@@ -72,11 +90,11 @@ const LandlordVerificationPage = () => {
 
   const counts = useMemo(
     () => ({
-      pending: applications.filter((item) => item.verificationStatus === "pending").length,
-      verified: applications.filter((item) => item.verificationStatus === "verified").length,
-      rejected: applications.filter((item) => item.verificationStatus === "rejected").length,
+      pending: summaryApplications.filter((item) => item.verificationStatus === "pending").length,
+      verified: summaryApplications.filter((item) => item.verificationStatus === "verified").length,
+      rejected: summaryApplications.filter((item) => item.verificationStatus === "rejected").length,
     }),
-    [applications],
+    [summaryApplications],
   );
 
   const openPrivateDocument = async (path: string) => {
@@ -135,17 +153,8 @@ const LandlordVerificationPage = () => {
   return (
     <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <div className="mb-2 flex items-center gap-2 text-[#129B36]">
-              <ShieldCheck className="h-6 w-6" />
-              <span className="text-sm font-semibold uppercase tracking-wide">Admin review</span>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-950">Landlord verification</h1>
-            <p className="mt-2 max-w-2xl text-gray-600">
-              Match the verified identity, property details and uploaded title document before deciding.
-            </p>
-          </div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-950">Admin review</h2>
           <div className="flex gap-3">
             <select
               aria-label="Filter verification applications"
@@ -164,9 +173,27 @@ const LandlordVerificationPage = () => {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <Card><CardContent className="p-5"><p className="text-sm text-gray-500">Pending review</p><p className="mt-1 text-3xl font-bold text-amber-600">{filter === "all" ? counts.pending : filter === "pending" ? applications.length : "—"}</p></CardContent></Card>
-          <Card><CardContent className="p-5"><p className="text-sm text-gray-500">Verified</p><p className="mt-1 text-3xl font-bold text-green-600">{filter === "all" ? counts.verified : filter === "verified" ? applications.length : "—"}</p></CardContent></Card>
-          <Card><CardContent className="p-5"><p className="text-sm text-gray-500">Rejected</p><p className="mt-1 text-3xl font-bold text-red-600">{filter === "all" ? counts.rejected : filter === "rejected" ? applications.length : "—"}</p></CardContent></Card>
+          <Card className="relative overflow-hidden border-[#41614F] bg-[linear-gradient(135deg,#41614F_0%,#4f765f_100%)] text-white shadow-lg shadow-[#41614F]/20 ring-1 ring-white/20">
+            <SummaryDecoration tone="amber" />
+            <CardContent className="relative z-10 flex items-center gap-4 p-6">
+              <span className="rounded-xl bg-amber-300/20 p-3 shadow-inner ring-1 ring-amber-100/20"><Clock3 className="h-7 w-7 text-amber-100" strokeWidth={2} /></span>
+              <div><p className="text-2xl font-bold">{counts.pending}</p><p className="text-sm text-white/85">Pending review</p></div>
+            </CardContent>
+          </Card>
+          <Card className="relative overflow-hidden border-[#41614F] bg-[linear-gradient(135deg,#41614F_0%,#4f765f_100%)] text-white shadow-lg shadow-[#41614F]/20 ring-1 ring-white/20">
+            <SummaryDecoration tone="green" />
+            <CardContent className="relative z-10 flex items-center gap-4 p-6">
+              <span className="rounded-xl bg-emerald-300/20 p-3 shadow-inner ring-1 ring-emerald-100/20"><BadgeCheck className="h-7 w-7 text-emerald-100" strokeWidth={2} /></span>
+              <div><p className="text-2xl font-bold">{counts.verified}</p><p className="text-sm text-white/85">Verified</p></div>
+            </CardContent>
+          </Card>
+          <Card className="relative overflow-hidden border-[#41614F] bg-[linear-gradient(135deg,#41614F_0%,#4f765f_100%)] text-white shadow-lg shadow-[#41614F]/20 ring-1 ring-white/20">
+            <SummaryDecoration tone="rose" />
+            <CardContent className="relative z-10 flex items-center gap-4 p-6">
+              <span className="rounded-xl bg-rose-300/20 p-3 shadow-inner ring-1 ring-rose-100/20"><XCircle className="h-7 w-7 text-rose-100" strokeWidth={2} /></span>
+              <div><p className="text-2xl font-bold">{counts.rejected}</p><p className="text-sm text-white/85">Rejected</p></div>
+            </CardContent>
+          </Card>
         </div>
 
         {loading ? (

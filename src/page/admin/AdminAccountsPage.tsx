@@ -69,14 +69,7 @@ const AdminAccountsPage = () => {
 
   return (
     <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-950">Administrator access</h1>
-          <p className="mt-2 text-gray-600">
-            The primary administrator controls who can review landlords and manage listings.
-          </p>
-        </div>
-
+      <div className="w-full space-y-6">
         <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
           <Card>
             <CardHeader>
