@@ -191,6 +191,15 @@ export const authService = {
     const {
       data: { user: currentUser },
     } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase.rpc("complete_user_profile", {
+      p_name: name.trim(),
+      p_phone: phone.trim(),
+    });
+    throwIfError(error);
+
+    // Persist display metadata only after the public profile transaction has
+    // accepted the submitted phone number.
     const { error: authError } = await supabase.auth.updateUser({
       data: {
         ...(currentUser?.user_metadata || {}),
@@ -200,24 +209,6 @@ export const authService = {
       },
     });
     throwIfError(authError);
-
-    const { data, error } = await supabase.rpc("complete_user_profile", {
-      p_name: name.trim(),
-      p_phone: phone.trim(),
-    });
-    if (error && isDuplicatePhoneError(error)) {
-      // Do not keep a rejected number in auth metadata; otherwise a later
-      // session can mistake this incomplete OAuth profile for a completed one.
-      await supabase.auth.updateUser({
-        data: {
-          ...(currentUser?.user_metadata || {}),
-          full_name: name.trim(),
-          name: name.trim(),
-          phone: "",
-        },
-      });
-    }
-    throwIfError(error);
 
     const {
       data: { user },
