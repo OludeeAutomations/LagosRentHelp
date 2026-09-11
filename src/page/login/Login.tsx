@@ -20,6 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import GoogleLogo from "@/components/common/GoogleLogo";
+import { accountSecurityService } from "@/services/accountSecurityService";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -48,16 +49,24 @@ const Login: React.FC = () => {
 
     try {
       await login(data.email, data.password);
-      toast.success("Welcome back!");
       const signedInUser = useAuthStore.getState().user;
+      let destination: string;
       if (signedInUser?.role === "admin" || signedInUser?.role === "super_admin") {
-        navigate("/admin/verifications");
+        destination = "/admin/verifications";
       } else if (signedInUser?.role === "landlord") {
-        navigate("/landlord");
+        destination = "/landlord";
       } else if (localStorage.getItem("needs_renter_preferences") === "true") {
-        navigate("/renter/preferences");
+        destination = "/renter/preferences";
       } else {
-        navigate(signedInUser?.phone ? "/" : "/complete-profile");
+        destination = signedInUser?.phone ? "/" : "/complete-profile";
+      }
+
+      if (await accountSecurityService.requiresMfaChallenge()) {
+        localStorage.setItem("mfa_return_to", destination);
+        navigate("/mfa-challenge");
+      } else {
+        toast.success("Welcome back!");
+        navigate(destination);
       }
     } catch (error: unknown) {
       const errorMessage =

@@ -145,20 +145,12 @@ const Header: React.FC = () => {
                     />
 
                     {(user.role === "admin" || user.role === "super_admin") && (
-                      <>
-                        <HeaderActionButton
-                          to="/admin/verifications"
-                          icon={ShieldCheck}
-                          label="Verify Landlords"
-                          onClick={closeMenu}
-                        />
-                        <HeaderActionButton
-                          to="/admin/properties"
-                          icon={Building2}
-                          label="Manage Properties"
-                          onClick={closeMenu}
-                        />
-                      </>
+                      <HeaderActionButton
+                        to="/admin/verifications"
+                        icon={ShieldCheck}
+                        label="Verify Landlords"
+                        onClick={closeMenu}
+                      />
                     )}
 
                     {user.role === "landlord" ? (

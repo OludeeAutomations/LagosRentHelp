@@ -29,17 +29,17 @@ import ResetPassword from "./page/login/ResetPassword";
 import { Toaster } from "sonner";
 import Favorites from "./page/user/Favorites";
 import RenterPreferencesPage from "./page/user/RenterPreferencesPage";
-import PropertyManagementPage from "./page/admin/PropertyManagementPage";
-import PropertyEditorPage from "./page/admin/PropertyEditorPage";
 import AdminAccountsPage from "./page/admin/AdminAccountsPage";
 import LandlordVerificationPage from "./page/admin/LandlordVerificationPage";
 import AdminDashboardLayout from "./page/admin/AdminDashboardLayout";
 import AuthCallback from "./page/login/AuthCallback";
+import MfaChallenge from "./page/login/MfaChallenge";
 import { useAuthStore } from "./stores/authStore";
 import {
   AdminRoute,
   AuthenticatedRoute,
   LandlordRoute,
+  MfaProtectedRoute,
   SuperAdminRoute,
 } from "./components/common/RoleRoute";
 import LandlordOnboarding from "./page/landlord/LandlordOnboarding";
@@ -49,6 +49,9 @@ import CompleteProfile from "./page/register/CompleteProfile";
 import LandlordDashboardLayout from "./page/landlord/LandlordDashboardLayout";
 import LandlordProfile from "./page/landlord/LandlordProfile";
 import LandlordListings from "./page/landlord/LandlordListings";
+import LandlordLeads from "./page/landlord/LandlordLeads";
+import LandlordSubscription from "./page/landlord/LandlordSubscription";
+import DashboardSecuritySettings from "./page/settings/DashboardSecuritySettings";
 
 const AppContent: React.FC = () => {
   const location = useLocation();
@@ -220,13 +223,19 @@ const AppContent: React.FC = () => {
                   </Layout>
                 }
               />
+              <Route path="/mfa-challenge" element={<MfaChallenge />} />
             </Route>
             <Route element={<LandlordRoute />}>
-              <Route element={<LandlordDashboardLayout />}>
-                <Route path="/landlord" element={<LandlordDashboard />} />
-                <Route path="/landlord/listings" element={<LandlordListings />} />
-                <Route path="/landlord/listings/new" element={<LandlordCreateListing />} />
-                <Route path="/landlord/profile" element={<LandlordProfile />} />
+              <Route element={<MfaProtectedRoute />}>
+                <Route element={<LandlordDashboardLayout />}>
+                  <Route path="/landlord" element={<LandlordDashboard />} />
+                  <Route path="/landlord/listings" element={<LandlordListings />} />
+                  <Route path="/landlord/listings/new" element={<LandlordCreateListing />} />
+                  <Route path="/landlord/leads" element={<LandlordLeads />} />
+                  <Route path="/landlord/subscription" element={<LandlordSubscription />} />
+                  <Route path="/landlord/profile" element={<LandlordProfile />} />
+                  <Route path="/landlord/settings" element={<DashboardSecuritySettings />} />
+                </Route>
               </Route>
             </Route>
             <Route
@@ -238,13 +247,13 @@ const AppContent: React.FC = () => {
               }
             />
             <Route element={<AdminRoute />}>
-              <Route element={<AdminDashboardLayout />}>
-                <Route path="/admin/verifications" element={<LandlordVerificationPage />} />
-                <Route path="/admin/properties" element={<PropertyManagementPage />} />
-                <Route path="/admin/properties/new" element={<PropertyEditorPage />} />
-                <Route path="/admin/properties/:id/edit" element={<PropertyEditorPage />} />
-                <Route element={<SuperAdminRoute />}>
-                  <Route path="/admin/accounts" element={<AdminAccountsPage />} />
+              <Route element={<MfaProtectedRoute />}>
+                <Route element={<AdminDashboardLayout />}>
+                  <Route path="/admin/verifications" element={<LandlordVerificationPage />} />
+                  <Route path="/admin/settings" element={<DashboardSecuritySettings />} />
+                  <Route element={<SuperAdminRoute />}>
+                    <Route path="/admin/accounts" element={<AdminAccountsPage />} />
+                  </Route>
                 </Route>
               </Route>
             </Route>

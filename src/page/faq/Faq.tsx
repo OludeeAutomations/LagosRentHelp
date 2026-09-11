@@ -26,12 +26,12 @@ const FAQPage: React.FC = () => {
   const categories = {
     general: [
       {
-        question: "What is LagosHomes?",
+        question: "What is LagosRentHelp?",
         answer:
-          "LagosHomes is a platform connecting property owners with tenants looking for both short-term stays and long-term rentals in Lagos. We focus on providing quality, affordable housing options across all areas of Lagos State.",
+          "LagosRentHelp is a platform connecting verified property owners with renters looking for short-term and long-term homes across Lagos State.",
       },
       {
-        question: "Is LagosHomes free to use?",
+        question: "Is LagosRentHelp free to use?",
         answer:
           "Yes. Searching for properties, browsing listings, and contacting listing owners through the platform is free for renters.",
       },
@@ -43,9 +43,9 @@ const FAQPage: React.FC = () => {
     ],
     safety: [
       {
-        question: "How are listings reviewed?",
+        question: "How do you verify landlords?",
         answer:
-          "We review listing information and encourage users to report anything inaccurate or suspicious so our team can investigate quickly.",
+          "Landlords complete identity verification and submit property ownership evidence for administrator review. Once approved, they can publish listings immediately, while duplicate submissions are automatically blocked.",
       },
       {
         question: "How can I stay safe while renting?",
@@ -118,7 +118,7 @@ const FAQPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-xl md:text-2xl max-w-3xl mx-auto">
-            Find answers to common questions about LagosHomes
+            Find answers to common questions about LagosRentHelp
           </motion.p>
         </div>
       </section>

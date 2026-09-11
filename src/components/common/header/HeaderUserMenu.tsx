@@ -63,22 +63,12 @@ const HeaderUserMenu: React.FC<HeaderUserMenuProps> = ({
           <Separator className="my-2 sm:my-3" />
           <div className="space-y-1 sm:space-y-2">
             {(user.role === "admin" || user.role === "super_admin") && (
-              <>
-                <Link to="/admin/verifications">
-                  <Button variant="ghost" className="w-full justify-start text-xs sm:text-sm font-normal">
-                    <ShieldCheck className="h-4 w-4 mr-2" />
-                    Verify Landlords
-                  </Button>
-                </Link>
-                <Link to="/admin/properties">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start text-xs sm:text-sm font-normal">
-                    <Building2 className="h-4 w-4 mr-2" />
-                    Manage Properties
-                  </Button>
-                </Link>
-              </>
+              <Link to="/admin/verifications">
+                <Button variant="ghost" className="w-full justify-start text-xs sm:text-sm font-normal">
+                  <ShieldCheck className="h-4 w-4 mr-2" />
+                  Verify Landlords
+                </Button>
+              </Link>
             )}
 
             {user.role === "landlord" ? (

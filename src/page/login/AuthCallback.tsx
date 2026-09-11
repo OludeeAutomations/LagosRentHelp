@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import AuthLayout from "@/components/common/AuthLayout";
 import { supabase } from "@/lib/supabase";
 import { mapSupabaseSession } from "@/services/authService";
+import { accountSecurityService } from "@/services/accountSecurityService";
 import { useAuthStore } from "@/stores/authStore";
 
 const AuthCallback = () => {
@@ -38,19 +39,27 @@ const AuthCallback = () => {
         setUser(auth.user);
         setAccessToken(auth.accessToken);
 
-        toast.success("Welcome back!");
+        let destination: string;
         if (pendingAccountType === "landlord") {
-          navigate("/landlord/onboarding", { replace: true });
+          destination = "/landlord/onboarding";
         } else if (!auth.user.phone) {
-          navigate("/complete-profile", { replace: true });
+          destination = "/complete-profile";
         } else if (returnTo && returnTo !== "/auth/callback") {
-          navigate(returnTo, { replace: true });
+          destination = returnTo;
         } else if (auth.user.role === "admin" || auth.user.role === "super_admin") {
-          navigate("/admin/verifications", { replace: true });
+          destination = "/admin/verifications";
         } else if (needsRenterPreferences) {
-          navigate("/renter/preferences", { replace: true });
+          destination = "/renter/preferences";
         } else {
-          navigate(auth.user.role === "landlord" ? "/landlord" : "/", { replace: true });
+          destination = auth.user.role === "landlord" ? "/landlord" : "/";
+        }
+
+        if (await accountSecurityService.requiresMfaChallenge()) {
+          localStorage.setItem("mfa_return_to", destination);
+          navigate("/mfa-challenge", { replace: true });
+        } else {
+          toast.success("Welcome back!");
+          navigate(destination, { replace: true });
         }
       } catch (error: unknown) {
         if (!active) return;

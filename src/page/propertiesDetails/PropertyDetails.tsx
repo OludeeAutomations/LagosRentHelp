@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -20,10 +19,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PropertyMap from "@/components/common/PropertyMap";
 import { useAmenities } from "@/hooks/useAmenities";
 import { useAuthStore } from "@/stores/authStore";
-import { useLeadStore } from "@/stores/leadStore";
 import { usePropertyStore } from "@/stores/propertyStore";
 import { Property } from "@/types";
-import { agentService } from "@/services/agentService";
+import { landlordLeadService } from "@/services/landlordLeadService";
 import PropertyContactCard from "./components/PropertyContactCard";
 import PropertyContactModal from "./components/PropertyContactModal";
 import PropertyFeatureIcon from "./components/PropertyFeatureIcon";
@@ -38,7 +36,6 @@ const PropertyDetails: React.FC = () => {
   const { userFavorites, toggleFavorite, getPropertyById } = usePropertyStore();
   const { user } = useAuthStore();
   const openLoginModal = useLoginModalStore((state) => state.openLoginModal);
-  const { createLead, checkContactStatus } = useLeadStore();
 
   const [property, setProperty] = useState<Property | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,46 +63,24 @@ const PropertyDetails: React.FC = () => {
     (typeof property?.agentId === "object"
       ? (property.agentId as unknown as ListingContact)
       : null);
-  const contactId =
-    rawContact?._id ||
-    (typeof property?.contactUserId === "string"
-      ? property.contactUserId
-      : null) ||
-    rawContact?.agentId ||
-    (typeof property?.agentId === "string" ? property.agentId : null);
   const contact = resolvedContact || rawContact;
 
-  const resolveAgentContact = async (agentId: string) => {
+  const resolvePropertyContact = async (propertyId: string) => {
     try {
-      const response = await agentService.getProfile(agentId);
-      const agent = response?.data?.agent;
-      if (agent) {
-        const userImage =
-          (agent as any).userId?.avatar ||
-          (agent as any).userId?.avatarUrl ||
-          (agent as any).userId?.photo ||
-          "";
-
-        setResolvedContact({
-          _id: agent._id,
-          agentId: agent._id,
-          name: agent.name,
-          photo:
-            (agent as any).photo ||
-            agent.avatar ||
-            agent.idPhoto ||
-            userImage ||
-            "",
-          phone: agent.phone || "",
-          whatsapp: agent.whatsappNumber || "",
-          whatsappNumber: agent.whatsappNumber || "",
-          verificationStatus: agent.verificationStatus,
-          state: (agent as any).state || "",
-          city: (agent as any).city || "",
-        });
-      }
+      const owner = await landlordLeadService.getPropertyContact(propertyId);
+      setResolvedContact({
+        _id: owner.id,
+        agentId: owner.id,
+        name: owner.name,
+        phone: owner.phone,
+        whatsapp: owner.whatsappNumber,
+        whatsappNumber: owner.whatsappNumber,
+        verificationStatus: owner.verificationStatus,
+        state: owner.state,
+        city: owner.localGovernment,
+      });
     } catch (error) {
-      console.error("Failed to resolve agent contact:", error);
+      console.error("Failed to resolve listing contact:", error);
     }
   };
 
@@ -120,16 +95,7 @@ const PropertyDetails: React.FC = () => {
       return;
     }
 
-    const agentIdString =
-      typeof property.contactUserId === "string"
-        ? property.contactUserId
-        : typeof property.agentId === "string"
-          ? property.agentId
-          : null;
-
-    if (agentIdString) {
-      resolveAgentContact(agentIdString);
-    }
+    resolvePropertyContact(property._id);
   }, [property, rawContact]);
 
   const gallery = usePropertyImageGallery({
@@ -156,12 +122,6 @@ const PropertyDetails: React.FC = () => {
     fetchProperty();
   }, [id, getPropertyById]);
 
-  useEffect(() => {
-    if (user && contactId) {
-      checkContactStatus(contactId);
-    }
-  }, [user, contactId, checkContactStatus]);
-
   const isFavorite = userFavorites.includes(property?._id || "");
 
   const handleWhatsAppClick = async () => {
@@ -173,17 +133,19 @@ const PropertyDetails: React.FC = () => {
       return;
     }
 
-    createLead({
-      agentId: contactId,
-      type: "whatsapp",
-      propertyId: property?._id,
-    }).catch(console.error);
+    const whatsappNumber = contact?.whatsappNumber || contact?.whatsapp || contact?.phone;
+    if (!whatsappNumber) {
+      toast.error("WhatsApp number not available");
+      return;
+    }
+    if (property?._id) {
+      void landlordLeadService.record(property._id, "whatsapp").catch(console.error);
+    }
 
-    const whatsappUrl =
-      "https://wa.me/2347082293054?text=" +
-      encodeURIComponent(
-        `Hello, I'm interested in your property: ${property?.title}`,
-      );
+    const digits = whatsappNumber.replace(/\D/g, "").replace(/^0/, "234");
+    const whatsappUrl = `https://wa.me/${digits}?text=${encodeURIComponent(
+      `Hello, I'm interested in your property: ${property?.title}`,
+    )}`;
     window.open(whatsappUrl, "_blank");
   };
 
@@ -201,11 +163,9 @@ const PropertyDetails: React.FC = () => {
       return;
     }
 
-    createLead({
-      agentId: contactId,
-      type: "phone",
-      propertyId: property?._id,
-    }).catch(console.error);
+    if (property?._id) {
+      void landlordLeadService.record(property._id, "phone").catch(console.error);
+    }
 
     window.location.href = `tel:${contact.phone}`;
   };

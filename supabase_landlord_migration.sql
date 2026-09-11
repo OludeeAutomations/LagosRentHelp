@@ -552,7 +552,7 @@ with check (
   and owner_id = public.current_public_user_id()
   and contact_user_id = public.current_public_user_id()
   and created_by = public.current_public_user_id()
-  and approval_status = 'pending'
+  and approval_status = 'approved'
 );
 
 grant update (

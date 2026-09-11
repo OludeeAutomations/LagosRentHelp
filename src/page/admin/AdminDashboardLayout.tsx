@@ -3,6 +3,7 @@ import {
   ExternalLink,
   LogOut,
   Menu,
+  Settings,
   ShieldCheck,
   UserCog,
   X,
@@ -29,6 +30,7 @@ type AdminNavigationItem = {
 
 const baseNavigation: AdminNavigationItem[] = [
   { label: "Landlord Verification", href: "/admin/verifications", icon: ShieldCheck },
+  { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 const AdminDashboardLayout = () => {
@@ -45,15 +47,11 @@ const AdminDashboardLayout = () => {
     ? [...baseNavigation, { label: "Administrators", href: "/admin/accounts", icon: UserCog }]
     : baseNavigation;
 
-  const pageHeader = location.pathname === "/admin/properties/new"
-    ? { title: "Add Property", description: "Create and publish a managed property listing" }
-    : location.pathname.includes("/edit")
-      ? { title: "Edit Property", description: "Update property information and availability" }
-      : location.pathname === "/admin/properties"
-        ? { title: "Property Management", description: "Review and manage property listings" }
-        : location.pathname === "/admin/accounts"
-          ? { title: "Administrator Access", description: "Manage trusted review staff" }
-          : { title: "Landlord Verification", description: "Review identity and property ownership evidence" };
+  const pageHeader = location.pathname === "/admin/accounts"
+    ? { title: "Administrator Access", description: "Manage trusted review staff" }
+    : location.pathname === "/admin/settings"
+      ? { title: "Settings", description: "Manage your password and account security" }
+      : { title: "Landlord Verification", description: "Review identity and property ownership evidence" };
 
   const initials = (user?.name || "Admin")
     .split(" ")
@@ -62,12 +60,8 @@ const AdminDashboardLayout = () => {
     .toUpperCase()
     .slice(0, 2);
 
-  const isActive = (href: string, exact?: boolean) => {
-    if (href === "/admin/properties") {
-      return location.pathname === href || location.pathname.endsWith("/edit");
-    }
-    return exact ? location.pathname === href : location.pathname.startsWith(href);
-  };
+  const isActive = (href: string, exact?: boolean) =>
+    exact ? location.pathname === href : location.pathname.startsWith(href);
 
   const loadNotifications = useCallback(async () => {
     setNotificationLoading(true);

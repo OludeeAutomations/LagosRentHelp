@@ -8,7 +8,7 @@ const TermsOfService: React.FC = () => {
       icon: FileText,
       title: "Acceptance of Terms",
       content:
-        "By accessing or using the LagosHomes platform, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.",
+        "By accessing or using the LagosRentHelp platform, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.",
     },
     {
       icon: Scale,
@@ -55,7 +55,7 @@ const TermsOfService: React.FC = () => {
           viewport={{ once: true }}
           className="bg-white rounded-2xl shadow-lg p-8 mb-12">
           <p className="text-[#7F8080] leading-relaxed">
-            Welcome to LagosHomes. These Terms of Service govern your use of our
+            Welcome to LagosRentHelp. These Terms of Service govern your use of our
             platform and services. Please read these terms carefully before
             using our services.
           </p>
@@ -101,7 +101,7 @@ const TermsOfService: React.FC = () => {
           </h2>
           <div className="space-y-4 text-[#7F8080]">
             <p>
-              <strong>Limitation of Liability:</strong> LagosHomes is not
+              <strong>Limitation of Liability:</strong> LagosRentHelp is not
               responsible for the quality, safety, or legality of properties
               listed on our platform. Users are responsible for verifying
               property details before making rental decisions.
@@ -109,7 +109,7 @@ const TermsOfService: React.FC = () => {
             <p>
               <strong>Intellectual Property:</strong> All content on our
               platform, including logos, text, and graphics, is the property of
-              LagosHomes and protected by intellectual property laws.
+              LagosRentHelp and protected by intellectual property laws.
             </p>
             <p>
               <strong>Termination:</strong> We reserve the right to suspend or

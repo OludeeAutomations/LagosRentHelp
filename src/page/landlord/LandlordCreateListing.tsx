@@ -94,7 +94,7 @@ const LandlordCreateListing = () => {
         amenities: form.amenities.split(",").map((item) => item.trim()).filter(Boolean),
         images,
       });
-      toast.success("Listing submitted for review.");
+      toast.success("Listing published successfully.");
       setOpen(false);
       navigate("/landlord/listings", { replace: true });
     } catch (error) {
@@ -110,8 +110,8 @@ const LandlordCreateListing = () => {
         <CardHeader className="justify-items-center px-6 pb-0 pt-12 text-center sm:px-12">
           <CardTitle className="text-3xl">Add your property</CardTitle>
           <p className="mx-auto w-full max-w-xl text-center text-gray-600">
-            Add your property details and photos. Your listing will be reviewed
-            before it is published for renters to see.
+            Add accurate property details and photos. Because your landlord
+            account is verified, the listing will publish immediately.
           </p>
         </CardHeader>
         <CardContent className="flex justify-center px-6 pb-12 pt-2">
@@ -126,7 +126,7 @@ const LandlordCreateListing = () => {
               <DialogHeader>
                 <DialogTitle className="text-2xl">Property information</DialogTitle>
                 <DialogDescription>
-                  Complete every required field. Your listing will remain pending until approved.
+                  Complete every required field. Duplicate property submissions are automatically blocked.
                 </DialogDescription>
               </DialogHeader>
               <form className="grid gap-5 py-2 sm:grid-cols-2" onSubmit={submit}>
@@ -153,7 +153,7 @@ const LandlordCreateListing = () => {
             <div className="space-y-2"><Label htmlFor="tenantAccommodationType">Accommodation arrangement</Label><select id="tenantAccommodationType" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.tenantAccommodationType} onChange={(e) => update("tenantAccommodationType", e.target.value)}>{ACCOMMODATION_TYPES.filter((item) => item.value !== "any").map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></div>
             {form.tenantAccommodationType === "shared" && <div className="space-y-2"><Label htmlFor="tenantGenderPreference">Roommate gender preference</Label><select id="tenantGenderPreference" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.tenantGenderPreference} onChange={(e) => update("tenantGenderPreference", e.target.value)}><option value="any">No preference</option><option value="female">Woman</option><option value="male">Man</option></select></div>}
             <div className="space-y-2 sm:col-span-2"><Label htmlFor="images">Property images * (maximum 8)</Label><label htmlFor="images" className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-gray-600 hover:border-[#129B36]"><ImagePlus className="h-6 w-6" />{images.length ? `${images.length} image(s) selected` : "Choose images"}</label><Input id="images" type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={(e) => chooseImages(e.target.files)} /></div>
-                <div className="flex gap-3 sm:col-span-2"><Button type="button" variant="outline" className="flex-1" onClick={() => setOpen(false)}>Cancel</Button><Button type="submit" disabled={submitting} className="flex-1 bg-[#129B36] hover:bg-[#0e7d2b]">{submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Submit for review</Button></div>
+                <div className="flex gap-3 sm:col-span-2"><Button type="button" variant="outline" className="flex-1" onClick={() => setOpen(false)}>Cancel</Button><Button type="submit" disabled={submitting} className="flex-1 bg-[#129B36] hover:bg-[#0e7d2b]">{submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Publish listing</Button></div>
               </form>
             </DialogContent>
           </Dialog>

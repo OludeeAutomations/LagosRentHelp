@@ -1,372 +1,156 @@
-import React from "react";
 import { motion } from "framer-motion";
 import {
-  Shield,
-  Users,
+  ArrowRight,
+  BadgeCheck,
+  Building2,
+  CheckCircle2,
+  HeartHandshake,
   MapPin,
-  Phone,
-  CheckCircle,
-  Home,
-  Target,
-  Heart,
-  MessageCircle,
+  Search,
+  ShieldCheck,
+  Users,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
-const About: React.FC = () => {
-  const features = [
-    {
-      icon: Shield,
-      title: "Verified Listings",
-      description:
-        "Listings go through review checks to help promote genuine details and a better rental experience.",
-    },
-    {
-      icon: MapPin,
-      title: "Lagos Coverage",
-      description:
-        "Comprehensive coverage across all Lagos State local government areas with detailed local knowledge.",
-    },
-    {
-      icon: Phone,
-      title: "Direct WhatsApp Contact",
-      description:
-        "Connect directly with listing contacts via WhatsApp for immediate response and seamless communication.",
-    },
-    {
-      icon: Home,
-      title: "Affordable Focus",
-      description:
-        "Specializing in budget-friendly options including single rooms, self-contain apartments, and mini flats.",
-    },
-    {
-      icon: MessageCircle,
-      title: "Mobile Optimized",
-      description:
-        "Designed for Nigerian mobile users with fast loading times and data-friendly interfaces.",
-    },
-    {
-      icon: CheckCircle,
-      title: "Safety First",
-      description:
-        "Clear safety warnings and tips to help users avoid rental scams and fraudulent listings.",
-    },
-  ];
+const principles = [
+  {
+    icon: ShieldCheck,
+    title: "Trust before visibility",
+    description: "Landlords submit identity and property-ownership evidence before they can publish listings.",
+  },
+  {
+    icon: MapPin,
+    title: "Built around Lagos",
+    description: "Search and onboarding use Lagos LGAs, local rental language, and the details renters actually need.",
+  },
+  {
+    icon: HeartHandshake,
+    title: "Useful, not intrusive",
+    description: "Private renter preferences improve recommendations without exposing personal profile answers to landlords.",
+  },
+];
 
-  const stats = [
-    { number: "500+", label: "Properties Listed" },
-    { number: "100+", label: "Verified Listings" },
-    { number: "20+", label: "Lagos Areas" },
-    { number: "1000+", label: "Happy Tenants" },
-  ];
+const verificationSteps = [
+  { number: "01", title: "Identity check", description: "A landlord completes identity verification and provides a clear identity image." },
+  { number: "02", title: "Ownership evidence", description: "The property address, Lagos LGA, and primary title document are submitted securely." },
+  { number: "03", title: "Human review", description: "An administrator compares the verified identity with the ownership information." },
+  { number: "04", title: "Publish directly", description: "Once approved, a landlord can publish listings immediately without a second review queue." },
+];
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-[#129B36] to-[#41614F] text-white py-20">
-        <div className="container mx-auto px-4 text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-4xl md:text-5xl font-bold mb-6">
-            About LagosRentHelp
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-xl md:text-2xl max-w-3xl mx-auto">
-            Connecting Lagos residents with quality, trusted, and affordable
-            housing
-          </motion.p>
-        </div>
-      </section>
-
-      {/* Mission Section */}
-      <section className="py-20 md:px-5">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}>
-              <h2 className="text-3xl font-bold text-[#0E0E0E] mb-6">
-                Our Mission
-              </h2>
-              <p className="text-[#7F8080] text-lg mb-6">
-                We're on a mission to make finding affordable, quality housing
-                in Lagos State as easy as possible. Our platform helps genuine
-                property seekers discover trusted listings with clearer
-                information, reducing the stress of house hunting in Nigeria's
-                commercial capital.
-              </p>
-              <p className="text-[#7F8080] text-lg mb-8">
-                To revolutionize the real estate rental market in Lagos by
-                creating a transparent, secure, and efficient platform that
-                connects property owners with qualified tenants.
-              </p>
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-[#129B36] rounded-full flex items-center justify-center">
-                  <Heart className="h-6 w-6 text-white" />
-                </div>
-                <span className="text-lg font-semibold text-[#0E0E0E]">
-                  Making Lagos feel like home
-                </span>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}
-              className="grid grid-cols-2 gap-6 justify-items-center text-center">
-              <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-[260px]">
-                <div className="text-3xl font-bold text-[#129B36] mb-2">
-                  500+
-                </div>
-                <div className="text-[#7F8080]">Properties Listed</div>
-              </div>
-              <div className="bg-white p-6 rounded-2xl shadow-lg">
-                <div className="text-3xl font-bold text-[#129B36] mb-2">
-                  100+
-                </div>
-                <div className="text-[#7F8080]">Verified Listings</div>
-              </div>
-              <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-[260px]">
-                <div className="text-3xl font-bold text-[#129B36] mb-2">
-                  20+
-                </div>
-                <div className="text-[#7F8080]">Lagos Areas</div>
-              </div>
-              <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-[260px]">
-                <div className="text-3xl font-bold text-[#129B36] mb-2">
-                  1000+
-                </div>
-                <div className="text-[#7F8080]">Happy Tenants</div>
-              </div>
-            </motion.div>
+const About = () => (
+  <div className="overflow-hidden bg-[#f7f9f7] text-gray-950">
+    <section className="relative isolate bg-[#173f2a] text-white">
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_15%_15%,rgba(34,197,94,0.24),transparent_32%),radial-gradient(circle_at_85%_80%,rgba(255,255,255,0.1),transparent_34%)]" />
+      <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 md:py-24 lg:grid-cols-[1.05fr_.95fr] lg:px-8">
+        <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-sm font-medium text-green-100">
+            <Building2 className="h-4 w-4" /> About LagosRentHelp
+          </span>
+          <h1 className="mt-6 max-w-3xl text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
+            A clearer way to find and offer homes in Lagos.
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-green-50/80">
+            LagosRentHelp brings renters and verified property owners into one focused marketplace—designed to reduce uncertainty, improve discovery, and make every next step easier to understand.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link to="/search" className="inline-flex items-center gap-2 rounded-xl bg-[#18a83f] px-5 py-3 font-semibold text-white transition hover:bg-[#129B36]">
+              Explore homes <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link to="/register" className="inline-flex items-center rounded-xl border border-white/25 px-5 py-3 font-semibold text-white transition hover:bg-white/10">
+              Create an account
+            </Link>
           </div>
-        </div>
-      </section>
+        </motion.div>
 
-      {/* Features Section */}
-      <section className="py-20 bg-white md:px-5">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
-            className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-[#0E0E0E] mb-4">
-              Why Choose LagosRentHelp?
-            </h2>
-            <p className="text-[#7F8080] text-lg max-w-2xl mx-auto">
-              We offer unique features designed specifically for the Lagos
-              rental market
+        <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.55, delay: 0.1 }} className="relative">
+          <div className="overflow-hidden rounded-[2rem] border border-white/15 bg-white/10 p-2 shadow-2xl shadow-black/20">
+            <img src="/gettyimages-923379128-612x612.jpg" alt="A view across Lagos" className="h-[420px] w-full rounded-[1.55rem] object-cover" />
+          </div>
+          <div className="absolute -bottom-5 left-5 right-5 rounded-2xl border border-white/20 bg-white/95 p-4 text-gray-950 shadow-xl backdrop-blur sm:left-auto sm:w-72">
+            <div className="flex items-center gap-3">
+              <span className="rounded-xl bg-green-50 p-3 text-[#129B36]"><BadgeCheck className="h-6 w-6" /></span>
+              <div><p className="font-semibold">Reviewed ownership</p><p className="text-sm text-gray-500">Confidence starts before a listing goes live.</p></div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+
+    <section className="bg-white py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid gap-12 lg:grid-cols-[.8fr_1.2fr] lg:items-start">
+          <div className="lg:sticky lg:top-28">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#129B36]">Why we exist</p>
+            <h2 className="mt-3 text-3xl font-bold leading-tight sm:text-4xl">Less guesswork. Better rental decisions.</h2>
+            <p className="mt-5 text-lg leading-8 text-gray-600">
+              House hunting in Lagos often means scattered information, unclear ownership, and wasted journeys. We are building a more organised path from discovery to direct contact.
             </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                  className="bg-gray-50 p-6 rounded-2xl hover:shadow-lg transition-shadow duration-300">
-                  <div className="w-16 h-16 bg-[#129B36] rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <Icon className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-[#0E0E0E] mb-4 text-center">
-                    {feature.title}
-                  </h3>
-                  <p className="text-[#7F8080] text-center">
-                    {feature.description}
-                  </p>
-                </motion.div>
-              );
-            })}
           </div>
-        </div>
-      </section>
-
-      {/* Additional Features */}
-      <section className="py-20 md:px-5 bg-gradient-to-r from-[#129B36]/10 to-[#41614F]/10">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}>
-              <h2 className="text-3xl font-bold text-[#0E0E0E] mb-6">
-                Our Commitment
-              </h2>
-
-              <div className="space-y-6">
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-[#129B36] rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Target className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-[#0E0E0E] mb-2">
-                      Building Trust
-                    </h3>
-                    <p className="text-[#7F8080]">
-                      We understand the challenges of finding reliable
-                      accommodation in Lagos. That's why we've built a platform
-                      that prioritizes transparency, affordability, and genuine
-                      connections.
-                    </p>
-                  </div>
+          <div className="grid gap-5 sm:grid-cols-3 lg:grid-cols-1">
+            {principles.map(({ icon: Icon, title, description }, index) => (
+              <motion.article key={title} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.08 }} className="rounded-2xl border border-gray-200 bg-[#fafcfb] p-6">
+                <div className="flex items-start gap-4">
+                  <span className="rounded-xl bg-green-50 p-3 text-[#129B36]"><Icon className="h-6 w-6" /></span>
+                  <div><h3 className="text-lg font-semibold">{title}</h3><p className="mt-2 leading-7 text-gray-600">{description}</p></div>
                 </div>
-
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-[#129B36] rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Users className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-[#0E0E0E] mb-2">
-                      Community Focus
-                    </h3>
-                    <p className="text-[#7F8080]">
-                      We believe in building communities, not just renting
-                      properties. Your satisfaction is our priority.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-[#129B36] rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Shield className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-[#0E0E0E] mb-2">
-                      Safety First
-                    </h3>
-                    <p className="text-[#7F8080]">
-                      Clear safety warnings and tips to help users avoid rental
-                      scams and fraudulent listings.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}
-              className="bg-white rounded-2xl p-8 shadow-lg">
-              <h3 className="text-2xl font-bold text-[#0E0E0E] mb-6">
-                Better Renting Experience
-              </h3>
-              <p className="text-[#7F8080] mb-6">
-                We focus on making discovery simpler for renters with trusted
-                listings, clear contact paths, and practical safety guidance at
-                every step.
-              </p>
-
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="h-5 w-5 text-[#129B36]" />
-                  <span className="text-[#0E0E0E]">Clear property details</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="h-5 w-5 text-[#129B36]" />
-                  <span className="text-[#0E0E0E]">Fast contact options</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="h-5 w-5 text-[#129B36]" />
-                  <span className="text-[#0E0E0E]">Safety-first guidance</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="h-5 w-5 text-[#129B36]" />
-                  <span className="text-[#0E0E0E]">Mobile-friendly search</span>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-20 md:px-5 bg-[#41614F] text-white">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
-            className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Our Impact</h2>
-            <p className="text-xl text-gray-300">
-              Making a difference in Lagos housing market
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}>
-                <div className="text-4xl font-bold mb-2">{stat.number}</div>
-                <div className="text-gray-300">{stat.label}</div>
-              </motion.div>
+              </motion.article>
             ))}
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      {/* Story Section */}
-      <section className="py-20 md:px-5 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}
-              className="text-3xl font-bold text-[#0E0E0E] mb-6">
-              Our Story
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              viewport={{ once: true }}
-              className="text-[#7F8080] text-lg mb-6">
-              Founded in 2025, LagosRentHelp was born out of a need for a more
-              transparent and reliable rental market in Lagos. Our founders,
-              experienced in both real estate and technology, saw an opportunity
-              to create a platform that would benefit both property owners and
-              tenants.
-            </motion.p>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              viewport={{ once: true }}
-              className="text-[#7F8080] text-lg">
-              Today, we're proud to be Lagos' fastest-growing rental platform,
-              connecting thousands of tenants with quality homes and helping
-              property owners maximize their investments.
-            </motion.p>
+    <section className="py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#129B36]">Our trust process</p>
+          <h2 className="mt-3 text-3xl font-bold sm:text-4xl">Verification with a human decision at the centre.</h2>
+          <p className="mt-4 leading-7 text-gray-600">Technology helps collect and protect the information. A trained administrator makes the approval decision.</p>
+        </div>
+        <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {verificationSteps.map((step) => (
+            <article key={step.number} className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <span className="text-sm font-bold text-[#129B36]">{step.number}</span>
+              <h3 className="mt-6 text-lg font-semibold">{step.title}</h3>
+              <p className="mt-2 leading-7 text-gray-600">{step.description}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section className="bg-[#173f2a] py-20 text-white">
+      <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
+        <div className="overflow-hidden rounded-3xl">
+          <img src="/istockphoto-1145244310-612x612.jpg" alt="Lagos city and lagoon" className="h-[390px] w-full object-cover" />
+        </div>
+        <div>
+          <span className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-green-300"><MapPin className="h-4 w-4" />Made for Lagos</span>
+          <h2 className="mt-4 text-3xl font-bold sm:text-4xl">One city. Twenty LGAs. Many different rental needs.</h2>
+          <p className="mt-5 text-lg leading-8 text-green-50/75">
+            From move-in timing and yearly budget to property type and occupancy, our matching tools organise the details that matter while keeping sensitive renter answers private.
+          </p>
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            {["Lagos LGA-based discovery", "Private renter preferences", "Reviewed landlord applications", "Clear listing information"].map((item) => (
+              <p key={item} className="flex items-center gap-2 text-sm text-green-50"><CheckCircle2 className="h-5 w-5 text-green-300" />{item}</p>
+            ))}
           </div>
         </div>
-      </section>
-    </div>
-  );
-};
+      </div>
+    </section>
+
+    <section className="bg-white py-20">
+      <div className="mx-auto max-w-5xl px-4 text-center sm:px-6">
+        <span className="inline-flex rounded-full bg-green-50 p-3 text-[#129B36]"><Users className="h-6 w-6" /></span>
+        <h2 className="mt-5 text-3xl font-bold sm:text-4xl">Find your next home—or bring the right property to market.</h2>
+        <p className="mx-auto mt-4 max-w-2xl text-lg text-gray-600">Choose the path that fits you and complete one clear onboarding process.</p>
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <Link to="/search" className="inline-flex items-center gap-2 rounded-xl bg-[#129B36] px-6 py-3 font-semibold text-white hover:bg-[#0e7d2b]"><Search className="h-4 w-4" />Find a home</Link>
+          <Link to="/register" className="inline-flex items-center gap-2 rounded-xl border border-gray-300 px-6 py-3 font-semibold text-gray-900 hover:bg-gray-50">List a property <ArrowRight className="h-4 w-4" /></Link>
+        </div>
+      </div>
+    </section>
+  </div>
+);
 
 export default About;

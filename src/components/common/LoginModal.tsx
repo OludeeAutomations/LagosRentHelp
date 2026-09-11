@@ -4,8 +4,11 @@ import { useAuthStore } from "@/stores/authStore";
 import { useLoginModalStore } from "@/stores/modalStore";
 import { Eye, EyeOff, ArrowRight, Info } from "lucide-react";
 import GoogleLogo from "@/components/common/GoogleLogo";
+import { useNavigate } from "react-router-dom";
+import { accountSecurityService } from "@/services/accountSecurityService";
 
 export const LoginModal = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -23,6 +26,14 @@ export const LoginModal = () => {
     try {
       await login(email, password);
       closeLoginModal();
+      if (await accountSecurityService.requiresMfaChallenge()) {
+        localStorage.setItem(
+          "mfa_return_to",
+          `${window.location.pathname}${window.location.search}`,
+        );
+        navigate("/mfa-challenge");
+        return;
+      }
       try {
         await executeRetry();
       } catch (retryError) {

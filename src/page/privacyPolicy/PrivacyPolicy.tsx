@@ -55,7 +55,7 @@ const PrivacyPolicy: React.FC = () => {
           viewport={{ once: true }}
           className="bg-white rounded-2xl shadow-lg p-8 mb-12">
           <p className="text-[#7F8080] leading-relaxed">
-            At LagosHomes, we take your privacy seriously. This Privacy Policy
+            At LagosRentHelp, we take your privacy seriously. This Privacy Policy
             describes how we collect, use, and share your personal information
             when you use our platform. By using our services, you agree to the
             collection and use of information in accordance with this policy.

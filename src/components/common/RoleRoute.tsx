@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { accountSecurityService } from "@/services/accountSecurityService";
 import { useAuthStore } from "@/stores/authStore";
 
 export const AuthenticatedRoute = () => {
@@ -28,6 +30,53 @@ export const LandlordRoute = () => {
   if (!["landlord", "admin", "super_admin"].includes(user.role)) {
     return <Navigate to="/landlord/onboarding" replace />;
   }
+  return <Outlet />;
+};
+
+export const MfaProtectedRoute = () => {
+  const { user, loading } = useAuthStore();
+  const userId = user?._id;
+  const location = useLocation();
+  const [checking, setChecking] = useState(true);
+  const [challengeRequired, setChallengeRequired] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    const checkMfa = async () => {
+      if (!userId) {
+        if (active) setChecking(false);
+        return;
+      }
+
+      setChecking(true);
+      try {
+        const required = await accountSecurityService.requiresMfaChallenge();
+        if (active) setChallengeRequired(required);
+      } catch {
+        // Fail closed: a temporary MFA check error must not bypass dashboard security.
+        if (active) setChallengeRequired(true);
+      } finally {
+        if (active) setChecking(false);
+      }
+    };
+
+    void checkMfa();
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  useEffect(() => {
+    if (challengeRequired) {
+      localStorage.setItem("mfa_return_to", `${location.pathname}${location.search}`);
+    }
+  }, [challengeRequired, location.pathname, location.search]);
+
+  if (loading || checking) {
+    return <Loader2 className="mx-auto my-24 h-8 w-8 animate-spin text-[#129B36]" />;
+  }
+  if (challengeRequired) return <Navigate to="/mfa-challenge" replace />;
   return <Outlet />;
 };
 

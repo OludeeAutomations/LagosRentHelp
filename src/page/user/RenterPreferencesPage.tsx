@@ -103,7 +103,7 @@ const RenterPreferencesPage = () => {
         <div className="mb-7 text-center">
           <h1 className="text-3xl font-bold text-gray-950">Find homes that fit you</h1>
           <p className="mx-auto mt-2 max-w-2xl text-gray-600">
-            Tell us what you need once. We use these answers privately to rank suitable approved listings; no listing is hidden from you.
+            Tell us what you need once. We use these answers privately to rank suitable available listings; no listing is hidden from you.
           </p>
         </div>
 
@@ -139,7 +139,7 @@ const RenterPreferencesPage = () => {
 
               <div className="flex gap-3 rounded-lg border border-green-100 bg-green-50 p-4 text-sm text-gray-700">
                 <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#129B36]" />
-                <p>Your answers stay private and are used only to rank approved listings for you. Landlords cannot see your preference profile.</p>
+                <p>Your answers stay private and are used only to rank available listings for you. Landlords cannot see your preference profile.</p>
               </div>
 
               <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

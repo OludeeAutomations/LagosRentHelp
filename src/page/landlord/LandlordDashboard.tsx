@@ -6,7 +6,7 @@ import {
   DollarSign,
   Eye,
   Heart,
-  Hourglass,
+  KeyRound,
   Lightbulb,
   PieChart,
   Plus,
@@ -61,9 +61,8 @@ const LandlordDashboard = () => {
   useEffect(() => { void load(); }, []);
 
   const counts = useMemo(() => ({
-    approved: listings.filter((item) => item.approvalStatus === "approved").length,
-    pending: listings.filter((item) => item.approvalStatus === "pending").length,
-    rejected: listings.filter((item) => item.approvalStatus === "rejected").length,
+    available: listings.filter((item) => item.status === "available").length,
+    rented: listings.filter((item) => item.status === "rented").length,
   }), [listings]);
 
   const analytics = useMemo(() => {
@@ -73,10 +72,7 @@ const LandlordDashboard = () => {
       .sort((first, second) => (second.views || 0) - (first.views || 0))
       .slice(0, 6);
     const maxViews = Math.max(...chartListings.map((listing) => listing.views || 0), 1);
-    const approvedEnd = listings.length ? (counts.approved / listings.length) * 100 : 0;
-    const pendingEnd = listings.length
-      ? approvedEnd + (counts.pending / listings.length) * 100
-      : 0;
+    const availableEnd = listings.length ? (counts.available / listings.length) * 100 : 0;
     const available = listings.filter((listing) => listing.status === "available").length;
     const rented = listings.filter((listing) => listing.status === "rented").length;
     const rentListings = listings.filter((listing) => listing.listingType === "rent").length;
@@ -90,8 +86,7 @@ const LandlordDashboard = () => {
       totalLikes,
       chartListings,
       maxViews,
-      approvedEnd,
-      pendingEnd,
+      availableEnd,
       available,
       rented,
       rentListings,
@@ -100,7 +95,7 @@ const LandlordDashboard = () => {
       averagePrice,
       engagementRate,
     };
-  }, [counts.approved, counts.pending, listings]);
+  }, [counts.available, listings]);
 
   return (
     <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
@@ -134,8 +129,8 @@ const LandlordDashboard = () => {
 
       <div className="mb-8 grid gap-4 sm:grid-cols-3">
         <Card className="relative overflow-hidden border-[#41614F] bg-[linear-gradient(135deg,#41614F_0%,#4f765f_100%)] text-white shadow-lg shadow-[#41614F]/20 ring-1 ring-white/20"><SummaryDecoration tone="sky" /><CardContent className="relative z-10 flex items-center gap-4 p-6"><span className="rounded-xl bg-sky-300/20 p-3 shadow-inner ring-1 ring-sky-100/20"><ClipboardList className="h-7 w-7 text-sky-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{listings.length}</p><p className="text-sm text-white/85">Total listings</p></div></CardContent></Card>
-        <Card className="relative overflow-hidden border-[#41614F] bg-[linear-gradient(135deg,#41614F_0%,#4f765f_100%)] text-white shadow-lg shadow-[#41614F]/20 ring-1 ring-white/20"><SummaryDecoration tone="green" /><CardContent className="relative z-10 flex items-center gap-4 p-6"><span className="rounded-xl bg-emerald-300/20 p-3 shadow-inner ring-1 ring-emerald-100/20"><BadgeCheck className="h-7 w-7 text-emerald-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{counts.approved}</p><p className="text-sm text-white/85">Approved</p></div></CardContent></Card>
-        <Card className="relative overflow-hidden border-[#41614F] bg-[linear-gradient(135deg,#41614F_0%,#4f765f_100%)] text-white shadow-lg shadow-[#41614F]/20 ring-1 ring-white/20"><SummaryDecoration tone="amber" /><CardContent className="relative z-10 flex items-center gap-4 p-6"><span className="rounded-xl bg-amber-300/20 p-3 shadow-inner ring-1 ring-amber-100/20"><Hourglass className="h-7 w-7 text-amber-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{counts.pending}</p><p className="text-sm text-white/85">Pending review</p></div></CardContent></Card>
+        <Card className="relative overflow-hidden border-[#41614F] bg-[linear-gradient(135deg,#41614F_0%,#4f765f_100%)] text-white shadow-lg shadow-[#41614F]/20 ring-1 ring-white/20"><SummaryDecoration tone="green" /><CardContent className="relative z-10 flex items-center gap-4 p-6"><span className="rounded-xl bg-emerald-300/20 p-3 shadow-inner ring-1 ring-emerald-100/20"><BadgeCheck className="h-7 w-7 text-emerald-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{counts.available}</p><p className="text-sm text-white/85">Available</p></div></CardContent></Card>
+        <Card className="relative overflow-hidden border-[#41614F] bg-[linear-gradient(135deg,#41614F_0%,#4f765f_100%)] text-white shadow-lg shadow-[#41614F]/20 ring-1 ring-white/20"><SummaryDecoration tone="amber" /><CardContent className="relative z-10 flex items-center gap-4 p-6"><span className="rounded-xl bg-amber-300/20 p-3 shadow-inner ring-1 ring-amber-100/20"><KeyRound className="h-7 w-7 text-amber-100" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{counts.rented}</p><p className="text-sm text-white/85">Rented</p></div></CardContent></Card>
       </div>
 
       <div className="mb-8 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
@@ -184,9 +179,9 @@ const LandlordDashboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <PieChart className="h-5 w-5 text-[#129B36]" />
-              Approval overview
+              Availability overview
             </CardTitle>
-            <p className="text-sm text-gray-500">Current listing review status</p>
+            <p className="text-sm text-gray-500">Current portfolio availability</p>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center gap-6 sm:flex-row lg:flex-col xl:flex-row">
@@ -194,7 +189,7 @@ const LandlordDashboard = () => {
                 className="relative h-40 w-40 shrink-0 rounded-full"
                 style={{
                   background: listings.length
-                    ? `conic-gradient(#16a34a 0% ${analytics.approvedEnd}%, #f59e0b ${analytics.approvedEnd}% ${analytics.pendingEnd}%, #ef4444 ${analytics.pendingEnd}% 100%)`
+                    ? `conic-gradient(#16a34a 0% ${analytics.availableEnd}%, #64748b ${analytics.availableEnd}% 100%)`
                     : "#e5e7eb",
                 }}>
                 <div className="absolute inset-7 flex flex-col items-center justify-center rounded-full bg-white">
@@ -203,9 +198,8 @@ const LandlordDashboard = () => {
                 </div>
               </div>
               <div className="w-full space-y-3 text-sm">
-                <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-green-600" />Approved</span><strong>{counts.approved}</strong></div>
-                <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-amber-500" />Pending</span><strong>{counts.pending}</strong></div>
-                <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-red-500" />Rejected</span><strong>{counts.rejected}</strong></div>
+                <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-green-600" />Available</span><strong>{counts.available}</strong></div>
+                <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-slate-500" />Rented</span><strong>{counts.rented}</strong></div>
               </div>
             </div>
           </CardContent>
@@ -281,8 +275,8 @@ const LandlordDashboard = () => {
               </div>
             ) : (
               <>
-                <div className="rounded-lg bg-amber-50 p-4 text-sm"><strong>{counts.pending} listing{counts.pending === 1 ? "" : "s"}</strong> waiting for review.</div>
-                <div className="rounded-lg bg-green-50 p-4 text-sm"><strong>{counts.approved} approved listing{counts.approved === 1 ? "" : "s"}</strong> visible to renters.</div>
+                <div className="rounded-lg bg-green-50 p-4 text-sm"><strong>{counts.available} available listing{counts.available === 1 ? "" : "s"}</strong> visible to renters.</div>
+                <div className="rounded-lg bg-slate-100 p-4 text-sm"><strong>{counts.rented} rented listing{counts.rented === 1 ? "" : "s"}</strong> kept in your portfolio history.</div>
                 <div className="rounded-lg bg-blue-50 p-4 text-sm">Your portfolio has generated <strong>{analytics.totalViews} views</strong> and <strong>{analytics.totalLikes} likes</strong>.</div>
               </>
             )}

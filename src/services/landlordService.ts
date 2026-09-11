@@ -315,6 +315,25 @@ export const landlordService = {
       throw new Error("Your ownership verification must be approved before you can create a listing.");
     }
 
+    const { data: isDuplicate, error: duplicateCheckError } = await supabase.rpc(
+      "is_duplicate_property_listing",
+      {
+        p_title: input.title.trim(),
+        p_location: input.location.trim(),
+        p_property_type: input.type,
+        p_listing_type: input.listingType,
+      },
+    );
+    if (duplicateCheckError) {
+      if (duplicateCheckError.message.includes("is_duplicate_property_listing")) {
+        throw new Error("Run the latest listing database migration before publishing a property.");
+      }
+      throw new Error(duplicateCheckError.message);
+    }
+    if (isDuplicate) {
+      throw new Error("This property is already in your listings. Update the existing listing instead.");
+    }
+
     const imageUrls = await uploadImages(input.images);
     const { data, error } = await supabase
       .from("properties")
@@ -332,7 +351,7 @@ export const landlordService = {
         amenities: input.amenities,
         images: imageUrls,
         status: "available",
-        approval_status: "pending",
+        approval_status: "approved",
         owner_id: profile.id,
         contact_user_id: profile.id,
         created_by: profile.id,
@@ -353,6 +372,9 @@ export const landlordService = {
       .select(PUBLIC_PROPERTY_COLUMNS)
       .single();
 
+    if (error?.code === "23505") {
+      throw new Error("This property is already in your listings. Update the existing listing instead.");
+    }
     if (error) throw new Error(error.message);
     return mapPublicProperty(data as PublicPropertyRow);
   },

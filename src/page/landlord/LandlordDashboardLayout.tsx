@@ -10,6 +10,9 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Settings,
+  BadgeCheck,
+  UsersRound,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -33,7 +36,10 @@ const navigation = [
   { label: "Dashboard", href: "/landlord", icon: LayoutDashboard, exact: true },
   { label: "My Listings", href: "/landlord/listings", icon: FileStack, exact: true },
   { label: "Add Listing", href: "/landlord/listings/new", icon: FilePlus2 },
+  { label: "Leads", href: "/landlord/leads", icon: UsersRound },
+  { label: "Subscription", href: "/landlord/subscription", icon: BadgeCheck },
   { label: "Profile", href: "/landlord/profile", icon: CircleUserRound },
+  { label: "Settings", href: "/landlord/settings", icon: Settings },
 ];
 
 const LandlordDashboardLayout = () => {
@@ -45,12 +51,18 @@ const LandlordDashboardLayout = () => {
   const [noticesLoading, setNoticesLoading] = useState(true);
 
   const pageHeader = location.pathname === "/landlord/listings/new"
-    ? { title: "Add New Listing", description: "Create and submit a new property listing" }
+    ? { title: "Add New Listing", description: "Create and publish a new property listing" }
     : location.pathname === "/landlord/listings"
       ? { title: "My Listings", description: "Manage all your submitted properties" }
       : location.pathname === "/landlord/profile"
         ? { title: "Profile", description: "Manage your landlord and contact information" }
-        : { title: "Dashboard", description: "Manage your properties and listings" };
+        : location.pathname === "/landlord/leads"
+          ? { title: "Leads", description: "View genuine renter enquiries for your properties" }
+          : location.pathname === "/landlord/subscription"
+            ? { title: "Subscription", description: "Review your current LagosRentHelp access" }
+            : location.pathname === "/landlord/settings"
+              ? { title: "Settings", description: "Manage your password and account security" }
+              : { title: "Dashboard", description: "Manage your properties and listings" };
 
   const initials = (user?.name || "Landlord")
     .split(" ")
@@ -68,10 +80,7 @@ const LandlordDashboardLayout = () => {
     const loadNotices = async () => {
       setNoticesLoading(true);
       try {
-        const [profile, listings] = await Promise.all([
-          landlordService.getProfile(),
-          landlordService.getMyListings(),
-        ]);
+        const profile = await landlordService.getProfile();
         if (!active) return;
 
         const next: LandlordNotice[] = [];
@@ -98,27 +107,6 @@ const LandlordDashboardLayout = () => {
             message: "Your landlord account has been successfully verified.",
             href: "/landlord/profile",
             tone: "success",
-          });
-        }
-
-        const pendingCount = listings.filter((listing) => listing.approvalStatus === "pending").length;
-        const rejectedCount = listings.filter((listing) => listing.approvalStatus === "rejected").length;
-        if (pendingCount > 0) {
-          next.push({
-            id: "listings-pending",
-            title: `${pendingCount} listing${pendingCount === 1 ? "" : "s"} under review`,
-            message: "You will see an update here after administrator review.",
-            href: "/landlord/listings",
-            tone: "warning",
-          });
-        }
-        if (rejectedCount > 0) {
-          next.push({
-            id: "listings-rejected",
-            title: `${rejectedCount} listing${rejectedCount === 1 ? "" : "s"} need attention`,
-            message: "Open your listings to review their approval status.",
-            href: "/landlord/listings",
-            tone: "danger",
           });
         }
 
