@@ -161,20 +161,12 @@ const Header: React.FC = () => {
                         onClick={closeMenu}
                       />
                     ) : user.role === "user" ? (
-                      <>
-                        <HeaderActionButton
-                          to="/renter/preferences"
-                          icon={Settings}
-                          label="Rental Preferences"
-                          onClick={closeMenu}
-                        />
-                        <HeaderActionButton
-                          to="/landlord/onboarding"
-                          icon={Building2}
-                          label="List Your Property"
-                          onClick={closeMenu}
-                        />
-                      </>
+                      <HeaderActionButton
+                        to="/renter/preferences"
+                        icon={Settings}
+                        label="Rental Preferences"
+                        onClick={closeMenu}
+                      />
                     ) : null}
 
                     {user.role === "super_admin" && (

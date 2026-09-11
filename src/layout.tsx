@@ -18,6 +18,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     "/register",
     "/complete-profile",
     "/landlord/onboarding",
+    "/renter/preferences",
   ].includes(location.pathname);
   //const isMaintenanceMode = location.pathname === "/";
   //add && !isMaintenanceMode to the condition above when maintenance mode is implemented

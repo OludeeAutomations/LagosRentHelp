@@ -4,6 +4,7 @@ import {
   Bath,
   Bed,
   Heart,
+  LockKeyhole,
   MapPin,
   Share2,
   Square,
@@ -47,7 +48,15 @@ const PropertyDetails: React.FC = () => {
     | (Property & { agent?: ListingContact })
     | null;
 
+  const requestContactAccess = () => {
+    openLoginModal("Sign in or create an account to unlock the owner and contact details.");
+  };
+
   const openContactModal = () => {
+    if (!user) {
+      requestContactAccess();
+      return;
+    }
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -63,7 +72,7 @@ const PropertyDetails: React.FC = () => {
     (typeof property?.agentId === "object"
       ? (property.agentId as unknown as ListingContact)
       : null);
-  const contact = resolvedContact || rawContact;
+  const contact = user ? resolvedContact || rawContact : null;
 
   const resolvePropertyContact = async (propertyId: string) => {
     try {
@@ -85,7 +94,7 @@ const PropertyDetails: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!property) {
+    if (!property || !user) {
       setResolvedContact(null);
       return;
     }
@@ -96,7 +105,7 @@ const PropertyDetails: React.FC = () => {
       return;
     }
 
-    if (user) resolvePropertyContact(property._id);
+    resolvePropertyContact(property._id);
   }, [property, rawContact, user]);
 
   const gallery = usePropertyImageGallery({
@@ -292,7 +301,19 @@ const PropertyDetails: React.FC = () => {
                     {property.title}
                   </h1>
                   <div className="flex items-center text-gray-600 mb-4">
-                    <MapPin className="h-4 w-4 mr-1" /> {property.location}
+                    <MapPin className="h-4 w-4 mr-1" />
+                    {user ? (
+                      property.location
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={requestContactAccess}
+                        className="inline-flex items-center gap-2 text-gray-500 hover:text-[#129B36]">
+                        <span className="select-none blur-[3px]">Exact property location</span>
+                        <LockKeyhole className="h-3.5 w-3.5" />
+                        <span className="text-sm font-medium">Sign in to view</span>
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="text-right">
@@ -352,18 +373,39 @@ const PropertyDetails: React.FC = () => {
               <TabsContent value="location" className="pt-4">
                 <Card className="border-gray-200 p-0">
                   <CardContent className="p-0">
-                    <PropertyMap
-                      address={property.location}
-                      coordinates={property.coordinates}
-                      height="400px"
-                      showStreetViewButton={true}
-                    />
-                    <div className="p-4">
-                      <h4 className="font-semibold mb-2 text-gray-900">
-                        Address
-                      </h4>
-                      <p className="text-gray-600">{property.location}</p>
-                    </div>
+                    {user ? (
+                      <>
+                        <PropertyMap
+                          address={property.location}
+                          coordinates={property.coordinates}
+                          height="400px"
+                          showStreetViewButton={true}
+                        />
+                        <div className="p-4">
+                          <h4 className="font-semibold mb-2 text-gray-900">
+                            Address
+                          </h4>
+                          <p className="text-gray-600">{property.location}</p>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="relative flex min-h-[400px] items-center justify-center overflow-hidden bg-gray-100 p-6">
+                        <div className="absolute inset-0 select-none opacity-55 blur-md" aria-hidden="true">
+                          <div className="h-full bg-[linear-gradient(35deg,transparent_45%,#d1d5db_46%,#d1d5db_52%,transparent_53%),linear-gradient(145deg,transparent_40%,#bbf7d0_41%,#bbf7d0_49%,transparent_50%)] bg-[length:90px_90px]" />
+                        </div>
+                        <div className="relative z-10 max-w-sm rounded-xl border border-white/80 bg-white/90 p-6 text-center shadow-lg backdrop-blur-sm">
+                          <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-green-50 text-[#129B36]">
+                            <LockKeyhole className="h-5 w-5" />
+                          </span>
+                          <h4 className="mt-3 font-semibold text-gray-950">Exact location is protected</h4>
+                          <p className="mt-1 text-sm leading-5 text-gray-600">Sign in to view the address, map and directions for this property.</p>
+                          <div className="mt-4 flex justify-center gap-2">
+                            <Button type="button" onClick={requestContactAccess} className="bg-[#129B36] hover:bg-[#0e7d2b]">Sign in</Button>
+                            <Button asChild variant="outline"><a href="/register">Sign up</a></Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -376,6 +418,8 @@ const PropertyDetails: React.FC = () => {
               onCall={handlePhoneCall}
               onChat={handleWhatsAppClick}
               onOpen={openContactModal}
+              onSignIn={requestContactAccess}
+              isAuthenticated={Boolean(user)}
             />
 
             <Card>
@@ -414,8 +458,8 @@ const PropertyDetails: React.FC = () => {
       </div>
 
       <PropertyContactModal
-        contact={contact}
-        isOpen={showContactModal}
+        contact={user ? contact : null}
+        isOpen={Boolean(user) && showContactModal}
         onCall={handlePhoneCall}
         onChat={handleWhatsAppClick}
         onClose={() => setShowContactModal(false)}

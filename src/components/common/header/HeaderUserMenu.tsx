@@ -81,22 +81,12 @@ const HeaderUserMenu: React.FC<HeaderUserMenuProps> = ({
                 </Button>
               </Link>
             ) : user.role === "user" ? (
-              <>
-                <Link to="/renter/preferences">
-                  <Button variant="ghost" className="w-full justify-start text-xs sm:text-sm font-normal">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Rental Preferences
-                  </Button>
-                </Link>
-                <Link to="/landlord/onboarding">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start text-xs sm:text-sm font-normal">
-                    <Building2 className="h-4 w-4 mr-2" />
-                    List Your Property
-                  </Button>
-                </Link>
-              </>
+              <Link to="/renter/preferences">
+                <Button variant="ghost" className="w-full justify-start text-xs sm:text-sm font-normal">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Rental Preferences
+                </Button>
+              </Link>
             ) : null}
 
             {user.role === "super_admin" && (

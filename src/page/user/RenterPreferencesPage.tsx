@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Briefcase, Home, Loader2, ShieldCheck, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import AuthLayout from "@/components/common/AuthLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { LAGOS_LOCAL_GOVERNMENTS } from "@/lib/nigeriaLocations";
 import {
@@ -98,19 +98,15 @@ const RenterPreferencesPage = () => {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 py-10">
-      <div className="mx-auto max-w-4xl px-4">
-        <div className="mb-7 text-center">
-          <h1 className="text-3xl font-bold text-gray-950">Find homes that fit you</h1>
-          <p className="mx-auto mt-2 max-w-2xl text-gray-600">
-            Tell us what you need once. We use these answers privately to rank suitable available listings; no listing is hidden from you.
-          </p>
-        </div>
-
-        <Card>
-          <CardHeader><CardTitle>Your rental preferences</CardTitle></CardHeader>
-          <CardContent>
-            <form className="space-y-7" onSubmit={submit}>
+    <AuthLayout
+      title="Find homes that fit you"
+      subtitle="Tell us what you need once and we will rank suitable available listings for you."
+      sideTitle="A Better Way to Find Home"
+      sideSubtitle="Personalised matches built around your budget, lifestyle and preferred Lagos location."
+      sideIcon={Home}
+      contentClassName="max-w-xl">
+      <form className="space-y-7" onSubmit={submit}>
+        <h2 className="text-lg font-semibold text-gray-950">Your rental preferences</h2>
               <section className="grid gap-4 sm:grid-cols-2">
                 <h2 className="flex items-center gap-2 font-semibold sm:col-span-2"><Home className="h-5 w-5 text-[#129B36]" />Home and budget</h2>
                 <div className="space-y-2"><Label htmlFor="preferredLga">Preferred Lagos LGA *</Label><select id="preferredLga" className={fieldClassName} value={form.preferredLga} onChange={(event) => update("preferredLga", event.target.value)}><option value="">Select Lagos LGA</option>{LAGOS_LOCAL_GOVERNMENTS.map((lga) => <option key={lga} value={lga}>{lga}</option>)}</select></div>
@@ -146,11 +142,8 @@ const RenterPreferencesPage = () => {
                 <Button type="button" variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
                 <Button type="submit" disabled={saving} className="bg-[#129B36] hover:bg-[#0e7d2b]">{saving && <Loader2 className="animate-spin" />}Save and see matches</Button>
               </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </main>
+      </form>
+    </AuthLayout>
   );
 };
 
