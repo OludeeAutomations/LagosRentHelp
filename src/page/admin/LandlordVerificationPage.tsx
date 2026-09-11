@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { DASHBOARD_SUMMARY_CARD_CLASS } from "@/components/common/DashboardSummaryDecoration";
+import DashboardSummaryBanner from "@/components/common/DashboardSummaryDecoration";
 import {
   Dialog,
   DialogContent,
@@ -206,26 +206,16 @@ const LandlordVerificationPage = () => {
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Card className={DASHBOARD_SUMMARY_CARD_CLASS}>
-            <CardContent className="flex flex-1 items-center gap-4 p-6">
-              <span className="rounded-xl bg-amber-50 p-3 ring-1 ring-amber-200"><Clock3 className="h-7 w-7 text-amber-700" strokeWidth={2} /></span>
-              <div><p className="text-2xl font-bold">{counts.pending}</p><p className="text-sm text-gray-500">Pending review</p></div>
-            </CardContent>
-          </Card>
-          <Card className={DASHBOARD_SUMMARY_CARD_CLASS}>
-            <CardContent className="flex flex-1 items-center gap-4 p-6">
-              <span className="rounded-xl bg-emerald-50 p-3 ring-1 ring-emerald-200"><BadgeCheck className="h-7 w-7 text-emerald-700" strokeWidth={2} /></span>
-              <div><p className="text-2xl font-bold">{counts.verified}</p><p className="text-sm text-gray-500">Verified</p></div>
-            </CardContent>
-          </Card>
-          <Card className={DASHBOARD_SUMMARY_CARD_CLASS}>
-            <CardContent className="flex flex-1 items-center gap-4 p-6">
-              <span className="rounded-xl bg-rose-50 p-3 ring-1 ring-rose-200"><XCircle className="h-7 w-7 text-rose-700" strokeWidth={2} /></span>
-              <div><p className="text-2xl font-bold">{counts.rejected}</p><p className="text-sm text-gray-500">Rejected</p></div>
-            </CardContent>
-          </Card>
-        </div>
+        <DashboardSummaryBanner
+          eyebrow="Verification queue"
+          title="Landlord verification overview"
+          description="Review ownership applications and keep trusted landlords moving through the approval process."
+          items={[
+            { label: "Pending review", value: counts.pending, icon: Clock3 },
+            { label: "Verified", value: counts.verified, icon: BadgeCheck },
+            { label: "Rejected", value: counts.rejected, icon: XCircle },
+          ]}
+        />
 
         {loading ? (
           <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-[#129B36]" /></div>

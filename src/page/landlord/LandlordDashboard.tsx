@@ -16,7 +16,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DASHBOARD_SUMMARY_CARD_CLASS } from "@/components/common/DashboardSummaryDecoration";
+import DashboardSummaryBanner from "@/components/common/DashboardSummaryDecoration";
 import { landlordService, type LandlordProfile } from "@/services/landlordService";
 import type { Property } from "@/types";
 
@@ -85,33 +85,22 @@ const LandlordDashboard = () => {
 
   return (
     <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
-      <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        {profile && profile.verificationStatus !== "verified" && (
-          <div>
-            <p className="mt-1 text-sm text-gray-500">
-              Verification:{" "}
-              <span
-                className={`font-semibold capitalize ${
-                  profile.verificationStatus === "rejected"
-                    ? "text-red-600"
-                    : "text-amber-500"
-                }`}>
-                {profile.verificationStatus}
-              </span>
-            </p>
-          </div>
-        )}
-        {profile?.verificationStatus === "verified" ? (
-          <Button asChild className="self-end bg-[#129B36] hover:bg-[#0e7d2b] sm:ml-auto"><Link to="/landlord/listings/new"><Plus className="mr-2 h-4 w-4" />Add listing</Link></Button>
-        ) : (
-          <Button disabled className="self-end sm:ml-auto" title="Ownership verification must be approved first"><Plus className="mr-2 h-4 w-4" />Awaiting verification</Button>
-        )}
-      </div>
-
-      <div className="mb-8 grid gap-4 sm:grid-cols-3">
-        <Card className={DASHBOARD_SUMMARY_CARD_CLASS}><CardContent className="flex flex-1 items-center gap-4 p-6"><span className="rounded-xl bg-sky-50 p-3 ring-1 ring-sky-200"><ClipboardList className="h-7 w-7 text-sky-700" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{listings.length}</p><p className="text-sm text-gray-500">Total listings</p></div></CardContent></Card>
-        <Card className={DASHBOARD_SUMMARY_CARD_CLASS}><CardContent className="flex flex-1 items-center gap-4 p-6"><span className="rounded-xl bg-emerald-50 p-3 ring-1 ring-emerald-200"><BadgeCheck className="h-7 w-7 text-emerald-700" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{counts.available}</p><p className="text-sm text-gray-500">Available</p></div></CardContent></Card>
-        <Card className={DASHBOARD_SUMMARY_CARD_CLASS}><CardContent className="flex flex-1 items-center gap-4 p-6"><span className="rounded-xl bg-amber-50 p-3 ring-1 ring-amber-200"><KeyRound className="h-7 w-7 text-amber-700" strokeWidth={2} /></span><div><p className="text-2xl font-bold">{counts.rented}</p><p className="text-sm text-gray-500">Rented</p></div></CardContent></Card>
+      <div className="mb-8">
+        <DashboardSummaryBanner
+          eyebrow="Landlord dashboard"
+          title={profile?.businessName ? `Welcome back, ${profile.businessName}` : "Welcome back"}
+          description={profile && profile.verificationStatus !== "verified" ? <>Your ownership verification is currently <span className="font-semibold capitalize text-amber-200">{profile.verificationStatus}</span>.</> : "Manage your listings and keep track of your property portfolio from one place."}
+          items={[
+            { label: "Total listings", value: listings.length, icon: ClipboardList },
+            { label: "Available", value: counts.available, icon: BadgeCheck },
+            { label: "Rented", value: counts.rented, icon: KeyRound },
+          ]}
+          action={profile?.verificationStatus === "verified" ? (
+            <Button asChild className="bg-white text-[#143f2b] hover:bg-green-50"><Link to="/landlord/listings/new"><Plus className="mr-2 h-4 w-4" />Add listing</Link></Button>
+          ) : (
+            <Button disabled className="bg-white text-[#143f2b]" title="Ownership verification must be approved first"><Plus className="mr-2 h-4 w-4" />Awaiting verification</Button>
+          )}
+        />
       </div>
 
       <div className="mb-8 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
