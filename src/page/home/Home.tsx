@@ -7,8 +7,6 @@ import {
   BedSingle,
   Building2,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   ClipboardPlus,
   FileSearch,
   Home as HomeIcon,
@@ -112,37 +110,37 @@ const Home = () => {
     <div className="overflow-hidden bg-white text-gray-950">
       <section className="bg-white p-3 sm:p-4 lg:p-5">
         <div className="mx-auto grid max-w-[1600px] gap-6 lg:grid-cols-2 lg:items-stretch">
-          <div className="flex w-full overflow-hidden rounded-[1.4rem] bg-[#173f2a] px-6 py-10 text-white shadow-[0_18px_60px_rgba(15,55,35,0.08)] sm:px-10 sm:py-12 lg:px-12 lg:py-14 xl:px-16">
+          <div className="order-2 flex w-full bg-white px-6 py-10 text-gray-950 sm:px-10 sm:py-12 lg:px-12 lg:py-14 xl:px-16">
             <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="flex w-full flex-col">
-              <span className="inline-flex w-fit self-start items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-green-100">
+              <span className="inline-flex w-fit self-start items-center gap-2 rounded-full border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-[#173f2a]">
                 <MapPin className="h-4 w-4" />Made for renting in Lagos
               </span>
               <h1 className="mt-6 max-w-2xl text-4xl font-extrabold leading-[1.05] tracking-[-0.035em] [font-family:var(--font-display)] sm:text-5xl xl:text-6xl">
                 Find a Lagos home with <span className="text-green-300">more confidence.</span>
               </h1>
-              <p className="mt-5 max-w-xl text-base leading-7 text-green-50/80 sm:text-lg sm:leading-8">
+              <p className="mt-5 max-w-xl text-base leading-7 text-gray-600 sm:text-lg sm:leading-8">
                 Browse homes from verified landlords, get recommendations shaped around your needs, and connect through a platform that reviews identity and ownership evidence.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <a href="#listings" className="inline-flex items-center gap-2 rounded-xl bg-[#18a83f] px-6 py-3 font-semibold text-white transition hover:bg-[#129B36]">Explore listings <ArrowRight className="h-4 w-4" /></a>
-                <Link to="/register" className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white px-6 py-3 font-semibold text-[#173f2a] transition hover:bg-green-50"><ClipboardPlus className="h-[18px] w-[18px]" strokeWidth={1.9} />List a property</Link>
+                <Link to="/register" className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3 font-semibold text-[#173f2a] shadow-sm transition hover:border-green-300 hover:bg-green-50"><ClipboardPlus className="h-[18px] w-[18px]" strokeWidth={1.9} />List a property</Link>
               </div>
-              <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-sm text-green-50/80">
-                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-300" />Reviewed landlords</span>
-                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-300" />Private matching</span>
-                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-300" />Lagos-focused search</span>
+              <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-sm text-gray-600">
+                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#129B36]" />Reviewed landlords</span>
+                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#129B36]" />Private matching</span>
+                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#129B36]" />Lagos-focused search</span>
               </div>
 
-              <form onSubmit={handleSearch} className="mt-9 grid gap-3 rounded-2xl border border-white/15 bg-white/[0.08] p-4 sm:grid-cols-2 sm:p-5">
-                <label className="space-y-1.5 sm:col-span-2"><span className="text-xs font-semibold uppercase tracking-wide text-green-50/80">Location</span><select value={selectedLga} onChange={(event) => setSelectedLga(event.target.value)} className="h-12 w-full rounded-xl border border-white/20 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-green-300 focus:ring-2 focus:ring-green-300/30"><option value="">All Lagos LGAs</option>{LAGOS_LOCAL_GOVERNMENTS.map((lga) => <option key={lga} value={lga}>{lga}</option>)}</select></label>
-                <label className="space-y-1.5"><span className="text-xs font-semibold uppercase tracking-wide text-green-50/80">Property type</span><select value={selectedType} onChange={(event) => setSelectedType(event.target.value)} className="h-12 w-full rounded-xl border border-white/20 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-green-300 focus:ring-2 focus:ring-green-300/30"><option value="">All property types</option>{propertyTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}</select></label>
-                <label className="space-y-1.5"><span className="text-xs font-semibold uppercase tracking-wide text-green-50/80">Budget</span><select value={priceRange} onChange={(event) => setPriceRange(event.target.value)} className="h-12 w-full rounded-xl border border-white/20 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-green-300 focus:ring-2 focus:ring-green-300/30">{priceBands.map((band) => <option key={band.value} value={band.value}>{band.label}</option>)}</select></label>
+              <form onSubmit={handleSearch} className="mt-9 grid gap-3 rounded-2xl border border-gray-200 bg-gray-50/80 p-4 shadow-sm sm:grid-cols-2 sm:p-5">
+                <label className="space-y-1.5 sm:col-span-2"><span className="text-xs font-semibold uppercase tracking-wide text-gray-600">Location</span><select value={selectedLga} onChange={(event) => setSelectedLga(event.target.value)} className="h-12 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-green-400 focus:ring-2 focus:ring-green-300/30"><option value="">All Lagos LGAs</option>{LAGOS_LOCAL_GOVERNMENTS.map((lga) => <option key={lga} value={lga}>{lga}</option>)}</select></label>
+                <label className="space-y-1.5"><span className="text-xs font-semibold uppercase tracking-wide text-gray-600">Property type</span><select value={selectedType} onChange={(event) => setSelectedType(event.target.value)} className="h-12 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-green-400 focus:ring-2 focus:ring-green-300/30"><option value="">All property types</option>{propertyTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}</select></label>
+                <label className="space-y-1.5"><span className="text-xs font-semibold uppercase tracking-wide text-gray-600">Budget</span><select value={priceRange} onChange={(event) => setPriceRange(event.target.value)} className="h-12 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-green-400 focus:ring-2 focus:ring-green-300/30">{priceBands.map((band) => <option key={band.value} value={band.value}>{band.label}</option>)}</select></label>
                 <Button type="submit" className="h-12 rounded-xl bg-[#18a83f] px-6 shadow-lg shadow-black/10 hover:bg-[#129B36] sm:col-span-2"><Search className="h-4 w-4" />Search homes</Button>
               </form>
             </motion.div>
           </div>
 
-          <div className="relative min-h-[520px] overflow-hidden rounded-[1.4rem] bg-white lg:min-h-0" aria-roledescription="carousel" aria-label="LagosRentHelp highlights">
+          <div className="order-1 relative min-h-[520px] overflow-hidden rounded-2xl bg-white lg:min-h-0" aria-roledescription="carousel" aria-label="LagosRentHelp highlights">
             {heroSlides.map((slide, index) => (
               <img
                 key={slide.src}
@@ -150,16 +148,9 @@ const Home = () => {
                 alt={index === activeHeroSlide ? slide.alt : ""}
                 aria-hidden={index !== activeHeroSlide}
                 loading={index === 0 ? "eager" : "lazy"}
-                className={`absolute inset-0 h-full w-full rounded-[1.4rem] object-contain transition-opacity duration-700 ${index === activeHeroSlide ? "opacity-100" : "opacity-0"}`}
+                className={`absolute inset-0 h-full w-full rounded-2xl object-contain transition-opacity duration-700 ${index === activeHeroSlide ? "opacity-100" : "opacity-0"}`}
               />
             ))}
-
-            <button type="button" onClick={() => setActiveHeroSlide((current) => (current - 1 + heroSlides.length) % heroSlides.length)} className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-[#173f2a] shadow-lg transition hover:bg-white" aria-label="Previous carousel image">
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button type="button" onClick={() => setActiveHeroSlide((current) => (current + 1) % heroSlides.length)} className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-[#173f2a] shadow-lg transition hover:bg-white" aria-label="Next carousel image">
-              <ChevronRight className="h-5 w-5" />
-            </button>
 
             <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2 rounded-full bg-black/35 px-3 py-2 backdrop-blur-sm">
               {heroSlides.map((slide, index) => (
