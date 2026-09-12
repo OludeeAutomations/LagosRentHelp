@@ -35,17 +35,23 @@ const buttonVariants = cva(
   }
 )
 
-function Button({
-  className,
-  variant,
-  size,
-  asChild = false,
-  onClick,
-  ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-  }) {
+const Button = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentProps<"button"> &
+    VariantProps<typeof buttonVariants> & {
+      asChild?: boolean
+    }
+>(function Button(
+  {
+    className,
+    variant,
+    size,
+    asChild = false,
+    onClick,
+    ...props
+  },
+  ref,
+) {
   const Comp = asChild ? Slot : "button"
 
   const handleClick: React.MouseEventHandler<HTMLElement> = (event) => {
@@ -60,12 +66,13 @@ function Button({
 
   return (
     <Comp
+      ref={ref}
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
       onClick={handleClick}
       {...props}
     />
   )
-}
+})
 
 export { Button, buttonVariants }

@@ -48,6 +48,7 @@ const LandlordDashboardLayout = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
   const [notices, setNotices] = useState<LandlordNotice[]>([]);
   const [noticesLoading, setNoticesLoading] = useState(true);
   const [verificationStatus, setVerificationStatus] = useState<LandlordProfile["verificationStatus"] | null>(null);
@@ -227,10 +228,13 @@ const LandlordDashboardLayout = () => {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <Popover>
+            <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Open notifications" className="rounded-full">
+                <Button type="button" variant="ghost" size="icon" aria-label="Open notifications" aria-expanded={notificationOpen} className="relative rounded-full">
                   <Bell className="h-5 w-5" />
+                  {!noticesLoading && notices.length > 0 && (
+                    <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#129B36] ring-2 ring-white" />
+                  )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent align="end" sideOffset={10} className="w-[min(92vw,380px)] p-0">
@@ -261,7 +265,7 @@ const LandlordDashboardLayout = () => {
                           : "bg-amber-50 text-amber-600";
 
                       return (
-                        <Link key={notice.id} to={notice.href} className="flex gap-3 rounded-lg px-3 py-3 hover:bg-gray-50">
+                        <Link key={notice.id} to={notice.href} onClick={() => setNotificationOpen(false)} className="flex gap-3 rounded-lg px-3 py-3 hover:bg-gray-50">
                           <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${iconClass}`}>
                             <NoticeIcon className="h-4 w-4" strokeWidth={2} />
                           </span>

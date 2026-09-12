@@ -177,8 +177,13 @@ const AdminDashboardLayout = () => {
           <div className="flex items-center gap-2 sm:gap-4">
             <Popover open={notificationOpen} onOpenChange={changeNotificationOpen}>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Open admin notifications" className="rounded-full">
+                <Button type="button" variant="ghost" size="icon" aria-label="Open admin notifications" aria-expanded={notificationOpen} className="relative rounded-full">
                   <Bell className="h-5 w-5" />
+                  {!notificationLoading && pendingReviews > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white">
+                      {pendingReviews > 9 ? "9+" : pendingReviews}
+                    </span>
+                  )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent align="end" sideOffset={10} className="w-[min(92vw,360px)] p-0">
