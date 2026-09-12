@@ -102,28 +102,38 @@ type AdminRentedListingRow = {
 };
 
 export const adminDashboardService = {
-  getLandlords: async (): Promise<AdminLandlordSummary[]> => {
-    const [{ data, error }, { data: verificationData }] = await Promise.all([
-      supabase.rpc("get_super_admin_landlords"),
-      supabase.rpc("get_landlord_verification_queue", { p_status: "verified" }),
-    ]);
+  getLandlords: async (
+    options: { includeAvatars?: boolean } = {},
+  ): Promise<AdminLandlordSummary[]> => {
+    const { data, error } = await supabase.rpc("get_super_admin_landlords");
     if (error) throw new Error(error.message);
 
     const landlords = ((data || []) as AdminLandlordRow[]).map(mapLandlord);
+    if (!options.includeAvatars) return landlords;
+
+    const { data: verificationData, error: verificationError } = await supabase
+      .rpc("get_landlord_verification_queue", { p_status: "verified" });
+    if (verificationError) throw new Error(verificationError.message);
+
     const verificationRows = (verificationData || []) as VerifiedIdentityRow[];
     const imageUrls = new Map<string, string>();
+    const pathOwners = new Map<string, string>();
+    verificationRows.forEach((verification) => {
+      if (verification.identity_image_path) {
+        pathOwners.set(verification.identity_image_path, verification.user_id);
+      }
+    });
 
-    await Promise.all(
-      verificationRows.map(async (verification) => {
-        if (!verification.identity_image_path) return;
-        const { data: signedImage } = await supabase.storage
-          .from("landlord-verification")
-          .createSignedUrl(verification.identity_image_path, 3600);
-        if (signedImage?.signedUrl) {
-          imageUrls.set(verification.user_id, signedImage.signedUrl);
-        }
-      }),
-    );
+    const paths = [...pathOwners.keys()];
+    if (paths.length) {
+      const { data: signedImages } = await supabase.storage
+        .from("landlord-verification")
+        .createSignedUrls(paths, 3600);
+      (signedImages || []).forEach((signedImage) => {
+        const userId = pathOwners.get(signedImage.path || "");
+        if (userId && signedImage.signedUrl) imageUrls.set(userId, signedImage.signedUrl);
+      });
+    }
 
     return landlords.map((landlord) => ({
       ...landlord,

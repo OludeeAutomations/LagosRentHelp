@@ -151,17 +151,64 @@ const ensureProfile = async (): Promise<ProfileRpcResult> => {
   return data as ProfileRpcResult;
 };
 
+const optimizePropertyImage = async (file: File): Promise<File> => {
+  if (
+    typeof document === "undefined" ||
+    typeof createImageBitmap === "undefined" ||
+    !file.type.startsWith("image/")
+  ) return file;
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    const longestSide = Math.max(bitmap.width, bitmap.height);
+    if (longestSide <= 1600 && file.size <= 1.5 * 1024 * 1024) {
+      bitmap.close();
+      return file;
+    }
+
+    const scale = Math.min(1, 1600 / longestSide);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext("2d");
+    if (!context) {
+      bitmap.close();
+      return file;
+    }
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/webp", 0.82);
+    });
+    if (!blob || blob.size >= file.size) return file;
+
+    const baseName = file.name.replace(/\.[^.]+$/, "") || "property";
+    return new File([blob], `${baseName}.webp`, {
+      type: "image/webp",
+      lastModified: file.lastModified,
+    });
+  } catch {
+    return file;
+  }
+};
+
 const uploadImages = async (files: File[]): Promise<string[]> => {
   const authUser = await requireSession();
   const uploadedPaths: string[] = [];
 
   try {
     for (const file of files) {
-      const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const optimizedFile = await optimizePropertyImage(file);
+      const extension = optimizedFile.name.split(".").pop()?.toLowerCase() || "jpg";
       const path = `${authUser.id}/${crypto.randomUUID()}.${extension}`;
       const { error } = await supabase.storage
         .from("property-images")
-        .upload(path, file, { contentType: file.type, upsert: false });
+        .upload(path, optimizedFile, {
+          contentType: optimizedFile.type,
+          cacheControl: "31536000",
+          upsert: false,
+        });
       if (error) throw error;
       uploadedPaths.push(path);
     }

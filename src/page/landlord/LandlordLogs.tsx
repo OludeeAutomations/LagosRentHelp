@@ -216,7 +216,7 @@ const LandlordLogs = () => {
                 {rentedListings.map((listing) => (
                   <article key={listing._id} className="p-5">
                     <div className="flex gap-3">
-                      <img src={listing.images[0] || "/placeholder.svg"} alt="" className="h-16 w-20 shrink-0 rounded-lg object-cover" />
+                      <img src={listing.images[0] || "/placeholder.svg"} alt="" loading="lazy" decoding="async" className="h-16 w-20 shrink-0 rounded-lg object-cover" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
                           <h3 className="truncate font-semibold text-gray-950">{listing.title}</h3>

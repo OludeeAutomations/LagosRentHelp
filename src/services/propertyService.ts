@@ -101,7 +101,7 @@ export const propertyService = {
     filters: PropertyFilters = {}
   ): Promise<ApiResponse<Property[]>> => {
     const page = Math.max(1, filters.page || 1);
-    const limit = Math.max(1, filters.limit || 100);
+    const limit = Math.min(48, Math.max(1, filters.limit || 30));
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 

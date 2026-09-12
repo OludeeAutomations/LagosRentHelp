@@ -61,7 +61,7 @@ const AdminLandlordsPage = () => {
   const loadLandlords = useCallback(async () => {
     setLoading(true);
     try {
-      setLandlords(await adminDashboardService.getLandlords());
+      setLandlords(await adminDashboardService.getLandlords({ includeAvatars: true }));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not load landlords.");
     } finally {
@@ -211,7 +211,7 @@ const AdminLandlordsPage = () => {
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   {rentedListings.map((listing) => (
                     <article key={listing.id} className="flex gap-3 rounded-xl border bg-gray-50/70 p-3">
-                      <img src={listing.imageUrl || "/placeholder.svg"} alt="" className="h-20 w-24 shrink-0 rounded-lg object-cover" />
+                      <img src={listing.imageUrl || "/placeholder.svg"} alt="" loading="lazy" decoding="async" className="h-20 w-24 shrink-0 rounded-lg object-cover" />
                       <div className="min-w-0"><h4 className="truncate font-semibold text-gray-950">{listing.title}</h4><p className="mt-1 flex items-center gap-1 truncate text-xs text-gray-500"><MapPin className="h-3 w-3 shrink-0" />{listing.location}</p><p className="mt-1 text-xs font-semibold text-gray-700">{formatPrice(listing.totalPackagePrice || listing.price)}</p><p className="mt-1 text-[11px] text-gray-400">Marked rented {formatDate(listing.markedRentedAt)}</p></div>
                     </article>
                   ))}

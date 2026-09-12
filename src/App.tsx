@@ -9,33 +9,8 @@ import { AnimatePresence } from "framer-motion";
 import Layout from "./layout";
 import { ModalProvider } from "./provider/ModalProvider";
 import Home from "./page/home/Home";
-import Contact from "./page/contact/Contact";
-import About from "./page/about/About";
-import SearchPage from "./page/searchPage/SearchPage";
-import Features from "./page/feature/Features";
-import PrivacyPolicy from "./page/privacyPolicy/PrivacyPolicy";
-import TermsOfService from "./page/terms/Terms";
 import ScrollToTop from "./components/common/ScrollToTop";
-import FAQPage from "./page/faq/Faq";
-import Register from "./page/register/Register";
-import Login from "./page/login/Login";
-import PropertyDetails from "./page/propertiesDetails/PropertyDetails";
-import ComingSoonPage from "./page/ComingSoonPage";
-import UserSettingsPage from "./page/settings/SettingsPage";
-import EmailVerificationNotice from "./page/register/EmailVerificationNotice";
-import VerifyEmailResult from "./page/register/VerifyEmailResult";
-import ForgotPassword from "./page/login/ForgotPassword";
-import ResetPassword from "./page/login/ResetPassword";
 import { Toaster } from "sonner";
-import Favorites from "./page/user/Favorites";
-import RenterPreferencesPage from "./page/user/RenterPreferencesPage";
-import AdminAccountsPage from "./page/admin/AdminAccountsPage";
-import LandlordVerificationPage from "./page/admin/LandlordVerificationPage";
-import AdminDashboardLayout from "./page/admin/AdminDashboardLayout";
-import AdminLandlordsPage from "./page/admin/AdminLandlordsPage";
-import SuperAdminDashboardPage from "./page/admin/SuperAdminDashboardPage";
-import AuthCallback from "./page/login/AuthCallback";
-import MfaChallenge from "./page/login/MfaChallenge";
 import { useAuthStore } from "./stores/authStore";
 import {
   AdminRoute,
@@ -44,17 +19,49 @@ import {
   MfaProtectedRoute,
   SuperAdminRoute,
 } from "./components/common/RoleRoute";
-import LandlordOnboarding from "./page/landlord/LandlordOnboarding";
-import LandlordDashboard from "./page/landlord/LandlordDashboard";
-import LandlordCreateListing from "./page/landlord/LandlordCreateListing";
-import CompleteProfile from "./page/register/CompleteProfile";
-import LandlordDashboardLayout from "./page/landlord/LandlordDashboardLayout";
-import LandlordProfile from "./page/landlord/LandlordProfile";
-import LandlordListings from "./page/landlord/LandlordListings";
-import LandlordLeads from "./page/landlord/LandlordLeads";
-import LandlordLogs from "./page/landlord/LandlordLogs";
-import LandlordSubscription from "./page/landlord/LandlordSubscription";
-import DashboardSecuritySettings from "./page/settings/DashboardSecuritySettings";
+
+const Contact = React.lazy(() => import("./page/contact/Contact"));
+const About = React.lazy(() => import("./page/about/About"));
+const SearchPage = React.lazy(() => import("./page/searchPage/SearchPage"));
+const Features = React.lazy(() => import("./page/feature/Features"));
+const PrivacyPolicy = React.lazy(() => import("./page/privacyPolicy/PrivacyPolicy"));
+const TermsOfService = React.lazy(() => import("./page/terms/Terms"));
+const FAQPage = React.lazy(() => import("./page/faq/Faq"));
+const Register = React.lazy(() => import("./page/register/Register"));
+const Login = React.lazy(() => import("./page/login/Login"));
+const PropertyDetails = React.lazy(() => import("./page/propertiesDetails/PropertyDetails"));
+const ComingSoonPage = React.lazy(() => import("./page/ComingSoonPage"));
+const UserSettingsPage = React.lazy(() => import("./page/settings/SettingsPage"));
+const EmailVerificationNotice = React.lazy(() => import("./page/register/EmailVerificationNotice"));
+const VerifyEmailResult = React.lazy(() => import("./page/register/VerifyEmailResult"));
+const ForgotPassword = React.lazy(() => import("./page/login/ForgotPassword"));
+const ResetPassword = React.lazy(() => import("./page/login/ResetPassword"));
+const Favorites = React.lazy(() => import("./page/user/Favorites"));
+const RenterPreferencesPage = React.lazy(() => import("./page/user/RenterPreferencesPage"));
+const AuthCallback = React.lazy(() => import("./page/login/AuthCallback"));
+const MfaChallenge = React.lazy(() => import("./page/login/MfaChallenge"));
+const CompleteProfile = React.lazy(() => import("./page/register/CompleteProfile"));
+const AdminAccountsPage = React.lazy(() => import("./page/admin/AdminAccountsPage"));
+const LandlordVerificationPage = React.lazy(() => import("./page/admin/LandlordVerificationPage"));
+const AdminDashboardLayout = React.lazy(() => import("./page/admin/AdminDashboardLayout"));
+const AdminLandlordsPage = React.lazy(() => import("./page/admin/AdminLandlordsPage"));
+const SuperAdminDashboardPage = React.lazy(() => import("./page/admin/SuperAdminDashboardPage"));
+const LandlordOnboarding = React.lazy(() => import("./page/landlord/LandlordOnboarding"));
+const LandlordDashboard = React.lazy(() => import("./page/landlord/LandlordDashboard"));
+const LandlordCreateListing = React.lazy(() => import("./page/landlord/LandlordCreateListing"));
+const LandlordDashboardLayout = React.lazy(() => import("./page/landlord/LandlordDashboardLayout"));
+const LandlordProfile = React.lazy(() => import("./page/landlord/LandlordProfile"));
+const LandlordListings = React.lazy(() => import("./page/landlord/LandlordListings"));
+const LandlordLeads = React.lazy(() => import("./page/landlord/LandlordLeads"));
+const LandlordLogs = React.lazy(() => import("./page/landlord/LandlordLogs"));
+const LandlordSubscription = React.lazy(() => import("./page/landlord/LandlordSubscription"));
+const DashboardSecuritySettings = React.lazy(() => import("./page/settings/DashboardSecuritySettings"));
+
+const RouteFallback = () => (
+  <div className="flex min-h-[45vh] items-center justify-center bg-white" role="status" aria-label="Loading page">
+    <span className="h-9 w-9 animate-spin rounded-full border-4 border-green-100 border-t-[#129B36]" />
+  </div>
+);
 
 const AppContent: React.FC = () => {
   const location = useLocation();
@@ -69,6 +76,7 @@ const AppContent: React.FC = () => {
       <AnimatePresence mode="wait">
         <ScrollToTop key="scroll-to-top" />
         <div key={location.pathname}>
+          <React.Suspense fallback={<RouteFallback />}>
           <Routes>
             {/* Public Routes with Main Layout */}
             <Route
@@ -274,6 +282,7 @@ const AppContent: React.FC = () => {
               }
             />
           </Routes>
+          </React.Suspense>
         </div>
       </AnimatePresence>
     </>

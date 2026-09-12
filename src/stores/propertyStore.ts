@@ -1,7 +1,21 @@
 import { create } from "zustand";
 import { Property, SearchFilters } from "@/types";
-import { propertyService } from "@/services/propertyService";
+import { propertyService, type PropertyFilters } from "@/services/propertyService";
 import { userService } from "@/services/userService";
+import { useAuthStore } from "@/stores/authStore";
+
+const PROPERTY_CACHE_TTL_MS = 30_000;
+type PropertyPage = {
+  properties: Property[];
+  pagination: { page: number; limit: number; total: number; pages: number };
+  cachedAt: number;
+};
+
+const propertyPageCache = new Map<string, PropertyPage>();
+const inFlightPropertyRequests = new Map<string, Promise<void>>();
+let activePropertyRequestKey = "";
+
+const clearPropertyCache = () => propertyPageCache.clear();
 
 interface PropertyState {
   properties: Property[];
@@ -11,6 +25,7 @@ interface PropertyState {
   searchFilters: SearchFilters;
   loading: boolean;
   error: string | null;
+  pagination: { page: number; limit: number; total: number; pages: number };
 
   // Actions
   setProperties: (properties: Property[]) => void;
@@ -23,7 +38,7 @@ interface PropertyState {
   toggleFavorite: (propertyId: string) => Promise<void>;
   filterProperties: (filters: Partial<SearchFilters>) => void;
   clearFilters: () => void;
-  fetchProperties: (filters?: SearchFilters) => Promise<void>;
+  fetchProperties: (filters?: PropertyFilters) => Promise<void>;
   fetchFavorites: () => Promise<void>;
   getPropertyById: (id: string) => Promise<Property | null>; // Added this function
 }
@@ -47,6 +62,7 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
   },
   loading: false,
   error: null,
+  pagination: { page: 1, limit: 30, total: 0, pages: 0 },
 
   // Add this function to your store
   getPropertyById: async (id: string): Promise<Property | null> => {
@@ -72,6 +88,7 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await propertyService.create(formData);
+      clearPropertyCache();
       set((state) => {
         const newProperties = [...state.properties, response.data];
         return {
@@ -93,6 +110,7 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await propertyService.update(id, updates);
+      clearPropertyCache();
       set((state) => {
         const updatedProperties = state.properties.map((prop) =>
           prop._id === id ? { ...prop, ...response.data } : prop,
@@ -118,6 +136,7 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
     set({ loading: true, error: null });
     try {
       await propertyService.delete(id);
+      clearPropertyCache();
       set((state) => {
         const filteredProperties = state.properties.filter(
           (prop) => prop._id !== id,
@@ -226,28 +245,68 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
       },
     })),
 
-  fetchProperties: async (filters) => {
-    set({ loading: true, error: null });
+  fetchProperties: (filters = {}) => {
+    const authState = useAuthStore.getState();
+    const viewerKey = authState.user?._id || authState.accessToken?.slice(-16) || "anonymous";
+    const requestKey = `${viewerKey}:${JSON.stringify(filters)}`;
+    activePropertyRequestKey = requestKey;
 
-    try {
-      const response = await propertyService.getAll(filters);
-      const propertyArray = response.data;
-
+    const cached = propertyPageCache.get(requestKey);
+    if (cached && Date.now() - cached.cachedAt < PROPERTY_CACHE_TTL_MS) {
       set({
-        properties: propertyArray,
-        filteredProperties: propertyArray,
-        featuredProperties: propertyArray.filter(
-          (prop: Property) => prop.isFeatured,
-        ),
+        properties: cached.properties,
+        filteredProperties: cached.properties,
+        featuredProperties: cached.properties.filter((property) => property.isFeatured),
+        pagination: cached.pagination,
         loading: false,
+        error: null,
       });
-
-      if (filters) get().filterProperties(filters);
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to fetch properties";
-      set({ error: errorMessage, loading: false });
+      return Promise.resolve();
     }
+
+    const existingRequest = inFlightPropertyRequests.get(requestKey);
+    if (existingRequest) return existingRequest;
+
+    set({ loading: true, error: null });
+    const request = (async () => {
+      try {
+        const response = await propertyService.getAll(filters);
+        const propertyArray = response.data;
+        const pagination = response.pagination || {
+          page: filters.page || 1,
+          limit: filters.limit || 30,
+          total: propertyArray.length,
+          pages: propertyArray.length ? 1 : 0,
+        };
+        propertyPageCache.set(requestKey, {
+          properties: propertyArray,
+          pagination,
+          cachedAt: Date.now(),
+        });
+
+        if (activePropertyRequestKey === requestKey) {
+          set({
+            properties: propertyArray,
+            filteredProperties: propertyArray,
+            featuredProperties: propertyArray.filter((property) => property.isFeatured),
+            pagination,
+            loading: false,
+          });
+        }
+      } catch (error: unknown) {
+        if (activePropertyRequestKey === requestKey) {
+          const errorMessage = error instanceof Error
+            ? error.message
+            : "Failed to fetch properties";
+          set({ error: errorMessage, loading: false });
+        }
+      } finally {
+        inFlightPropertyRequests.delete(requestKey);
+      }
+    })();
+
+    inFlightPropertyRequests.set(requestKey, request);
+    return request;
   },
 
   fetchFavorites: async () => {

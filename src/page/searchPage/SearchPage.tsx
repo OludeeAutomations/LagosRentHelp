@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import { usePropertyStore } from "@/stores/propertyStore";
@@ -10,10 +10,11 @@ import PropertyCategories from "@/components/common/PropertyCategories";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Home, Search } from "lucide-react";
+import type { PropertyFilters } from "@/services/propertyService";
 
 const SearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { properties, fetchProperties, loading, error } = usePropertyStore();
+  const { properties, fetchProperties, loading, error, pagination } = usePropertyStore();
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedCategory, setSelectedCategory] = useState<string>(
@@ -31,9 +32,28 @@ const SearchPage: React.FC = () => {
     category: searchParams.get("category") || "",
   };
 
+  const queryKey = searchParams.toString();
+  const queryFilters = useMemo<PropertyFilters>(() => {
+    const params = new URLSearchParams(queryKey);
+    const listingType = params.get("listingType");
+    return {
+      page: Math.max(1, Number(params.get("page")) || 1),
+      limit: 24,
+      location: params.get("location") || undefined,
+      type: params.get("type") || undefined,
+      category: params.get("category") || undefined,
+      listingType: listingType === "rent" || listingType === "short-let" ? listingType : undefined,
+      minPrice: Number(params.get("minPrice")) || undefined,
+      maxPrice: Number(params.get("maxPrice")) || undefined,
+      bedrooms: Number(params.get("bedrooms")) || undefined,
+      bathrooms: Number(params.get("bathrooms")) || undefined,
+      sortBy: "newest",
+    };
+  }, [queryKey]);
+
   useEffect(() => {
-    fetchProperties();
-  }, [fetchProperties]);
+    void fetchProperties(queryFilters);
+  }, [fetchProperties, queryFilters]);
 
   useEffect(() => {
     // Update selected category when URL params change
@@ -68,6 +88,7 @@ const SearchPage: React.FC = () => {
     params.delete("maxPrice");
     params.delete("bedrooms");
     params.delete("bathrooms");
+    params.delete("page");
 
     setSearchParams(params);
   };
@@ -76,30 +97,15 @@ const SearchPage: React.FC = () => {
     setSearchParams(new URLSearchParams());
   };
 
-  // Filter properties based on current filters
-  const filteredProperties = properties.filter((property) => {
-    // Category filter
-    if (selectedCategory && property.type !== selectedCategory) {
-      return false;
-    }
+  const filteredProperties = properties;
 
-    // Other filters
-    return (
-      (!currentFilters.location ||
-        property.location
-          .toLowerCase()
-          .includes(currentFilters.location.toLowerCase())) &&
-      (!currentFilters.type || property.type === currentFilters.type) &&
-      (!currentFilters.minPrice ||
-        property.price >= Number(currentFilters.minPrice)) &&
-      (!currentFilters.maxPrice ||
-        property.price <= Number(currentFilters.maxPrice)) &&
-      (!currentFilters.bedrooms ||
-        property.bedrooms >= Number(currentFilters.bedrooms)) &&
-      (!currentFilters.bathrooms ||
-        property.bathrooms >= Number(currentFilters.bathrooms))
-    );
-  });
+  const changePage = (nextPage: number) => {
+    const params = new URLSearchParams(searchParams);
+    if (nextPage <= 1) params.delete("page");
+    else params.set("page", String(nextPage));
+    setSearchParams(params);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   if (error) {
     return (
@@ -113,7 +119,7 @@ const SearchPage: React.FC = () => {
               </h3>
               <p className="text-muted-foreground">{error}</p>
               <button
-                onClick={() => fetchProperties()}
+                onClick={() => void fetchProperties(queryFilters)}
                 className="mt-4 bg-[#129B36] text-white px-4 py-2 rounded-md">
                 Try Again
               </button>
@@ -182,7 +188,7 @@ const SearchPage: React.FC = () => {
             className="lg:col-span-3">
             {/* Results Header */}
             <SearchResultsHeader
-              resultsCount={filteredProperties.length}
+              resultsCount={pagination.total}
               viewMode={viewMode}
               onViewModeChange={setViewMode}
               filters={currentFilters}
@@ -229,10 +235,19 @@ const SearchPage: React.FC = () => {
                 </CardContent>
               </Card>
             ) : (
-              <PropertiesGrid
-                properties={filteredProperties}
-                viewMode={viewMode}
-              />
+              <>
+                <PropertiesGrid
+                  properties={filteredProperties}
+                  viewMode={viewMode}
+                />
+                {pagination.pages > 1 && (
+                  <nav aria-label="Property result pages" className="mt-8 flex items-center justify-center gap-3">
+                    <button type="button" disabled={pagination.page <= 1 || loading} onClick={() => changePage(pagination.page - 1)} className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-40">Previous</button>
+                    <span className="text-sm text-gray-600">Page <strong>{pagination.page}</strong> of <strong>{pagination.pages}</strong></span>
+                    <button type="button" disabled={pagination.page >= pagination.pages || loading} onClick={() => changePage(pagination.page + 1)} className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-40">Next</button>
+                  </nav>
+                )}
+              </>
             )}
           </motion.div>
         </div>

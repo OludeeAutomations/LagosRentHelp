@@ -53,7 +53,7 @@ const heroSlides = [
 
 const Home = () => {
   const navigate = useNavigate();
-  const { properties, fetchProperties, loading } = usePropertyStore();
+  const { properties, fetchProperties, loading, pagination } = usePropertyStore();
   const user = useAuthStore((state) => state.user);
   const [selectedLga, setSelectedLga] = useState("");
   const [selectedType, setSelectedType] = useState("");
@@ -165,7 +165,7 @@ const Home = () => {
 
       <section className="border-y border-gray-100 bg-white">
         <div className="mx-auto grid max-w-7xl divide-y px-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4 py-7 sm:px-5"><span className="rounded-xl bg-green-50 p-3 text-[#129B36]"><HomeIcon className="h-6 w-6" /></span><div><p className="text-xl font-bold">{loading ? "—" : properties.length}</p><p className="text-sm text-gray-500">Approved homes available</p></div></div>
+          <div className="flex items-center gap-4 py-7 sm:px-5"><span className="rounded-xl bg-green-50 p-3 text-[#129B36]"><HomeIcon className="h-6 w-6" /></span><div><p className="text-xl font-bold">{loading ? "—" : pagination.total}</p><p className="text-sm text-gray-500">Approved homes available</p></div></div>
           <div className="flex items-center gap-4 py-7 sm:px-5"><span className="rounded-xl bg-green-50 p-3 text-[#129B36]"><MapPin className="h-6 w-6" /></span><div><p className="text-xl font-bold">20 LGAs</p><p className="text-sm text-gray-500">Lagos-wide preferences</p></div></div>
           <div className="flex items-center gap-4 py-7 sm:px-5"><span className="rounded-xl bg-green-50 p-3 text-[#129B36]"><FileSearch className="h-6 w-6" /></span><div><p className="text-xl font-bold">Human review</p><p className="text-sm text-gray-500">For ownership applications</p></div></div>
         </div>
