@@ -61,6 +61,7 @@ const LandlordDashboardLayout = () => {
   const [noticesLoading, setNoticesLoading] = useState(true);
   const [verificationStatus, setVerificationStatus] = useState<LandlordProfile["verificationStatus"] | null>(null);
   const [verifiedAvatarUrl, setVerifiedAvatarUrl] = useState<string | null>(null);
+  const [landlordAvatarResolved, setLandlordAvatarResolved] = useState(false);
 
   const pageHeader = location.pathname === "/landlord/listings/new"
     ? { title: "Add New Listing", description: "Create and publish a new property listing" }
@@ -86,6 +87,9 @@ const LandlordDashboardLayout = () => {
     .join("")
     .toUpperCase()
     .slice(0, 2);
+  const dashboardAvatarUrl = landlordAvatarResolved
+    ? verifiedAvatarUrl || (user ? getDisplayProfileImage(user) : "")
+    : "";
 
   const newNotices = notices.filter((notice) => !readNotificationIds.has(notice.id));
   const historyNotices = notices.filter((notice) => readNotificationIds.has(notice.id));
@@ -96,6 +100,11 @@ const LandlordDashboardLayout = () => {
 
   useEffect(() => {
     setReadNotificationIds(loadReadNotificationIds("landlord", user?._id));
+  }, [user?._id]);
+
+  useEffect(() => {
+    setVerifiedAvatarUrl(null);
+    setLandlordAvatarResolved(false);
   }, [user?._id]);
 
   const markNotificationsRead = (ids: string[]) => {
@@ -123,6 +132,7 @@ const LandlordDashboardLayout = () => {
         if (!active) return;
         setVerificationStatus(profile?.verificationStatus || null);
         setVerifiedAvatarUrl(profile?.identityImageUrl || null);
+        setLandlordAvatarResolved(true);
 
         const next: LandlordNotice[] = [];
         if (profile?.verificationStatus === "pending") {
@@ -165,6 +175,7 @@ const LandlordDashboardLayout = () => {
           setNotices([]);
           setVerificationStatus(null);
           setVerifiedAvatarUrl(null);
+          setLandlordAvatarResolved(true);
         }
       } finally {
         if (active) setNoticesLoading(false);
@@ -340,8 +351,8 @@ const LandlordDashboardLayout = () => {
             </Popover>
             <Link to="/landlord/profile" className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-50">
               <Avatar className="h-9 w-9">
-                <AvatarImage src={verifiedAvatarUrl || (user ? getDisplayProfileImage(user) || undefined : undefined)} alt={user?.name || "Landlord"} referrerPolicy="no-referrer" />
-                <AvatarFallback className="bg-[#129B36] text-sm text-white">{initials}</AvatarFallback>
+                <AvatarImage src={dashboardAvatarUrl || undefined} alt={user?.name || "Landlord"} referrerPolicy="no-referrer" />
+                <AvatarFallback className={landlordAvatarResolved ? "bg-[#129B36] text-sm text-white" : "animate-pulse bg-gray-200 text-transparent"}>{landlordAvatarResolved ? initials : "LR"}</AvatarFallback>
               </Avatar>
               <div className="hidden text-left sm:block">
                 <p className="max-w-40 truncate text-sm font-semibold text-gray-900">{user?.name}</p>
