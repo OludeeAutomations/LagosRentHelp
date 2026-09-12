@@ -1,20 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
-  BadgeCheck,
   BarChart3,
+  Briefcase,
   Building2,
   Eye,
   Heart,
   ListChecks,
   RefreshCw,
-  UsersRound,
+  UserCog,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import DashboardSummaryBanner from "@/components/common/DashboardSummaryDecoration";
 import {
   adminDashboardService,
   type AdminLandlordSummary,
@@ -108,43 +109,24 @@ const SuperAdminDashboardPage = () => {
     };
   }, [landlords]);
 
-  const summaryCards = [
-    { label: "Onboarded landlords", value: landlords.length, icon: UsersRound, color: "bg-green-50 text-[#129B36]" },
-    { label: "Verified landlords", value: analytics.verified, icon: BadgeCheck, color: "bg-blue-50 text-blue-600" },
-    { label: "Total listings", value: analytics.totalListings, icon: Building2, color: "bg-violet-50 text-violet-600" },
-    { label: "Pending reviews", value: analytics.pending, icon: ListChecks, color: "bg-amber-50 text-amber-600" },
-  ];
-
   return (
     <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
-      <section className="mb-7 overflow-hidden rounded-2xl bg-gradient-to-br from-[#0b3d25] via-[#116b34] to-[#129B36] p-6 text-white shadow-sm sm:p-8">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-green-200">Platform overview</p>
-            <h2 className="mt-2 text-2xl font-bold sm:text-3xl">Super-admin dashboard</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-green-50/85">Monitor landlord onboarding, verification health, listings, and marketplace engagement.</p>
-          </div>
+      <DashboardSummaryBanner
+        eyebrow="Platform overview"
+        title="Super-admin dashboard"
+        description="Monitor landlord onboarding, verification health, listings, and marketplace engagement."
+        items={[
+          { label: "Onboarded landlords", value: loading ? "—" : formatNumber(landlords.length), icon: Briefcase },
+          { label: "Total listings", value: loading ? "—" : formatNumber(analytics.totalListings), icon: Building2 },
+          { label: "Pending reviews", value: loading ? "—" : formatNumber(analytics.pending), icon: ListChecks },
+          { label: "Administrators", value: loading ? "—" : formatNumber(adminCount), icon: UserCog },
+        ]}
+        action={
           <Button variant="outline" onClick={() => void loadDashboard()} disabled={loading} className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
             <RefreshCw className={loading ? "animate-spin" : ""} /> Refresh data
           </Button>
-        </div>
-        <div className="mt-7 flex flex-wrap gap-x-8 gap-y-3 border-t border-white/20 pt-5 text-sm">
-          <span><strong className="text-lg">{adminCount}</strong> administrators</span>
-          <span><strong className="text-lg">{formatNumber(analytics.totalViews)}</strong> listing views</span>
-          <span><strong className="text-lg">{formatNumber(analytics.totalLikes)}</strong> saved interests</span>
-        </div>
-      </section>
-
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {summaryCards.map(({ label, value, icon: Icon, color }) => (
-          <Card key={label}>
-            <CardContent className="flex items-center justify-between p-5">
-              <div><p className="text-sm text-gray-500">{label}</p><p className="mt-1 text-3xl font-bold text-gray-950">{loading ? "—" : formatNumber(value)}</p></div>
-              <span className={`flex h-12 w-12 items-center justify-center rounded-xl ${color}`}><Icon className="h-6 w-6" /></span>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+        }
+      />
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(300px,1fr)]">
         <Card>

@@ -1,22 +1,25 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BadgeCheck,
+  Briefcase,
   Building2,
   ChevronLeft,
   ChevronRight,
   Eye,
   Heart,
+  ListChecks,
   Mail,
   MapPin,
   Phone,
+  RefreshCw,
   Search,
   UserRound,
-  UsersRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import DashboardSummaryBanner from "@/components/common/DashboardSummaryDecoration";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
@@ -88,17 +91,26 @@ const AdminLandlordsPage = () => {
 
   return (
     <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card><CardContent className="flex items-center justify-between p-5"><div><p className="text-sm text-gray-500">Total landlords</p><p className="mt-1 text-3xl font-bold">{loading ? "—" : landlords.length}</p></div><span className="rounded-xl bg-green-50 p-3 text-[#129B36]"><UsersRound className="h-6 w-6" /></span></CardContent></Card>
-        <Card><CardContent className="flex items-center justify-between p-5"><div><p className="text-sm text-gray-500">Verified</p><p className="mt-1 text-3xl font-bold">{loading ? "—" : verifiedCount}</p></div><span className="rounded-xl bg-blue-50 p-3 text-blue-600"><BadgeCheck className="h-6 w-6" /></span></CardContent></Card>
-        <Card><CardContent className="flex items-center justify-between p-5"><div><p className="text-sm text-gray-500">With listings</p><p className="mt-1 text-3xl font-bold">{loading ? "—" : activeCount}</p></div><span className="rounded-xl bg-violet-50 p-3 text-violet-600"><Building2 className="h-6 w-6" /></span></CardContent></Card>
-        <Card><CardContent className="flex items-center justify-between p-5"><div><p className="text-sm text-gray-500">Combined listings</p><p className="mt-1 text-3xl font-bold">{loading ? "—" : listingCount}</p></div><span className="rounded-xl bg-amber-50 p-3 text-amber-600"><Building2 className="h-6 w-6" /></span></CardContent></Card>
-      </div>
+      <DashboardSummaryBanner
+        eyebrow="Landlord directory"
+        title="Onboarded landlord overview"
+        description="Review every landlord's profile, verification standing, location, and property portfolio."
+        items={[
+          { label: "Total landlords", value: loading ? "—" : landlords.length, icon: Briefcase },
+          { label: "Verified", value: loading ? "—" : verifiedCount, icon: BadgeCheck },
+          { label: "With listings", value: loading ? "—" : activeCount, icon: Building2 },
+          { label: "Combined listings", value: loading ? "—" : listingCount, icon: ListChecks },
+        ]}
+        action={
+          <Button variant="outline" onClick={() => void loadLandlords()} disabled={loading} className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
+            <RefreshCw className={loading ? "animate-spin" : ""} /> Refresh data
+          </Button>
+        }
+      />
 
       <Card className="mt-6">
         <CardHeader className="gap-4 border-b sm:flex-row sm:items-center sm:justify-between">
           <div><CardTitle>Onboarded landlords</CardTitle><p className="mt-1 text-sm text-gray-500">Contact, verification, location, and portfolio details for every landlord.</p></div>
-          <Button variant="outline" onClick={() => void loadLandlords()} disabled={loading}>Refresh</Button>
         </CardHeader>
         <CardContent className="p-0">
           <div className="flex flex-col gap-3 border-b p-4 sm:flex-row">

@@ -1,6 +1,6 @@
 import {
   Bell,
-  Building2,
+  Briefcase,
   ExternalLink,
   LayoutDashboard,
   LogOut,
@@ -48,7 +48,7 @@ const AdminDashboardLayout = () => {
   const navigation: AdminNavigationItem[] = user?.role === "super_admin"
     ? [
         { label: "Dashboard", href: "/admin", icon: LayoutDashboard, exact: true },
-        { label: "Landlords", href: "/admin/landlords", icon: Building2 },
+        { label: "Landlords", href: "/admin/landlords", icon: Briefcase },
         ...baseNavigation,
         { label: "Administrators", href: "/admin/accounts", icon: UserCog },
       ]
