@@ -187,25 +187,6 @@ const LandlordVerificationPage = () => {
   return (
     <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
       <div className="w-full space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-950">Admin review</h2>
-          <div className="flex gap-3">
-            <select
-              aria-label="Filter verification applications"
-              className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm"
-              value={filter}
-              onChange={(event) => setFilter(event.target.value as "all" | VerificationStatus)}>
-              <option value="pending">Pending</option>
-              <option value="verified">Verified</option>
-              <option value="rejected">Rejected</option>
-              <option value="all">All applications</option>
-            </select>
-            <Button variant="outline" onClick={() => void loadApplications()} disabled={loading}>
-              <RefreshCw className={loading ? "animate-spin" : ""} /> Refresh
-            </Button>
-          </div>
-        </div>
-
         <DashboardSummaryBanner
           eyebrow="Verification queue"
           title="Landlord verification overview"
@@ -215,6 +196,23 @@ const LandlordVerificationPage = () => {
             { label: "Verified", value: counts.verified, icon: BadgeCheck },
             { label: "Rejected", value: counts.rejected, icon: XCircle },
           ]}
+          action={
+            <div className="flex flex-wrap gap-3">
+              <select
+                aria-label="Filter verification applications"
+                className="h-10 rounded-md border border-white/30 bg-white/10 px-3 text-sm text-white outline-none hover:bg-white/20 focus:ring-2 focus:ring-white/40"
+                value={filter}
+                onChange={(event) => setFilter(event.target.value as "all" | VerificationStatus)}>
+                <option className="text-gray-900" value="pending">Pending</option>
+                <option className="text-gray-900" value="verified">Verified</option>
+                <option className="text-gray-900" value="rejected">Rejected</option>
+                <option className="text-gray-900" value="all">All applications</option>
+              </select>
+              <Button variant="outline" onClick={() => void loadApplications()} disabled={loading} className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
+                <RefreshCw className={loading ? "animate-spin" : ""} /> Refresh
+              </Button>
+            </div>
+          }
         />
 
         {loading ? (
