@@ -21,6 +21,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -67,6 +68,7 @@ const LandlordVerificationPage = () => {
   const [actionId, setActionId] = useState<string | null>(null);
   const [openingPath, setOpeningPath] = useState<string | null>(null);
   const [selectedApplication, setSelectedApplication] = useState<LandlordVerificationApplication | null>(null);
+  const [approvalCandidate, setApprovalCandidate] = useState<LandlordVerificationApplication | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
@@ -158,13 +160,6 @@ const LandlordVerificationPage = () => {
       toast.error("Enter a clear rejection reason for the applicant.");
       return;
     }
-    if (
-      decision === "verified" &&
-      !window.confirm(`Approve ${application.name} as a verified landlord?`)
-    ) {
-      return;
-    }
-
     setActionId(application.userId);
     try {
       await adminVerificationService.reviewApplication(
@@ -176,6 +171,7 @@ const LandlordVerificationPage = () => {
         decision === "verified" ? "Landlord verified." : "Application rejected.",
       );
       await loadApplications();
+      setApprovalCandidate(null);
       setSelectedApplication(null);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Review could not be saved.");
@@ -332,12 +328,47 @@ const LandlordVerificationPage = () => {
                   <p className="text-xs text-gray-500">Submitted {formatDate(selectedApplication.submittedAt)}{selectedApplication.reviewedAt ? ` · Reviewed ${formatDate(selectedApplication.reviewedAt)} by ${selectedApplication.reviewerName || "administrator"}` : ""}</p>
                   <div className="flex gap-2">
                     <Button variant="destructive" disabled={actionId === selectedApplication.userId} onClick={() => void review(selectedApplication, "rejected")}><XCircle /> Reject</Button>
-                    <Button className="bg-[#129B36] hover:bg-[#0e7d2b]" disabled={actionId === selectedApplication.userId} onClick={() => void review(selectedApplication, "verified")}>
+                    <Button className="bg-[#129B36] hover:bg-[#0e7d2b]" disabled={actionId === selectedApplication.userId} onClick={() => setApprovalCandidate(selectedApplication)}>
                       {actionId === selectedApplication.userId ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} Approve
                     </Button>
                   </div>
                 </div>
               </div>
+            </DialogContent>
+          )}
+        </Dialog>
+
+        <Dialog
+          open={Boolean(approvalCandidate)}
+          onOpenChange={(open) => {
+            if (!open && !actionId) setApprovalCandidate(null);
+          }}>
+          {approvalCandidate && (
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <div className="mb-1 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-[#129B36]">
+                  <BadgeCheck className="h-6 w-6" />
+                </div>
+                <DialogTitle>Approve this landlord?</DialogTitle>
+                <DialogDescription className="leading-6">
+                  You are about to verify {approvalCandidate.name}. They will be able to publish rental listings after approval.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="rounded-lg border bg-gray-50 p-4">
+                <p className="font-semibold text-gray-950">{approvalCandidate.businessName || approvalCandidate.name}</p>
+                <p className="mt-1 text-sm text-gray-500">{approvalCandidate.email}</p>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" disabled={actionId === approvalCandidate.userId} onClick={() => setApprovalCandidate(null)}>
+                  Cancel
+                </Button>
+                <Button className="bg-[#129B36] hover:bg-[#0e7d2b]" disabled={actionId === approvalCandidate.userId} onClick={() => void review(approvalCandidate, "verified")}>
+                  {actionId === approvalCandidate.userId ? <Loader2 className="animate-spin" /> : <CheckCircle2 />}
+                  Approve landlord
+                </Button>
+              </DialogFooter>
             </DialogContent>
           )}
         </Dialog>

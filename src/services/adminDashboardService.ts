@@ -23,6 +23,7 @@ export interface AdminLandlordSummary {
   totalViews: number;
   totalLikes: number;
   latestListingAt: string | null;
+  avatarUrl: string | null;
 }
 
 type AdminLandlordRow = {
@@ -71,12 +72,44 @@ const mapLandlord = (row: AdminLandlordRow): AdminLandlordSummary => ({
   totalViews: Number(row.total_views || 0),
   totalLikes: Number(row.total_likes || 0),
   latestListingAt: row.latest_listing_at,
+  avatarUrl: null,
 });
+
+type VerifiedIdentityRow = {
+  user_id: string;
+  identity_image_path: string;
+};
 
 export const adminDashboardService = {
   getLandlords: async (): Promise<AdminLandlordSummary[]> => {
-    const { data, error } = await supabase.rpc("get_super_admin_landlords");
+    const [{ data, error }, { data: verificationData }] = await Promise.all([
+      supabase.rpc("get_super_admin_landlords"),
+      supabase.rpc("get_landlord_verification_queue", { p_status: "verified" }),
+    ]);
     if (error) throw new Error(error.message);
-    return ((data || []) as AdminLandlordRow[]).map(mapLandlord);
+
+    const landlords = ((data || []) as AdminLandlordRow[]).map(mapLandlord);
+    const verificationRows = (verificationData || []) as VerifiedIdentityRow[];
+    const imageUrls = new Map<string, string>();
+
+    await Promise.all(
+      verificationRows.map(async (verification) => {
+        if (!verification.identity_image_path) return;
+        const { data: signedImage } = await supabase.storage
+          .from("landlord-verification")
+          .createSignedUrl(verification.identity_image_path, 3600);
+        if (signedImage?.signedUrl) {
+          imageUrls.set(verification.user_id, signedImage.signedUrl);
+        }
+      }),
+    );
+
+    return landlords.map((landlord) => ({
+      ...landlord,
+      avatarUrl:
+        landlord.verificationStatus === "verified"
+          ? imageUrls.get(landlord.userId) || null
+          : null,
+    }));
   },
 };

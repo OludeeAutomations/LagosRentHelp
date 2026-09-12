@@ -51,6 +51,7 @@ const LandlordDashboardLayout = () => {
   const [notices, setNotices] = useState<LandlordNotice[]>([]);
   const [noticesLoading, setNoticesLoading] = useState(true);
   const [verificationStatus, setVerificationStatus] = useState<LandlordProfile["verificationStatus"] | null>(null);
+  const [verifiedAvatarUrl, setVerifiedAvatarUrl] = useState<string | null>(null);
 
   const pageHeader = location.pathname === "/landlord/listings/new"
     ? { title: "Add New Listing", description: "Create and publish a new property listing" }
@@ -87,6 +88,7 @@ const LandlordDashboardLayout = () => {
         const profile = await landlordService.getProfile();
         if (!active) return;
         setVerificationStatus(profile?.verificationStatus || null);
+        setVerifiedAvatarUrl(profile?.identityImageUrl || null);
 
         const next: LandlordNotice[] = [];
         if (profile?.verificationStatus === "pending") {
@@ -120,6 +122,7 @@ const LandlordDashboardLayout = () => {
         if (active) {
           setNotices([]);
           setVerificationStatus(null);
+          setVerifiedAvatarUrl(null);
         }
       } finally {
         if (active) setNoticesLoading(false);
@@ -275,7 +278,7 @@ const LandlordDashboardLayout = () => {
             </Popover>
             <Link to="/landlord/profile" className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-50">
               <Avatar className="h-9 w-9">
-                <AvatarImage src={user ? getDisplayProfileImage(user) || undefined : undefined} alt={user?.name || "Landlord"} referrerPolicy="no-referrer" />
+                <AvatarImage src={verifiedAvatarUrl || (user ? getDisplayProfileImage(user) || undefined : undefined)} alt={user?.name || "Landlord"} referrerPolicy="no-referrer" />
                 <AvatarFallback className="bg-[#129B36] text-sm text-white">{initials}</AvatarFallback>
               </Avatar>
               <div className="hidden text-left sm:block">

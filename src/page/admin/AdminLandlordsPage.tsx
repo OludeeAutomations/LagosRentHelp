@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DashboardSummaryBanner from "@/components/common/DashboardSummaryDecoration";
@@ -133,7 +134,7 @@ const AdminLandlordsPage = () => {
                     const initials = landlord.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
                     return (
                       <tr key={landlord.userId} className="hover:bg-gray-50/70">
-                        <td className="px-5 py-4"><div className="flex items-center gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 font-semibold text-[#0e7d2b]">{initials || "L"}</span><div className="min-w-0"><p className="max-w-52 truncate font-semibold text-gray-950">{landlord.businessName || landlord.name}</p><p className="max-w-52 truncate text-xs text-gray-500">{landlord.name}</p></div></div></td>
+                        <td className="px-5 py-4"><div className="flex items-center gap-3"><Avatar className="h-10 w-10 shrink-0"><AvatarImage src={landlord.avatarUrl || undefined} alt={landlord.name} className="object-cover" /><AvatarFallback className="bg-green-100 font-semibold text-[#0e7d2b]">{initials || "L"}</AvatarFallback></Avatar><div className="min-w-0"><p className="max-w-52 truncate font-semibold text-gray-950">{landlord.businessName || landlord.name}</p><p className="max-w-52 truncate text-xs text-gray-500">{landlord.name}</p></div></div></td>
                         <td className="px-4 py-4"><p className="max-w-52 truncate text-gray-700">{landlord.email}</p><p className="text-xs text-gray-500">{landlord.whatsappNumber || landlord.phone || "No phone"}</p></td>
                         <td className="px-4 py-4 text-gray-600">{[landlord.localGovernment, landlord.state].filter(Boolean).join(", ") || "Not provided"}</td>
                         <td className="px-4 py-4"><Badge variant="outline" className={`capitalize ${statusStyles[landlord.verificationStatus]}`}>{landlord.verificationStatus}</Badge></td>
@@ -158,7 +159,7 @@ const AdminLandlordsPage = () => {
       <Dialog open={Boolean(selectedLandlord)} onOpenChange={(open) => !open && setSelectedLandlord(null)}>
         {selectedLandlord && (
           <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-            <DialogHeader><div className="flex flex-wrap items-center gap-3 pr-8"><DialogTitle>{selectedLandlord.businessName || selectedLandlord.name}</DialogTitle><Badge variant="outline" className={`capitalize ${statusStyles[selectedLandlord.verificationStatus]}`}>{selectedLandlord.verificationStatus}</Badge></div><DialogDescription>Onboarded {formatDate(selectedLandlord.joinedAt)}</DialogDescription></DialogHeader>
+            <DialogHeader><div className="flex items-center gap-3 pr-8"><Avatar className="h-12 w-12 shrink-0"><AvatarImage src={selectedLandlord.avatarUrl || undefined} alt={selectedLandlord.name} className="object-cover" /><AvatarFallback className="bg-green-100 font-semibold text-[#0e7d2b]">{selectedLandlord.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "L"}</AvatarFallback></Avatar><div><div className="flex flex-wrap items-center gap-3"><DialogTitle>{selectedLandlord.businessName || selectedLandlord.name}</DialogTitle><Badge variant="outline" className={`capitalize ${statusStyles[selectedLandlord.verificationStatus]}`}>{selectedLandlord.verificationStatus}</Badge></div><DialogDescription>Onboarded {formatDate(selectedLandlord.joinedAt)}</DialogDescription></div></div></DialogHeader>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div className="rounded-xl bg-green-50 p-4"><Building2 className="h-5 w-5 text-green-600" /><p className="mt-2 text-2xl font-bold text-green-800">{selectedLandlord.listingCount}</p><p className="text-xs text-green-700">Total listings</p></div>
