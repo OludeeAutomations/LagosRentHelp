@@ -26,6 +26,16 @@ export interface AdminLandlordSummary {
   avatarUrl: string | null;
 }
 
+export interface AdminRentedListing {
+  id: string;
+  title: string;
+  location: string;
+  price: number;
+  totalPackagePrice: number;
+  imageUrl: string | null;
+  markedRentedAt: string;
+}
+
 type AdminLandlordRow = {
   user_id: string;
   name: string;
@@ -80,6 +90,17 @@ type VerifiedIdentityRow = {
   identity_image_path: string;
 };
 
+type AdminRentedListingRow = {
+  id: string;
+  title: string;
+  location: string;
+  price: number;
+  total_package_price: number | null;
+  images: string[] | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export const adminDashboardService = {
   getLandlords: async (): Promise<AdminLandlordSummary[]> => {
     const [{ data, error }, { data: verificationData }] = await Promise.all([
@@ -110,6 +131,28 @@ export const adminDashboardService = {
         landlord.verificationStatus === "verified"
           ? imageUrls.get(landlord.userId) || null
           : null,
+    }));
+  },
+
+  getLandlordRentedListings: async (
+    userId: string,
+  ): Promise<AdminRentedListing[]> => {
+    const { data, error } = await supabase
+      .rpc("get_super_admin_landlord_rented_listings", {
+        p_landlord_user_id: userId,
+      })
+      .select("id, title, location, price, total_package_price, images, created_at, updated_at")
+      .order("updated_at", { ascending: false });
+    if (error) throw new Error(error.message);
+
+    return ((data || []) as AdminRentedListingRow[]).map((listing) => ({
+      id: listing.id,
+      title: listing.title,
+      location: listing.location,
+      price: Number(listing.price || 0),
+      totalPackagePrice: Number(listing.total_package_price || 0),
+      imageUrl: listing.images?.[0] || null,
+      markedRentedAt: listing.updated_at || listing.created_at,
     }));
   },
 };

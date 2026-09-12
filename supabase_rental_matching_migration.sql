@@ -239,6 +239,7 @@ begin
   cross join public.renter_preferences preference
   where preference.user_id = public.current_public_user_id()
     and property.approval_status = 'approved'
+    and property.status = 'available'
   order by 2 desc, property.created_at desc;
 end;
 $$;

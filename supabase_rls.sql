@@ -82,7 +82,7 @@ create policy "public can read approved properties"
 on public.properties
 for select
 to anon, authenticated
-using (approval_status = 'approved');
+using (approval_status = 'approved' and status = 'available');
 
 -- Public review fields. user_id and moderation counters stay private.
 grant select (
@@ -116,4 +116,3 @@ using (
 -- accessible only through trusted server-side code using service_role.
 
 commit;
-

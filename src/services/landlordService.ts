@@ -16,6 +16,8 @@ export interface LandlordProfile {
   bio: string;
   verificationStatus: "pending" | "verified" | "rejected";
   identityImageUrl: string | null;
+  submittedAt: string | null;
+  reviewedAt: string | null;
 }
 
 export interface LandlordProfileInput {
@@ -333,20 +335,18 @@ export const landlordService = {
     if (error) throw new Error(error.message);
     if (!data) return null;
 
-    let identityImageUrl: string | null = null;
-    if (data.verification_status === "verified") {
-      const { data: verification } = await supabase
-        .from("landlord_verifications")
-        .select("identity_image_path")
-        .eq("user_id", profile.id)
-        .maybeSingle();
+    const { data: verification } = await supabase
+      .from("landlord_verifications")
+      .select("identity_image_path, submitted_at")
+      .eq("user_id", profile.id)
+      .maybeSingle();
 
-      if (verification?.identity_image_path) {
+    let identityImageUrl: string | null = null;
+    if (data.verification_status === "verified" && verification?.identity_image_path) {
         const { data: signedImage } = await supabase.storage
           .from("landlord-verification")
           .createSignedUrl(verification.identity_image_path, 3600);
         identityImageUrl = signedImage?.signedUrl || null;
-      }
     }
 
     return {
@@ -359,6 +359,8 @@ export const landlordService = {
       bio: data.bio || "",
       verificationStatus: data.verification_status,
       identityImageUrl,
+      submittedAt: verification?.submitted_at || null,
+      reviewedAt: data.reviewed_at || null,
     };
   },
 

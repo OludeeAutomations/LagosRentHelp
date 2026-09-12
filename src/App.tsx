@@ -52,6 +52,7 @@ import LandlordDashboardLayout from "./page/landlord/LandlordDashboardLayout";
 import LandlordProfile from "./page/landlord/LandlordProfile";
 import LandlordListings from "./page/landlord/LandlordListings";
 import LandlordLeads from "./page/landlord/LandlordLeads";
+import LandlordLogs from "./page/landlord/LandlordLogs";
 import LandlordSubscription from "./page/landlord/LandlordSubscription";
 import DashboardSecuritySettings from "./page/settings/DashboardSecuritySettings";
 
@@ -235,6 +236,7 @@ const AppContent: React.FC = () => {
                   <Route path="/landlord/listings/new" element={<LandlordCreateListing />} />
                   <Route path="/landlord/listings/:listingId/edit" element={<LandlordCreateListing />} />
                   <Route path="/landlord/leads" element={<LandlordLeads />} />
+                  <Route path="/landlord/logs" element={<LandlordLogs />} />
                   <Route path="/landlord/subscription" element={<LandlordSubscription />} />
                   <Route path="/landlord/profile" element={<LandlordProfile />} />
                   <Route path="/landlord/settings" element={<DashboardSecuritySettings />} />

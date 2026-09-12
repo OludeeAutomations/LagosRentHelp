@@ -53,6 +53,7 @@ begin
    and profile.verification_status = 'verified'
   where property.id = p_property_id
     and property.approval_status = 'approved'
+    and property.status = 'available'
   limit 1;
 
   if v_result is null then
@@ -88,6 +89,7 @@ begin
   from public.properties property
   where property.id = p_property_id
     and property.approval_status = 'approved'
+    and property.status = 'available'
   limit 1;
 
   if v_landlord_id is null then

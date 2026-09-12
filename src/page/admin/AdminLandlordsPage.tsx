@@ -7,7 +7,9 @@ import {
   ChevronRight,
   Eye,
   Heart,
+  KeyRound,
   ListChecks,
+  Loader2,
   Mail,
   MapPin,
   Phone,
@@ -25,6 +27,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import {
   adminDashboardService,
+  type AdminRentedListing,
   type AdminLandlordSummary,
 } from "@/services/adminDashboardService";
 import type { VerificationStatus } from "@/services/adminVerificationService";
@@ -39,10 +42,17 @@ const formatNumber = (value: number) => new Intl.NumberFormat("en-NG").format(va
 const formatDate = (value: string | null) => value
   ? new Intl.DateTimeFormat("en-NG", { dateStyle: "medium" }).format(new Date(value))
   : "Not available";
+const formatPrice = (value: number) => new Intl.NumberFormat("en-NG", {
+  style: "currency",
+  currency: "NGN",
+  maximumFractionDigits: 0,
+}).format(value);
 
 const AdminLandlordsPage = () => {
   const [landlords, setLandlords] = useState<AdminLandlordSummary[]>([]);
   const [selectedLandlord, setSelectedLandlord] = useState<AdminLandlordSummary | null>(null);
+  const [rentedListings, setRentedListings] = useState<AdminRentedListing[]>([]);
+  const [rentedListingsLoading, setRentedListingsLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<VerificationStatus | "all">("all");
   const [page, setPage] = useState(1);
@@ -87,8 +97,21 @@ const AdminLandlordsPage = () => {
   const totalPages = Math.max(1, Math.ceil(filteredLandlords.length / PAGE_SIZE));
   const visibleLandlords = filteredLandlords.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const verifiedCount = landlords.filter((item) => item.verificationStatus === "verified").length;
-  const activeCount = landlords.filter((item) => item.listingCount > 0).length;
   const listingCount = landlords.reduce((sum, item) => sum + item.listingCount, 0);
+  const rentedCount = landlords.reduce((sum, item) => sum + item.rentedListings, 0);
+
+  const openLandlordDetails = async (landlord: AdminLandlordSummary) => {
+    setSelectedLandlord(landlord);
+    setRentedListings([]);
+    setRentedListingsLoading(true);
+    try {
+      setRentedListings(await adminDashboardService.getLandlordRentedListings(landlord.userId));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not load rented properties.");
+    } finally {
+      setRentedListingsLoading(false);
+    }
+  };
 
   return (
     <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
@@ -99,8 +122,8 @@ const AdminLandlordsPage = () => {
         items={[
           { label: "Total landlords", value: loading ? "—" : landlords.length, icon: Briefcase },
           { label: "Verified", value: loading ? "—" : verifiedCount, icon: BadgeCheck },
-          { label: "With listings", value: loading ? "—" : activeCount, icon: Building2 },
           { label: "Combined listings", value: loading ? "—" : listingCount, icon: ListChecks },
+          { label: "Rented records", value: loading ? "—" : rentedCount, icon: KeyRound },
         ]}
         action={
           <Button variant="outline" onClick={() => void loadLandlords()} disabled={loading} className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
@@ -134,13 +157,13 @@ const AdminLandlordsPage = () => {
                     const initials = landlord.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
                     return (
                       <tr key={landlord.userId} className="hover:bg-gray-50/70">
-                        <td className="px-5 py-4"><div className="flex items-center gap-3"><Avatar className="h-10 w-10 shrink-0"><AvatarImage src={landlord.avatarUrl || undefined} alt={landlord.name} className="object-cover" /><AvatarFallback className="bg-green-100 font-semibold text-[#0e7d2b]">{initials || "L"}</AvatarFallback></Avatar><div className="min-w-0"><p className="max-w-52 truncate font-semibold text-gray-950">{landlord.businessName || landlord.name}</p><p className="max-w-52 truncate text-xs text-gray-500">{landlord.name}</p></div></div></td>
+                        <td className="px-5 py-4"><div className="flex items-center gap-3"><Avatar className="h-10 w-10 shrink-0"><AvatarImage src={landlord.avatarUrl || undefined} alt={landlord.name} className="object-cover" /><AvatarFallback className="bg-green-100 font-semibold text-[#0e7d2b]">{initials || "L"}</AvatarFallback></Avatar><div className="min-w-0"><div className="flex max-w-64 flex-wrap items-center gap-1.5"><p className="max-w-52 truncate font-semibold text-gray-950">{landlord.businessName || landlord.name}</p><Badge variant="outline" className={landlord.rentedListings > 0 ? "border-amber-200 bg-amber-50 text-[10px] font-semibold text-amber-700" : "border-gray-200 bg-gray-50 text-[10px] font-semibold text-gray-500"}><KeyRound className="mr-1 h-3 w-3" />{landlord.rentedListings} rented</Badge></div><p className="max-w-52 truncate text-xs text-gray-500">{landlord.name}</p></div></div></td>
                         <td className="px-4 py-4"><p className="max-w-52 truncate text-gray-700">{landlord.email}</p><p className="text-xs text-gray-500">{landlord.whatsappNumber || landlord.phone || "No phone"}</p></td>
                         <td className="px-4 py-4 text-gray-600">{[landlord.localGovernment, landlord.state].filter(Boolean).join(", ") || "Not provided"}</td>
                         <td className="px-4 py-4"><Badge variant="outline" className={`capitalize ${statusStyles[landlord.verificationStatus]}`}>{landlord.verificationStatus}</Badge></td>
                         <td className="px-4 py-4 text-center"><span className="inline-flex min-w-9 justify-center rounded-full bg-gray-100 px-2.5 py-1 font-semibold">{landlord.listingCount}</span></td>
                         <td className="px-4 py-4 text-gray-500">{formatDate(landlord.joinedAt)}</td>
-                        <td className="px-5 py-4 text-right"><Button variant="outline" size="sm" onClick={() => setSelectedLandlord(landlord)}>View details</Button></td>
+                        <td className="px-5 py-4 text-right"><Button variant="outline" size="sm" onClick={() => void openLandlordDetails(landlord)}>View details</Button></td>
                       </tr>
                     );
                   })}
@@ -156,7 +179,7 @@ const AdminLandlordsPage = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={Boolean(selectedLandlord)} onOpenChange={(open) => !open && setSelectedLandlord(null)}>
+      <Dialog open={Boolean(selectedLandlord)} onOpenChange={(open) => { if (!open) { setSelectedLandlord(null); setRentedListings([]); } }}>
         {selectedLandlord && (
           <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
             <DialogHeader><div className="flex items-center gap-3 pr-8"><Avatar className="h-12 w-12 shrink-0"><AvatarImage src={selectedLandlord.avatarUrl || undefined} alt={selectedLandlord.name} className="object-cover" /><AvatarFallback className="bg-green-100 font-semibold text-[#0e7d2b]">{selectedLandlord.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "L"}</AvatarFallback></Avatar><div><div className="flex flex-wrap items-center gap-3"><DialogTitle>{selectedLandlord.businessName || selectedLandlord.name}</DialogTitle><Badge variant="outline" className={`capitalize ${statusStyles[selectedLandlord.verificationStatus]}`}>{selectedLandlord.verificationStatus}</Badge></div><DialogDescription>Onboarded {formatDate(selectedLandlord.joinedAt)}</DialogDescription></div></div></DialogHeader>
@@ -174,6 +197,27 @@ const AdminLandlordsPage = () => {
             </div>
 
             <section className="rounded-xl border p-5"><h3 className="font-semibold text-gray-950">Portfolio breakdown</h3><div className="mt-4 grid gap-3 sm:grid-cols-3"><div className="rounded-lg bg-gray-50 p-3"><p className="text-xs text-gray-500">Available</p><p className="text-lg font-semibold">{selectedLandlord.availableListings}</p></div><div className="rounded-lg bg-gray-50 p-3"><p className="text-xs text-gray-500">Rented</p><p className="text-lg font-semibold">{selectedLandlord.rentedListings}</p></div><div className="rounded-lg bg-gray-50 p-3"><p className="text-xs text-gray-500">Other status</p><p className="text-lg font-semibold">{Math.max(0, selectedLandlord.listingCount - selectedLandlord.availableListings - selectedLandlord.rentedListings)}</p></div></div>{selectedLandlord.bio && <div className="mt-4 border-t pt-4"><p className="text-xs text-gray-500">Business bio</p><p className="mt-1 text-sm leading-6 text-gray-700">{selectedLandlord.bio}</p></div>}{selectedLandlord.verificationNote && <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-800"><strong>Verification note:</strong> {selectedLandlord.verificationNote}</div>}</section>
+
+            <section className="rounded-xl border p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div><h3 className="flex items-center gap-2 font-semibold text-gray-950"><KeyRound className="h-4 w-4 text-amber-600" />Rented property records</h3><p className="mt-1 text-xs text-gray-500">Homes this landlord has marked as rented.</p></div>
+                <Badge variant="secondary">{selectedLandlord.rentedListings} total</Badge>
+              </div>
+              {rentedListingsLoading ? (
+                <div className="flex items-center justify-center gap-2 py-10 text-sm text-gray-500"><Loader2 className="h-4 w-4 animate-spin" />Loading rented properties...</div>
+              ) : rentedListings.length === 0 ? (
+                <p className="py-8 text-center text-sm text-gray-500">No rented properties recorded for this landlord.</p>
+              ) : (
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {rentedListings.map((listing) => (
+                    <article key={listing.id} className="flex gap-3 rounded-xl border bg-gray-50/70 p-3">
+                      <img src={listing.imageUrl || "/placeholder.svg"} alt="" className="h-20 w-24 shrink-0 rounded-lg object-cover" />
+                      <div className="min-w-0"><h4 className="truncate font-semibold text-gray-950">{listing.title}</h4><p className="mt-1 flex items-center gap-1 truncate text-xs text-gray-500"><MapPin className="h-3 w-3 shrink-0" />{listing.location}</p><p className="mt-1 text-xs font-semibold text-gray-700">{formatPrice(listing.totalPackagePrice || listing.price)}</p><p className="mt-1 text-[11px] text-gray-400">Marked rented {formatDate(listing.markedRentedAt)}</p></div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
           </DialogContent>
         )}
       </Dialog>

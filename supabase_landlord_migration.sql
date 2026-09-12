@@ -578,6 +578,22 @@ grant execute on function public.current_public_user_id() to authenticated;
 grant execute on function public.current_app_role() to authenticated;
 grant execute on function public.get_my_properties() to authenticated;
 
+create or replace function public.touch_property_updated_at()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+drop trigger if exists touch_property_updated_at on public.properties;
+create trigger touch_property_updated_at
+before update on public.properties
+for each row execute function public.touch_property_updated_at();
+
 drop policy if exists "landlords read own profile" on public.landlord_profiles;
 drop policy if exists "landlords insert own profile" on public.landlord_profiles;
 drop policy if exists "landlords update own profile" on public.landlord_profiles;

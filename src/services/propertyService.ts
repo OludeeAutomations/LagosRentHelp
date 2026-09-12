@@ -93,6 +93,7 @@ export const mapPublicProperty = (row: PublicPropertyRow): Property => ({
   availableFrom: row.available_from || undefined,
   minimumStay: row.minimum_stay || undefined,
   createdAt: row.created_at,
+  updatedAt: row.updated_at,
 });
 
 export const propertyService = {
@@ -125,7 +126,11 @@ export const propertyService = {
     if (filters.amenities?.length) {
       query = query.contains("amenities", filters.amenities);
     }
-    if (filters.status) query = query.eq("status", filters.status);
+    if (filters.status) {
+      query = query.eq("status", filters.status);
+    } else if (!filters.includeOwned) {
+      query = query.eq("status", "available");
+    }
 
     switch (filters.sortBy) {
       case "price_asc":
@@ -190,6 +195,7 @@ export const propertyService = {
       .select(PUBLIC_PROPERTY_COLUMNS)
       .eq("id", id)
       .eq("approval_status", "approved")
+      .eq("status", "available")
       .single();
 
     if (error) throw new Error(`Failed to fetch property: ${error.message}`);

@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  ScrollText,
   Settings,
   BadgeCheck,
   UsersRound,
@@ -32,6 +33,7 @@ type LandlordNotice = {
   message: string;
   href: string;
   tone: "success" | "warning" | "danger";
+  occurredAt: string | null;
 };
 
 type NotificationTab = "new" | "history";
@@ -41,6 +43,7 @@ const navigation = [
   { label: "My Listings", href: "/landlord/listings", icon: FileStack, exact: true },
   { label: "Add Listing", href: "/landlord/listings/new", icon: FilePlus2 },
   { label: "Leads", href: "/landlord/leads", icon: UsersRound },
+  { label: "Activity Logs", href: "/landlord/logs", icon: ScrollText },
   { label: "Subscription", href: "/landlord/subscription", icon: BadgeCheck },
   { label: "Profile", href: "/landlord/profile", icon: CircleUserRound },
   { label: "Settings", href: "/landlord/settings", icon: Settings },
@@ -69,6 +72,8 @@ const LandlordDashboardLayout = () => {
         ? { title: "Profile", description: "Manage your landlord and contact information" }
         : location.pathname === "/landlord/leads"
           ? { title: "Leads", description: "View genuine renter enquiries for your properties" }
+          : location.pathname === "/landlord/logs"
+            ? { title: "Activity Logs", description: "Review notifications and rented property records" }
           : location.pathname === "/landlord/subscription"
             ? { title: "Subscription", description: "Review your current LagosRentHelp access" }
             : location.pathname === "/landlord/settings"
@@ -127,6 +132,7 @@ const LandlordDashboardLayout = () => {
             message: "Your landlord profile is awaiting administrator review.",
             href: "/landlord/profile",
             tone: "warning",
+            occurredAt: profile.submittedAt,
           });
         } else if (profile?.verificationStatus === "rejected") {
           next.push({
@@ -135,6 +141,7 @@ const LandlordDashboardLayout = () => {
             message: "Review your landlord details and submit the required corrections.",
             href: "/landlord/profile",
             tone: "danger",
+            occurredAt: profile.reviewedAt || profile.submittedAt,
           });
         } else if (profile?.verificationStatus === "verified") {
           next.push({
@@ -143,10 +150,16 @@ const LandlordDashboardLayout = () => {
             message: "Your landlord account has been successfully verified.",
             href: "/landlord/profile",
             tone: "success",
+            occurredAt: profile.reviewedAt || profile.submittedAt,
           });
         }
 
-        setNotices(next);
+        const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        setNotices(next.filter((notice) => {
+          if (!notice.occurredAt) return true;
+          const occurredAt = new Date(notice.occurredAt).getTime();
+          return Number.isNaN(occurredAt) || occurredAt >= oneWeekAgo;
+        }));
       } catch {
         if (active) {
           setNotices([]);
@@ -313,11 +326,16 @@ const LandlordDashboardLayout = () => {
                     })
                   )}
                 </div>
-                {notificationTab === "new" && newNotices.length > 0 && (
-                  <button type="button" onClick={() => { markNotificationsRead(newNotices.map((notice) => notice.id)); setNotificationTab("history"); }} className="block w-full border-t px-5 py-3 text-center text-sm font-medium text-[#129B36] hover:bg-green-50">
-                    Mark all as read
-                  </button>
-                )}
+                <div className="border-t p-2">
+                  {notificationTab === "new" && newNotices.length > 0 && (
+                    <button type="button" onClick={() => { markNotificationsRead(newNotices.map((notice) => notice.id)); setNotificationTab("history"); }} className="block w-full rounded-md px-4 py-2 text-center text-sm font-medium text-[#129B36] hover:bg-green-50">
+                      Mark all as read
+                    </button>
+                  )}
+                  <Link to="/landlord/logs" onClick={() => setNotificationOpen(false)} className="block w-full rounded-md px-4 py-2 text-center text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-[#129B36]">
+                    View full activity logs
+                  </Link>
+                </div>
               </PopoverContent>
             </Popover>
             <Link to="/landlord/profile" className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-50">
