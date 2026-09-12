@@ -85,6 +85,35 @@ type DatabaseProfile = {
   created_at?: string;
 };
 
+const getVerifiedLandlordAvatar = async (
+  userId: string,
+): Promise<string | undefined> => {
+  try {
+    const { data: landlordProfile, error: profileError } = await supabase
+      .from("landlord_profiles")
+      .select("verification_status")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (profileError || landlordProfile?.verification_status !== "verified") {
+      return undefined;
+    }
+
+    const { data: verification, error: verificationError } = await supabase
+      .from("landlord_verifications")
+      .select("identity_image_path")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (verificationError || !verification?.identity_image_path) return undefined;
+
+    const { data: signedImage } = await supabase.storage
+      .from("landlord-verification")
+      .createSignedUrl(verification.identity_image_path, 3600);
+    return signedImage?.signedUrl || undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 const resolveSupabaseUser = async (authUser: SupabaseUser): Promise<User> => {
   const fallback = mapSupabaseUser(authUser);
   let { data, error } = await supabase.rpc(
@@ -105,19 +134,24 @@ const resolveSupabaseUser = async (authUser: SupabaseUser): Promise<User> => {
 
   const profile = data as DatabaseProfile;
   const databaseRole = profile.role === "agent" ? "landlord" : profile.role;
+  const resolvedRole = databaseRole && allowedRoles.includes(databaseRole)
+    ? databaseRole
+    : fallback.role;
+  const resolvedUserId = profile.id || fallback._id;
+  const verifiedLandlordAvatar = resolvedRole === "landlord"
+    ? await getVerifiedLandlordAvatar(resolvedUserId)
+    : undefined;
 
   return {
     ...fallback,
-    _id: profile.id || fallback._id,
+    _id: resolvedUserId,
     name: profile.name || fallback.name,
     email: profile.email || fallback.email,
     phone: profile.phone || fallback.phone,
     avatar: profile.avatar || fallback.avatar,
-    displayAvatar: profile.avatar || fallback.displayAvatar,
-    role:
-      databaseRole && allowedRoles.includes(databaseRole)
-        ? databaseRole
-        : fallback.role,
+    displayAvatar:
+      profile.avatar || verifiedLandlordAvatar || fallback.displayAvatar,
+    role: resolvedRole,
     createdAt: profile.created_at || fallback.createdAt,
   };
 };
