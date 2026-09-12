@@ -171,9 +171,9 @@ const Header: React.FC = () => {
 
                     {user.role === "super_admin" && (
                       <HeaderActionButton
-                        to="/admin/accounts"
+                        to="/admin"
                         icon={Shield}
-                        label="Admin Accounts"
+                        label="Super Admin Dashboard"
                         onClick={closeMenu}
                       />
                     )}

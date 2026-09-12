@@ -90,12 +90,12 @@ const HeaderUserMenu: React.FC<HeaderUserMenuProps> = ({
             ) : null}
 
             {user.role === "super_admin" && (
-              <Link to="/admin/accounts">
+              <Link to="/admin">
                 <Button
                   variant="ghost"
                   className="w-full justify-start text-xs sm:text-sm font-normal">
                   <Shield className="h-4 w-4 mr-2" />
-                  Admin Accounts
+                  Super Admin Dashboard
                 </Button>
               </Link>
             )}

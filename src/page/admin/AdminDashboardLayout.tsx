@@ -1,6 +1,8 @@
 import {
   Bell,
+  Building2,
   ExternalLink,
+  LayoutDashboard,
   LogOut,
   Menu,
   Settings,
@@ -44,14 +46,23 @@ const AdminDashboardLayout = () => {
   const pendingReviews = pendingApplications.length;
 
   const navigation: AdminNavigationItem[] = user?.role === "super_admin"
-    ? [...baseNavigation, { label: "Administrators", href: "/admin/accounts", icon: UserCog }]
+    ? [
+        { label: "Dashboard", href: "/admin", icon: LayoutDashboard, exact: true },
+        { label: "Landlords", href: "/admin/landlords", icon: Building2 },
+        ...baseNavigation,
+        { label: "Administrators", href: "/admin/accounts", icon: UserCog },
+      ]
     : baseNavigation;
 
-  const pageHeader = location.pathname === "/admin/accounts"
-    ? { title: "Administrator Access", description: "Manage trusted review staff" }
-    : location.pathname === "/admin/settings"
-      ? { title: "Settings", description: "Manage your password and account security" }
-      : { title: "Landlord Verification", description: "Review identity and property ownership evidence" };
+  const pageHeader = location.pathname === "/admin"
+    ? { title: "Dashboard", description: "Platform analytics and landlord activity" }
+    : location.pathname === "/admin/landlords"
+      ? { title: "Landlords", description: "View onboarded landlords and their portfolios" }
+      : location.pathname === "/admin/accounts"
+        ? { title: "Administrator Access", description: "Manage trusted review staff" }
+        : location.pathname === "/admin/settings"
+          ? { title: "Settings", description: "Manage your password and account security" }
+          : { title: "Landlord Verification", description: "Review identity and property ownership evidence" };
 
   const initials = (user?.name || "Admin")
     .split(" ")
@@ -90,7 +101,7 @@ const AdminDashboardLayout = () => {
 
   const SidebarContent = () => (
     <>
-      <Link to="/admin/verifications" className="flex items-center gap-3 border-b px-6 py-5">
+      <Link to={user?.role === "super_admin" ? "/admin" : "/admin/verifications"} className="flex items-center gap-3 border-b px-6 py-5">
         <img src="/icon.png" alt="" className="h-10 w-10" />
         <div>
           <p className="font-bold text-gray-950">LagosRentHelp</p>

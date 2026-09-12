@@ -32,6 +32,8 @@ import RenterPreferencesPage from "./page/user/RenterPreferencesPage";
 import AdminAccountsPage from "./page/admin/AdminAccountsPage";
 import LandlordVerificationPage from "./page/admin/LandlordVerificationPage";
 import AdminDashboardLayout from "./page/admin/AdminDashboardLayout";
+import AdminLandlordsPage from "./page/admin/AdminLandlordsPage";
+import SuperAdminDashboardPage from "./page/admin/SuperAdminDashboardPage";
 import AuthCallback from "./page/login/AuthCallback";
 import MfaChallenge from "./page/login/MfaChallenge";
 import { useAuthStore } from "./stores/authStore";
@@ -253,6 +255,8 @@ const AppContent: React.FC = () => {
                   <Route path="/admin/verifications" element={<LandlordVerificationPage />} />
                   <Route path="/admin/settings" element={<DashboardSecuritySettings />} />
                   <Route element={<SuperAdminRoute />}>
+                    <Route path="/admin" element={<SuperAdminDashboardPage />} />
+                    <Route path="/admin/landlords" element={<AdminLandlordsPage />} />
                     <Route path="/admin/accounts" element={<AdminAccountsPage />} />
                   </Route>
                 </Route>

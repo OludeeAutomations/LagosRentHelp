@@ -132,6 +132,54 @@ const PropertyDetails: React.FC = () => {
     fetchProperty();
   }, [id, getPropertyById]);
 
+  useEffect(() => {
+    if (!property) return;
+
+    const previousTitle = document.title;
+    const managedMetadata = [
+      ["property", "og:title", property.title],
+      ["property", "og:description", property.description],
+      ["property", "og:type", "website"],
+      ["property", "og:url", window.location.href],
+      ["property", "og:image", property.images?.[0]],
+      ["name", "twitter:card", "summary_large_image"],
+      ["name", "twitter:title", property.title],
+      ["name", "twitter:description", property.description],
+      ["name", "twitter:image", property.images?.[0]],
+    ].filter((entry): entry is string[] => Boolean(entry[2]));
+
+    document.title = `${property.title} | Lagos Affordable Homes`;
+
+    const createdElements = managedMetadata.map(([attribute, key, content]) => {
+      const selector = `meta[${attribute}="${key}"]`;
+      let element = document.head.querySelector<HTMLMetaElement>(selector);
+      const created = !element;
+
+      if (!element) {
+        element = document.createElement("meta");
+        element.setAttribute(attribute, key);
+        document.head.appendChild(element);
+      }
+
+      const previousContent = element.getAttribute("content");
+      element.setAttribute("content", content);
+      return { element, created, previousContent };
+    });
+
+    return () => {
+      document.title = previousTitle;
+      createdElements.forEach(({ element, created, previousContent }) => {
+        if (created) {
+          element.remove();
+        } else if (previousContent === null) {
+          element.removeAttribute("content");
+        } else {
+          element.setAttribute("content", previousContent);
+        }
+      });
+    };
+  }, [property]);
+
   const isFavorite = userFavorites.includes(property?._id || "");
 
   const handleWhatsAppClick = async () => {
