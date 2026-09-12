@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { landlordService } from "@/services/landlordService";
+import { notifyListingVerificationRequired } from "@/lib/listingAccess";
+import { landlordService, type LandlordProfile } from "@/services/landlordService";
 import type { Property } from "@/types";
 
 const formatPrice = (value: number) =>
@@ -17,12 +18,18 @@ const formatPrice = (value: number) =>
 
 const LandlordListings = () => {
   const [listings, setListings] = useState<Property[]>([]);
+  const [profile, setProfile] = useState<LandlordProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    void landlordService
-      .getMyListings()
-      .then(setListings)
+    void Promise.all([
+      landlordService.getMyListings(),
+      landlordService.getProfile(),
+    ])
+      .then(([nextListings, nextProfile]) => {
+        setListings(nextListings);
+        setProfile(nextProfile);
+      })
       .catch((error) => toast.error(error instanceof Error ? error.message : "Could not load listings."))
       .finally(() => setLoading(false));
   }, []);
@@ -54,7 +61,11 @@ const LandlordListings = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
           <CardTitle className="flex items-center gap-2"><FileStack className="h-5 w-5 text-[#129B36]" strokeWidth={1.8} />Properties</CardTitle>
-          <Button asChild className="bg-[#129B36] hover:bg-[#0e7d2b]"><Link to="/landlord/listings/new"><Plus className="mr-2 h-4 w-4" />Add listing</Link></Button>
+          {profile?.verificationStatus === "verified" ? (
+            <Button asChild className="bg-[#129B36] hover:bg-[#0e7d2b]"><Link to="/landlord/listings/new"><Plus className="mr-2 h-4 w-4" />Add listing</Link></Button>
+          ) : (
+            <Button type="button" onClick={() => notifyListingVerificationRequired(profile?.verificationStatus)} className="bg-[#129B36] hover:bg-[#0e7d2b]"><Plus className="mr-2 h-4 w-4" />Add listing</Button>
+          )}
         </CardHeader>
         <CardContent>
           {loading ? (

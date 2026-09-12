@@ -21,7 +21,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getDisplayProfileImage } from "@/lib/profileImage";
-import { landlordService } from "@/services/landlordService";
+import { notifyListingVerificationRequired } from "@/lib/listingAccess";
+import { landlordService, type LandlordProfile } from "@/services/landlordService";
 import { useAuthStore } from "@/stores/authStore";
 
 type LandlordNotice = {
@@ -49,6 +50,7 @@ const LandlordDashboardLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notices, setNotices] = useState<LandlordNotice[]>([]);
   const [noticesLoading, setNoticesLoading] = useState(true);
+  const [verificationStatus, setVerificationStatus] = useState<LandlordProfile["verificationStatus"] | null>(null);
 
   const pageHeader = location.pathname === "/landlord/listings/new"
     ? { title: "Add New Listing", description: "Create and publish a new property listing" }
@@ -84,6 +86,7 @@ const LandlordDashboardLayout = () => {
       try {
         const profile = await landlordService.getProfile();
         if (!active) return;
+        setVerificationStatus(profile?.verificationStatus || null);
 
         const next: LandlordNotice[] = [];
         if (profile?.verificationStatus === "pending") {
@@ -114,7 +117,10 @@ const LandlordDashboardLayout = () => {
 
         setNotices(next);
       } catch {
-        if (active) setNotices([]);
+        if (active) {
+          setNotices([]);
+          setVerificationStatus(null);
+        }
       } finally {
         if (active) setNoticesLoading(false);
       }
@@ -149,7 +155,13 @@ const LandlordDashboardLayout = () => {
             <Link
               key={item.href}
               to={item.href}
-              onClick={() => setMobileOpen(false)}
+              onClick={(event) => {
+                if (item.href === "/landlord/listings/new" && verificationStatus !== "verified") {
+                  event.preventDefault();
+                  notifyListingVerificationRequired(verificationStatus);
+                }
+                setMobileOpen(false);
+              }}
               className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
                 active
                   ? "bg-[#129B36] text-white"

@@ -24,6 +24,7 @@ import {
   MOVE_IN_WINDOWS,
   YES_NO_OPTIONS,
 } from "@/lib/rentalMatching";
+import { notifyListingVerificationRequired } from "@/lib/listingAccess";
 
 type FormState = Omit<LandlordListingInput, "images" | "amenities"> & {
   amenities: string;
@@ -62,7 +63,7 @@ const LandlordCreateListing = () => {
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<Array<{ file: File; url: string }>>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
-  const [loadingListing, setLoadingListing] = useState(isEditing);
+  const [loadingListing, setLoadingListing] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [open, setOpen] = useState(isEditing);
   useEffect(() => {
@@ -82,7 +83,22 @@ const LandlordCreateListing = () => {
   }, [images]);
 
   useEffect(() => {
-    if (!listingId) return;
+    if (!listingId) {
+      void landlordService
+        .getProfile()
+        .then((profile) => {
+          if (profile?.verificationStatus !== "verified") {
+            notifyListingVerificationRequired(profile?.verificationStatus);
+            navigate("/landlord", { replace: true });
+          }
+        })
+        .catch((error) => {
+          toast.error(error instanceof Error ? error.message : "Could not verify your listing access.");
+          navigate("/landlord", { replace: true });
+        })
+        .finally(() => setLoadingListing(false));
+      return;
+    }
 
     void landlordService
       .getMyListingById(listingId)

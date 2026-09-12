@@ -61,6 +61,11 @@ export const LoginModal = () => {
     }
   };
 
+  const openRegistration = () => {
+    closeLoginModal();
+    navigate("/register");
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -192,6 +197,16 @@ export const LoginModal = () => {
               <GoogleLogo />
               Continue with Google
             </button>
+
+            <p className="text-center text-[13px] text-gray-500">
+              Don&apos;t have an account?{" "}
+              <button
+                type="button"
+                onClick={openRegistration}
+                className="font-semibold text-[#129B36] hover:underline">
+                Choose account type
+              </button>
+            </p>
           </form>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { Agent, User } from "@/types";
+import { toast } from "sonner";
 import {
   authService,
   mapSupabaseSession,
@@ -81,15 +82,38 @@ export const useAuthStore = create<AuthState>()(
       setAccessToken: (accessToken) => set({ accessToken }),
 
       initializeAuth: () => {
-        void supabase.auth.getSession().then(async ({ data, error }) => {
-          if (error || !data.session) {
-            set(createLoggedOutState());
-            return;
-          }
+        let remoteValidationRunning = false;
 
-          const auth = await mapSupabaseSession(data.session);
-          set(createAuthenticatedState(auth.user, auth.accessToken));
-        });
+        const clearDeletedAccountSession = async () => {
+          try {
+            await supabase.auth.signOut({ scope: "local" });
+          } finally {
+            set(createLoggedOutState("This account is no longer available."));
+            toast.error("This account has been deleted. You have been signed out.", {
+              id: "deleted-account-session",
+            });
+          }
+        };
+
+        const validateRemoteAccount = async () => {
+          if (remoteValidationRunning || !get().isAuthenticated) return;
+          remoteValidationRunning = true;
+          try {
+            const { data, error } = await supabase.auth.getUser();
+            const invalidSession =
+              !data.user &&
+              (!error ||
+                error.status === 401 ||
+                error.status === 403 ||
+                ["user_not_found", "session_not_found", "refresh_token_not_found"].includes(error.code || ""));
+
+            if (invalidSession) await clearDeletedAccountSession();
+          } finally {
+            remoteValidationRunning = false;
+          }
+        };
+
+        void get().validateAuth();
 
         const {
           data: { subscription },
@@ -110,19 +134,56 @@ export const useAuthStore = create<AuthState>()(
           // Run profile hydration after Supabase finishes processing the auth
           // event to avoid nested auth-client calls inside the callback.
           window.setTimeout(() => {
-            void mapSupabaseSession(session).then((auth) => {
-              set(createAuthenticatedState(auth.user, auth.accessToken));
-            });
+            void mapSupabaseSession(session)
+              .then((auth) => {
+                set(createAuthenticatedState(auth.user, auth.accessToken));
+              })
+              .catch(() => void validateRemoteAccount());
           }, 0);
         });
 
-        return () => subscription.unsubscribe();
+        const validateWhenVisible = () => {
+          if (document.visibilityState === "visible") void validateRemoteAccount();
+        };
+        const handleExternalLogout = () => set(createLoggedOutState());
+        const validationInterval = window.setInterval(() => {
+          void validateRemoteAccount();
+        }, 30_000);
+
+        window.addEventListener("focus", validateRemoteAccount);
+        window.addEventListener("online", validateRemoteAccount);
+        window.addEventListener("auth-logout", handleExternalLogout);
+        document.addEventListener("visibilitychange", validateWhenVisible);
+
+        return () => {
+          subscription.unsubscribe();
+          window.clearInterval(validationInterval);
+          window.removeEventListener("focus", validateRemoteAccount);
+          window.removeEventListener("online", validateRemoteAccount);
+          window.removeEventListener("auth-logout", handleExternalLogout);
+          document.removeEventListener("visibilitychange", validateWhenVisible);
+        };
       },
 
       validateAuth: async (): Promise<boolean> => {
         const result = await authService.validateToken();
         if (!result.valid || !result.user || !result.accessToken) {
+          if (result.reason === "temporary_error") {
+            set({ loading: false });
+            return Boolean(get().user);
+          }
+
+          try {
+            await supabase.auth.signOut({ scope: "local" });
+          } catch {
+            // Clearing the application state below still ends local access.
+          }
           set(createLoggedOutState());
+          if (result.reason === "account_missing") {
+            toast.error("This account has been deleted. You have been signed out.", {
+              id: "deleted-account-session",
+            });
+          }
           return false;
         }
 

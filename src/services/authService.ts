@@ -287,16 +287,27 @@ export const authService = {
     valid: boolean;
     user?: User;
     accessToken?: string;
+    reason?: "no_session" | "account_missing" | "temporary_error";
   }> => {
     const {
       data: { session },
       error: sessionError,
     } = await supabase.auth.getSession();
 
-    if (sessionError || !session) return { valid: false };
+    if (sessionError || !session) return { valid: false, reason: "no_session" };
 
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) return { valid: false };
+    if (error || !data.user) {
+      const accountMissing =
+        !error ||
+        error.status === 401 ||
+        error.status === 403 ||
+        ["user_not_found", "session_not_found", "refresh_token_not_found"].includes(error.code || "");
+      return {
+        valid: false,
+        reason: accountMissing ? "account_missing" : "temporary_error",
+      };
+    }
 
     return {
       valid: true,

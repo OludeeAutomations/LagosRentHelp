@@ -251,7 +251,7 @@ const Login: React.FC = () => {
               <Link
                 to="/register"
                 className="text-[#129B36] hover:text-[#41614F] font-medium">
-                Create account
+                Choose account type
               </Link>
             </p>
           </motion.div>
