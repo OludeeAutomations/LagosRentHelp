@@ -20,6 +20,7 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { loadReadNotificationIds, saveReadNotificationIds } from "@/lib/dashboardNotifications";
 import { getDisplayProfileImage } from "@/lib/profileImage";
 import { notifyListingVerificationRequired } from "@/lib/listingAccess";
 import { landlordService, type LandlordProfile } from "@/services/landlordService";
@@ -32,6 +33,8 @@ type LandlordNotice = {
   href: string;
   tone: "success" | "warning" | "danger";
 };
+
+type NotificationTab = "new" | "history";
 
 const navigation = [
   { label: "Dashboard", href: "/landlord", icon: LayoutDashboard, exact: true },
@@ -49,6 +52,8 @@ const LandlordDashboardLayout = () => {
   const { user, logout } = useAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
+  const [notificationTab, setNotificationTab] = useState<NotificationTab>("new");
+  const [readNotificationIds, setReadNotificationIds] = useState<Set<string>>(new Set());
   const [notices, setNotices] = useState<LandlordNotice[]>([]);
   const [noticesLoading, setNoticesLoading] = useState(true);
   const [verificationStatus, setVerificationStatus] = useState<LandlordProfile["verificationStatus"] | null>(null);
@@ -77,8 +82,31 @@ const LandlordDashboardLayout = () => {
     .toUpperCase()
     .slice(0, 2);
 
+  const newNotices = notices.filter((notice) => !readNotificationIds.has(notice.id));
+  const historyNotices = notices.filter((notice) => readNotificationIds.has(notice.id));
+  const visibleNotices = notificationTab === "new" ? newNotices : historyNotices;
+
   const isActive = (href: string, exact?: boolean) =>
     exact ? location.pathname === href : location.pathname.startsWith(href);
+
+  useEffect(() => {
+    setReadNotificationIds(loadReadNotificationIds("landlord", user?._id));
+  }, [user?._id]);
+
+  const markNotificationsRead = (ids: string[]) => {
+    if (!ids.length) return;
+    setReadNotificationIds((current) => {
+      const next = new Set(current);
+      ids.forEach((id) => next.add(id));
+      saveReadNotificationIds("landlord", user?._id, next);
+      return next;
+    });
+  };
+
+  const changeNotificationOpen = (open: boolean) => {
+    setNotificationOpen(open);
+    if (open) setNotificationTab("new");
+  };
 
   useEffect(() => {
     let active = true;
@@ -228,31 +256,38 @@ const LandlordDashboardLayout = () => {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
+            <Popover open={notificationOpen} onOpenChange={changeNotificationOpen}>
               <PopoverTrigger asChild>
                 <Button type="button" variant="ghost" size="icon" aria-label="Open notifications" aria-expanded={notificationOpen} className="relative rounded-full">
                   <Bell className="h-5 w-5" />
-                  {!noticesLoading && notices.length > 0 && (
+                  {!noticesLoading && newNotices.length > 0 && (
                     <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#129B36] ring-2 ring-white" />
                   )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent align="end" sideOffset={10} className="w-[min(92vw,380px)] p-0">
                 <div className="border-b px-5 py-4">
-                  <h2 className="font-semibold text-gray-950">Notifications</h2>
-                  <p className="text-xs text-gray-500">Recent account and listing updates</p>
+                  <div className="flex items-center justify-between gap-3">
+                    <h2 className="font-semibold text-gray-950">Notifications</h2>
+                    {!noticesLoading && <span className="text-xs font-medium text-gray-500">{newNotices.length} new</span>}
+                  </div>
+                  <p className="mt-0.5 text-xs text-gray-500">Recent account and listing updates</p>
+                </div>
+                <div className="grid grid-cols-2 border-b bg-gray-50 p-1.5" role="tablist" aria-label="Notification sections">
+                  <button type="button" role="tab" aria-selected={notificationTab === "new"} onClick={() => setNotificationTab("new")} className={`rounded-md px-3 py-2 text-xs font-semibold transition ${notificationTab === "new" ? "bg-white text-[#129B36] shadow-sm" : "text-gray-500 hover:text-gray-900"}`}>New ({newNotices.length})</button>
+                  <button type="button" role="tab" aria-selected={notificationTab === "history"} onClick={() => setNotificationTab("history")} className={`rounded-md px-3 py-2 text-xs font-semibold transition ${notificationTab === "history" ? "bg-white text-[#129B36] shadow-sm" : "text-gray-500 hover:text-gray-900"}`}>History ({historyNotices.length})</button>
                 </div>
                 <div className="max-h-80 overflow-y-auto p-2">
                   {noticesLoading ? (
                     <p className="px-3 py-8 text-center text-sm text-gray-500">Loading notifications...</p>
-                  ) : notices.length === 0 ? (
+                  ) : visibleNotices.length === 0 ? (
                     <div className="px-4 py-8 text-center">
                       <CheckCircle2 className="mx-auto mb-2 h-8 w-8 text-[#129B36]" />
-                      <p className="text-sm font-medium text-gray-900">You are all caught up</p>
-                      <p className="mt-1 text-xs text-gray-500">There are no new updates right now.</p>
+                      <p className="text-sm font-medium text-gray-900">{notificationTab === "new" ? "You are all caught up" : "No notification history"}</p>
+                      <p className="mt-1 text-xs text-gray-500">{notificationTab === "new" ? "There are no new updates right now." : "Notifications you have checked will appear here."}</p>
                     </div>
                   ) : (
-                    notices.map((notice) => {
+                    visibleNotices.map((notice) => {
                       const NoticeIcon = notice.tone === "success"
                         ? CheckCircle2
                         : notice.tone === "danger"
@@ -265,7 +300,7 @@ const LandlordDashboardLayout = () => {
                           : "bg-amber-50 text-amber-600";
 
                       return (
-                        <Link key={notice.id} to={notice.href} onClick={() => setNotificationOpen(false)} className="flex gap-3 rounded-lg px-3 py-3 hover:bg-gray-50">
+                        <Link key={notice.id} to={notice.href} onClick={() => { markNotificationsRead([notice.id]); setNotificationOpen(false); }} className="flex gap-3 rounded-lg px-3 py-3 hover:bg-gray-50">
                           <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${iconClass}`}>
                             <NoticeIcon className="h-4 w-4" strokeWidth={2} />
                           </span>
@@ -278,6 +313,11 @@ const LandlordDashboardLayout = () => {
                     })
                   )}
                 </div>
+                {notificationTab === "new" && newNotices.length > 0 && (
+                  <button type="button" onClick={() => { markNotificationsRead(newNotices.map((notice) => notice.id)); setNotificationTab("history"); }} className="block w-full border-t px-5 py-3 text-center text-sm font-medium text-[#129B36] hover:bg-green-50">
+                    Mark all as read
+                  </button>
+                )}
               </PopoverContent>
             </Popover>
             <Link to="/landlord/profile" className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-50">
