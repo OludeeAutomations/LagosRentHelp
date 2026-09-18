@@ -23,8 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { loadReadNotificationIds, saveReadNotificationIds } from "@/lib/dashboardNotifications";
 import { getDisplayProfileImage } from "@/lib/profileImage";
-import { notifyListingVerificationRequired } from "@/lib/listingAccess";
-import { landlordService, type LandlordProfile } from "@/services/landlordService";
+import { landlordService } from "@/services/landlordService";
 import { useAuthStore } from "@/stores/authStore";
 
 type LandlordNotice = {
@@ -59,7 +58,6 @@ const LandlordDashboardLayout = () => {
   const [readNotificationIds, setReadNotificationIds] = useState<Set<string>>(new Set());
   const [notices, setNotices] = useState<LandlordNotice[]>([]);
   const [noticesLoading, setNoticesLoading] = useState(true);
-  const [verificationStatus, setVerificationStatus] = useState<LandlordProfile["verificationStatus"] | null>(null);
   const [verifiedAvatarUrl, setVerifiedAvatarUrl] = useState<string | null>(null);
   const [landlordAvatarResolved, setLandlordAvatarResolved] = useState(false);
 
@@ -130,7 +128,6 @@ const LandlordDashboardLayout = () => {
       try {
         const profile = await landlordService.getProfile();
         if (!active) return;
-        setVerificationStatus(profile?.verificationStatus || null);
         setVerifiedAvatarUrl(profile?.identityImageUrl || null);
         setLandlordAvatarResolved(true);
 
@@ -173,7 +170,6 @@ const LandlordDashboardLayout = () => {
       } catch {
         if (active) {
           setNotices([]);
-          setVerificationStatus(null);
           setVerifiedAvatarUrl(null);
           setLandlordAvatarResolved(true);
         }
@@ -211,13 +207,7 @@ const LandlordDashboardLayout = () => {
             <Link
               key={item.href}
               to={item.href}
-              onClick={(event) => {
-                if (item.href === "/landlord/listings/new" && verificationStatus !== "verified") {
-                  event.preventDefault();
-                  notifyListingVerificationRequired(verificationStatus);
-                }
-                setMobileOpen(false);
-              }}
+              onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
                 active
                   ? "bg-[#129B36] text-white"

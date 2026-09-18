@@ -17,7 +17,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DashboardSummaryBanner from "@/components/common/DashboardSummaryDecoration";
-import { notifyListingVerificationRequired } from "@/lib/listingAccess";
 import { landlordService, type LandlordProfile } from "@/services/landlordService";
 import type { Property } from "@/types";
 
@@ -96,11 +95,9 @@ const LandlordDashboard = () => {
             { label: "Available", value: counts.available, icon: BadgeCheck },
             { label: "Rented", value: counts.rented, icon: KeyRound },
           ]}
-          action={profile?.verificationStatus === "verified" ? (
+          action={
             <Button asChild className="bg-white text-[#143f2b] hover:bg-green-50"><Link to="/landlord/listings/new"><Plus className="mr-2 h-4 w-4" />Add listing</Link></Button>
-          ) : (
-            <Button type="button" onClick={() => notifyListingVerificationRequired(profile?.verificationStatus)} className="bg-white text-[#143f2b] hover:bg-green-50" title="Super-admin verification is required"><Plus className="mr-2 h-4 w-4" />Add listing</Button>
-          )}
+          }
         />
       </div>
 
