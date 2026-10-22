@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { areaReviewService } from "@/services/areaReviewService";
-import { useAuthStore } from "@/stores/authStore";
+import { useAreaReviewsAuthStore } from "@/stores/areaReviewsAuthStore";
 import type {
   AreaLocationType,
   AreaRatingBreakdown,
@@ -77,7 +77,7 @@ const RatingField = ({ label, value, onChange }: { label: string; value: number;
 const AreaReviewWritePage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, loading: authLoading } = useAuthStore();
+  const { user, loading: authLoading } = useAreaReviewsAuthStore();
   const [locations, setLocations] = useState<AreaReviewLocation[]>([]);
   const [selectedSlug, setSelectedSlug] = useState(searchParams.get("location") || "new");
   const [locationName, setLocationName] = useState(searchParams.get("name") || "");
@@ -121,7 +121,7 @@ const AreaReviewWritePage = () => {
   const submitReview = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!user) {
-      navigate("/login?source=area-reviews", { state: { from: `/area-reviews/write?location=${selectedSlug}` } });
+      navigate("/area-reviews/login", { state: { from: `/area-reviews/write?location=${selectedSlug}` } });
       return;
     }
     if (!locationName.trim() || !lga || !headline.trim() || review.trim().length < 80) {
@@ -170,8 +170,8 @@ const AreaReviewWritePage = () => {
           <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-50"><LockKeyhole className="h-8 w-8 text-[#129B36]" /></span>
           <h1 className="mt-6 text-3xl font-bold">Sign in to share your experience</h1>
           <p className="mt-4 leading-7 text-slate-600">Accounts help us reduce duplicate and misleading submissions. Your account details will not be displayed with an anonymous review.</p>
-          <Link to="/login?source=area-reviews" state={{ from: `/area-reviews/write?location=${selectedSlug}` }} className="mt-7 inline-flex rounded-xl bg-[#129B36] px-6 py-3 font-bold text-white">Sign in to Area Reviews</Link>
-          <p className="mt-5 text-sm text-slate-500">New here? <Link to="/register?source=area-reviews" className="font-bold text-[#0e7d2b]">Create a resident account</Link></p>
+          <Link to="/area-reviews/login" state={{ from: `/area-reviews/write?location=${selectedSlug}` }} className="mt-7 inline-flex rounded-xl bg-[#129B36] px-6 py-3 font-bold text-white">Sign in to Area Reviews</Link>
+          <p className="mt-5 text-sm text-slate-500">New here? <Link to="/area-reviews/register" className="font-bold text-[#0e7d2b]">Create a resident account</Link></p>
         </div>
       </div>
     );

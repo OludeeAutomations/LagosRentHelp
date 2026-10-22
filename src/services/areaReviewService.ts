@@ -1,4 +1,5 @@
 import { starterAreaReviewLocations, findStarterArea } from "@/data/areaReviewLocations";
+import { areaReviewsSupabase } from "@/lib/areaReviewsSupabase";
 import { supabase } from "@/lib/supabase";
 import type {
   AreaReviewLocation,
@@ -69,7 +70,7 @@ const mergeStarterLocations = (locations: AreaReviewLocation[]) => {
 
 export const areaReviewService = {
   getLocations: async (search = ""): Promise<AreaReviewLocation[]> => {
-    const { data, error } = await supabase.rpc("get_area_review_locations", {
+    const { data, error } = await areaReviewsSupabase.rpc("get_area_review_locations", {
       p_search: search.trim() || null,
     });
     if (error) {
@@ -86,7 +87,7 @@ export const areaReviewService = {
   },
 
   getLocation: async (slug: string): Promise<AreaReviewLocationDetail | null> => {
-    const { data, error } = await supabase.rpc("get_area_review_location", {
+    const { data, error } = await areaReviewsSupabase.rpc("get_area_review_location", {
       p_slug: slug,
     });
     if (error) {
@@ -110,7 +111,7 @@ export const areaReviewService = {
     const databaseLocationId = payload.locationId?.startsWith("starter-")
       ? null
       : payload.locationId || null;
-    const { data, error } = await supabase.rpc("submit_area_review", {
+    const { data, error } = await areaReviewsSupabase.rpc("submit_area_review", {
       p_location_id: databaseLocationId,
       p_location_name: payload.locationName,
       p_location_type: payload.locationType,

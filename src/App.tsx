@@ -60,6 +60,9 @@ const AreaReviewsLandingPage = React.lazy(() => import("./page/areaReviews/AreaR
 const AreaReviewDetailPage = React.lazy(() => import("./page/areaReviews/AreaReviewDetailPage"));
 const AreaReviewWritePage = React.lazy(() => import("./page/areaReviews/AreaReviewWritePage"));
 const AreaReviewsLayout = React.lazy(() => import("./page/areaReviews/AreaReviewsLayout"));
+const AreaReviewsLoginPage = React.lazy(() => import("./page/areaReviews/AreaReviewsLoginPage"));
+const AreaReviewsRegisterPage = React.lazy(() => import("./page/areaReviews/AreaReviewsRegisterPage"));
+const AreaReviewsAuthCallback = React.lazy(() => import("./page/areaReviews/AreaReviewsAuthCallback"));
 const AdminAreaReviewsPage = React.lazy(() => import("./page/admin/AdminAreaReviewsPage"));
 
 const RouteFallback = () => (
@@ -143,6 +146,9 @@ const AppContent: React.FC = () => {
             <Route element={<AreaReviewsLayout />}>
               <Route path="/area-reviews" element={<AreaReviewsLandingPage />} />
               <Route path="/area-reviews/write" element={<AreaReviewWritePage />} />
+              <Route path="/area-reviews/login" element={<AreaReviewsLoginPage />} />
+              <Route path="/area-reviews/register" element={<AreaReviewsRegisterPage />} />
+              <Route path="/area-reviews/auth/callback" element={<AreaReviewsAuthCallback />} />
               <Route path="/area-reviews/:slug" element={<AreaReviewDetailPage />} />
             </Route>
             <Route

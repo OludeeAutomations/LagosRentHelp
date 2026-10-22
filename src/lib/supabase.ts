@@ -12,7 +12,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
-    detectSessionInUrl: true,
+    detectSessionInUrl: !window.location.pathname.startsWith("/area-reviews/auth/"),
     flowType: "pkce",
     persistSession: true,
   },
