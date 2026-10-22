@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import AuthLayout from "@/components/common/AuthLayout";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,12 @@ const Login: React.FC = () => {
   const [isLoading, setIsLoading] = React.useState(false);
   const { login, loginWithGoogle, setError } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const requestedDestination =
+    typeof (location.state as { from?: unknown } | null)?.from === "string" &&
+    ((location.state as { from: string }).from.startsWith("/area-reviews/"))
+      ? (location.state as { from: string }).from
+      : null;
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -58,7 +64,7 @@ const Login: React.FC = () => {
       } else if (localStorage.getItem("needs_renter_preferences") === "true") {
         destination = "/renter/preferences";
       } else {
-        destination = signedInUser?.phone ? "/" : "/complete-profile";
+        destination = signedInUser?.phone ? requestedDestination || "/" : "/complete-profile";
       }
 
       if (await accountSecurityService.requiresMfaChallenge()) {

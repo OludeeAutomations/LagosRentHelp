@@ -56,6 +56,10 @@ const LandlordLeads = React.lazy(() => import("./page/landlord/LandlordLeads"));
 const LandlordLogs = React.lazy(() => import("./page/landlord/LandlordLogs"));
 const LandlordSubscription = React.lazy(() => import("./page/landlord/LandlordSubscription"));
 const DashboardSecuritySettings = React.lazy(() => import("./page/settings/DashboardSecuritySettings"));
+const AreaReviewsLandingPage = React.lazy(() => import("./page/areaReviews/AreaReviewsLandingPage"));
+const AreaReviewDetailPage = React.lazy(() => import("./page/areaReviews/AreaReviewDetailPage"));
+const AreaReviewWritePage = React.lazy(() => import("./page/areaReviews/AreaReviewWritePage"));
+const AdminAreaReviewsPage = React.lazy(() => import("./page/admin/AdminAreaReviewsPage"));
 
 const RouteFallback = () => (
   <div className="flex min-h-[45vh] items-center justify-center bg-white" role="status" aria-label="Loading page">
@@ -135,6 +139,9 @@ const AppContent: React.FC = () => {
                 </Layout>
               }
             />
+            <Route path="/area-reviews" element={<Layout><AreaReviewsLandingPage /></Layout>} />
+            <Route path="/area-reviews/write" element={<Layout><AreaReviewWritePage /></Layout>} />
+            <Route path="/area-reviews/:slug" element={<Layout><AreaReviewDetailPage /></Layout>} />
             <Route
               path="/privacy"
               element={
@@ -264,6 +271,7 @@ const AppContent: React.FC = () => {
                 <Route element={<AdminDashboardLayout />}>
                   <Route path="/admin/verifications" element={<LandlordVerificationPage />} />
                   <Route path="/admin/settings" element={<DashboardSecuritySettings />} />
+                  <Route path="/admin/area-reviews" element={<AdminAreaReviewsPage />} />
                   <Route element={<SuperAdminRoute />}>
                     <Route path="/admin" element={<SuperAdminDashboardPage />} />
                     <Route path="/admin/landlords" element={<AdminLandlordsPage />} />

@@ -50,7 +50,7 @@ const Header: React.FC = () => {
                 <HeaderNavLink
                   key={item.href}
                   item={item}
-                  isActive={location.pathname === item.href}
+                  isActive={item.href === "/" ? location.pathname === "/" : location.pathname.startsWith(item.href)}
                 />
               ))}
             </nav>
@@ -104,7 +104,7 @@ const Header: React.FC = () => {
               <HeaderNavLink
                 key={item.href}
                 item={item}
-                isActive={location.pathname === item.href}
+                isActive={item.href === "/" ? location.pathname === "/" : location.pathname.startsWith(item.href)}
                 isMobile
                 onClick={closeMenu}
               />

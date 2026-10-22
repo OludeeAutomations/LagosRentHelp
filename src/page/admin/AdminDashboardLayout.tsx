@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  MessageSquareText,
   Settings,
   ShieldCheck,
   UserCog,
@@ -38,6 +39,7 @@ type NotificationTab = "new" | "history";
 
 const baseNavigation: AdminNavigationItem[] = [
   { label: "Landlord Verification", href: "/admin/verifications", icon: ShieldCheck },
+  { label: "Area Reviews", href: "/admin/area-reviews", icon: MessageSquareText },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
@@ -77,6 +79,8 @@ const AdminDashboardLayout = () => {
       ? { title: "Landlords", description: "View onboarded landlords and their portfolios" }
       : location.pathname === "/admin/accounts"
         ? { title: "Administrator Access", description: "Manage trusted review staff" }
+        : location.pathname === "/admin/area-reviews"
+          ? { title: "Area Reviews", description: "Moderate resident experiences before publication" }
         : location.pathname === "/admin/settings"
           ? { title: "Settings", description: "Manage your password and account security" }
           : { title: "Landlord Verification", description: "Review identity and property ownership evidence" };
