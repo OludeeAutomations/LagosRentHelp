@@ -90,7 +90,7 @@ const AreaReviewDetailPage = () => {
           <div className="mt-8 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
             <div>
               <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[#f4ce70]">
-                <span className="capitalize">{location.type}</span><span>·</span><span>{location.lga}, Lagos</span>
+                <span className="capitalize">{location.type === "lga" ? "Local government" : location.type}</span><span>·</span><span>{location.lga}, Lagos</span>
               </div>
               <h1 className="mt-3 text-4xl font-bold tracking-[-0.04em] sm:text-5xl lg:text-6xl">Living in {location.name}</h1>
               <p className="mt-5 max-w-2xl text-base leading-8 text-green-50/75">{location.description}</p>

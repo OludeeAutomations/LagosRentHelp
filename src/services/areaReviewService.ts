@@ -65,7 +65,11 @@ const mergeStarterLocations = (locations: AreaReviewLocation[]) => {
   starterAreaReviewLocations.forEach((starter) => {
     if (!bySlug.has(starter.slug)) bySlug.set(starter.slug, starter);
   });
-  return Array.from(bySlug.values());
+  return Array.from(bySlug.values()).sort((first, second) => {
+    if (first.type === "lga" && second.type !== "lga") return -1;
+    if (first.type !== "lga" && second.type === "lga") return 1;
+    return first.name.localeCompare(second.name);
+  });
 };
 
 export const areaReviewService = {

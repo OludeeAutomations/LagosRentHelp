@@ -10,7 +10,7 @@ create table if not exists public.area_review_locations (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   slug text not null unique,
-  location_type text not null check (location_type in ('neighbourhood', 'estate', 'street', 'building')),
+  location_type text not null check (location_type in ('lga', 'neighbourhood', 'estate', 'street', 'building')),
   lga text not null,
   state text not null default 'Lagos',
   description text not null default '',
@@ -25,6 +25,11 @@ alter table public.area_review_locations drop constraint if exists area_review_l
 alter table public.area_review_locations
   add constraint area_review_locations_status_check
   check (status in ('pending', 'active', 'archived'));
+
+alter table public.area_review_locations drop constraint if exists area_review_locations_location_type_check;
+alter table public.area_review_locations
+  add constraint area_review_locations_location_type_check
+  check (location_type in ('lga', 'neighbourhood', 'estate', 'street', 'building'));
 
 create table if not exists public.area_reviews (
   id uuid primary key default gen_random_uuid(),
@@ -73,6 +78,26 @@ revoke all privileges on table public.area_reviews from public, anon, authentica
 
 insert into public.area_review_locations (name, slug, location_type, lga, description, status)
 values
+  ('Agege LGA', 'agege-lga', 'lga', 'Agege', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Agege Local Government Area.', 'active'),
+  ('Ajeromi-Ifelodun LGA', 'ajeromi-ifelodun-lga', 'lga', 'Ajeromi-Ifelodun', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Ajeromi-Ifelodun Local Government Area.', 'active'),
+  ('Alimosho LGA', 'alimosho-lga', 'lga', 'Alimosho', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Alimosho Local Government Area.', 'active'),
+  ('Amuwo-Odofin LGA', 'amuwo-odofin-lga', 'lga', 'Amuwo-Odofin', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Amuwo-Odofin Local Government Area.', 'active'),
+  ('Apapa LGA', 'apapa-lga', 'lga', 'Apapa', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Apapa Local Government Area.', 'active'),
+  ('Badagry LGA', 'badagry-lga', 'lga', 'Badagry', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Badagry Local Government Area.', 'active'),
+  ('Epe LGA', 'epe-lga', 'lga', 'Epe', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Epe Local Government Area.', 'active'),
+  ('Eti-Osa LGA', 'eti-osa-lga', 'lga', 'Eti-Osa', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Eti-Osa Local Government Area.', 'active'),
+  ('Ibeju-Lekki LGA', 'ibeju-lekki-lga', 'lga', 'Ibeju-Lekki', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Ibeju-Lekki Local Government Area.', 'active'),
+  ('Ifako-Ijaiye LGA', 'ifako-ijaiye-lga', 'lga', 'Ifako-Ijaiye', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Ifako-Ijaiye Local Government Area.', 'active'),
+  ('Ikeja LGA', 'ikeja-lga', 'lga', 'Ikeja', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Ikeja Local Government Area.', 'active'),
+  ('Ikorodu LGA', 'ikorodu-lga', 'lga', 'Ikorodu', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Ikorodu Local Government Area.', 'active'),
+  ('Kosofe LGA', 'kosofe-lga', 'lga', 'Kosofe', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Kosofe Local Government Area.', 'active'),
+  ('Lagos Island LGA', 'lagos-island-lga', 'lga', 'Lagos Island', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Lagos Island Local Government Area.', 'active'),
+  ('Lagos Mainland LGA', 'lagos-mainland-lga', 'lga', 'Lagos Mainland', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Lagos Mainland Local Government Area.', 'active'),
+  ('Mushin LGA', 'mushin-lga', 'lga', 'Mushin', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Mushin Local Government Area.', 'active'),
+  ('Ojo LGA', 'ojo-lga', 'lga', 'Ojo', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Ojo Local Government Area.', 'active'),
+  ('Oshodi-Isolo LGA', 'oshodi-isolo-lga', 'lga', 'Oshodi-Isolo', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Oshodi-Isolo Local Government Area.', 'active'),
+  ('Shomolu LGA', 'shomolu-lga', 'lga', 'Shomolu', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Shomolu Local Government Area.', 'active'),
+  ('Surulere LGA', 'surulere-lga', 'lga', 'Surulere', 'Resident experiences covering rent, utilities, roads, flooding, security and daily life across Surulere Local Government Area.', 'active'),
   ('Yaba', 'yaba', 'neighbourhood', 'Lagos Mainland', 'Share and discover first-hand living experiences from Yaba residents.', 'active'),
   ('Surulere', 'surulere', 'neighbourhood', 'Surulere', 'Real resident notes about costs, utilities, roads and daily life in Surulere.', 'active'),
   ('Ikeja', 'ikeja', 'neighbourhood', 'Ikeja', 'Resident-led information for renters considering Ikeja.', 'active'),
@@ -231,7 +256,7 @@ declare
   v_review public.area_reviews%rowtype;
 begin
   if v_user_id is null then raise exception 'Sign in to submit a resident review'; end if;
-  if p_location_type not in ('neighbourhood', 'estate', 'street', 'building') then raise exception 'Select a valid location type'; end if;
+  if p_location_type not in ('lga', 'neighbourhood', 'estate', 'street', 'building') then raise exception 'Select a valid location type'; end if;
   if p_residency_status not in ('current', 'former') then raise exception 'Select a valid residency status'; end if;
   if p_flood_risk not in ('none', 'low', 'moderate', 'high', 'unsure') then raise exception 'Select a valid flooding experience'; end if;
   if nullif(trim(p_location_name), '') is null or nullif(trim(p_lga), '') is null then raise exception 'Provide the location and local government area'; end if;

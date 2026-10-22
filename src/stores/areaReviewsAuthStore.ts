@@ -15,6 +15,7 @@ interface AreaReviewsAuthState {
   initialize: () => () => void;
   setSession: (session: Session | null) => void;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: (returnTo?: string) => Promise<void>;
   signUp: (details: { name: string; email: string; phone: string; password: string }) => Promise<{ requiresVerification: boolean }>;
   signOut: () => Promise<void>;
 }
@@ -63,6 +64,28 @@ export const useAreaReviewsAuthStore = create<AreaReviewsAuthState>((set) => ({
       throw new Error(error.message);
     }
     set({ user: mapAccount(data.user), loading: false, initialized: true });
+  },
+
+  signInWithGoogle: async (returnTo = "/area-reviews") => {
+    set({ loading: true });
+    const safeReturnTo = returnTo.startsWith("/area-reviews")
+      && !returnTo.startsWith("/area-reviews/login")
+      && !returnTo.startsWith("/area-reviews/register")
+      && !returnTo.startsWith("/area-reviews/auth/")
+      ? returnTo
+      : "/area-reviews";
+    localStorage.setItem("area_reviews_oauth_return_to", safeReturnTo);
+    const { error } = await areaReviewsSupabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/area-reviews/auth/callback`,
+      },
+    });
+    if (error) {
+      localStorage.removeItem("area_reviews_oauth_return_to");
+      set({ loading: false });
+      throw new Error(error.message);
+    }
   },
 
   signUp: async ({ name, email, phone, password }) => {

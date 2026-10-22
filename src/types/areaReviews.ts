@@ -1,4 +1,4 @@
-export type AreaLocationType = "neighbourhood" | "estate" | "street" | "building";
+export type AreaLocationType = "lga" | "neighbourhood" | "estate" | "street" | "building";
 
 export type ResidencyStatus = "current" | "former";
 

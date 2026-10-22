@@ -25,8 +25,17 @@ const AreaReviewsAuthCallback = () => {
         if (!session) throw new Error("No login session was returned.");
         if (!active) return;
         setSession(session);
-        navigate("/area-reviews", { replace: true });
+        const storedReturnTo = localStorage.getItem("area_reviews_oauth_return_to");
+        localStorage.removeItem("area_reviews_oauth_return_to");
+        const destination = storedReturnTo?.startsWith("/area-reviews")
+          && !storedReturnTo.startsWith("/area-reviews/login")
+          && !storedReturnTo.startsWith("/area-reviews/register")
+          && !storedReturnTo.startsWith("/area-reviews/auth/")
+          ? storedReturnTo
+          : "/area-reviews";
+        navigate(destination, { replace: true });
       } catch (reason: unknown) {
+        localStorage.removeItem("area_reviews_oauth_return_to");
         if (active) setErrorMessage(reason instanceof Error ? reason.message : "Unable to verify your account.");
       }
     };

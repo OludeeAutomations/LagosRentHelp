@@ -9,9 +9,50 @@ const emptyRatings = {
   maintenance: 0,
 };
 
-// These are starter location pages, not fabricated reviews or ratings. Database
-// results replace them as residents begin contributing real experiences.
-export const starterAreaReviewLocations: AreaReviewLocation[] = [
+export const lagosLocalGovernmentAreas = [
+  "Agege",
+  "Ajeromi-Ifelodun",
+  "Alimosho",
+  "Amuwo-Odofin",
+  "Apapa",
+  "Badagry",
+  "Epe",
+  "Eti-Osa",
+  "Ibeju-Lekki",
+  "Ifako-Ijaiye",
+  "Ikeja",
+  "Ikorodu",
+  "Kosofe",
+  "Lagos Island",
+  "Lagos Mainland",
+  "Mushin",
+  "Ojo",
+  "Oshodi-Isolo",
+  "Shomolu",
+  "Surulere",
+] as const;
+
+const lgaStarterLocations: AreaReviewLocation[] = lagosLocalGovernmentAreas.map((lga) => {
+  const slug = `${lga.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-lga`;
+  return {
+    id: `starter-${slug}`,
+    name: `${lga} LGA`,
+    slug,
+    type: "lga",
+    lga,
+    state: "Lagos",
+    description: `Resident experiences covering rent, utilities, roads, flooding, security and daily life across ${lga} Local Government Area.`,
+    reviewCount: 0,
+    averageRating: null,
+    averageRent: null,
+    averageMoveInCost: null,
+    ratings: emptyRatings,
+  };
+});
+
+// These are starter pages, not fabricated reviews or ratings. Database results
+// replace them as residents begin contributing real experiences.
+const neighbourhoodStarterLocations: AreaReviewLocation[] = [
   {
     id: "starter-yaba",
     name: "Yaba",
@@ -96,6 +137,11 @@ export const starterAreaReviewLocations: AreaReviewLocation[] = [
     averageMoveInCost: null,
     ratings: emptyRatings,
   },
+];
+
+export const starterAreaReviewLocations: AreaReviewLocation[] = [
+  ...lgaStarterLocations,
+  ...neighbourhoodStarterLocations,
 ];
 
 export const findStarterArea = (slug: string) =>

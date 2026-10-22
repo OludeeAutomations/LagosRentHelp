@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Mail, Phone, UserRound } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, Lock, Mail, MapPinned, Phone, UserRound } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import AuthLayout from "@/components/common/AuthLayout";
+import GoogleLogo from "@/components/common/GoogleLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,20 +11,22 @@ import { useAreaReviewsAuthStore } from "@/stores/areaReviewsAuthStore";
 
 const AreaReviewsRegisterPage = () => {
   const navigate = useNavigate();
-  const signUp = useAreaReviewsAuthStore((state) => state.signUp);
+  const { signUp, signInWithGoogle } = useAreaReviewsAuthStore();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (name.trim().split(/\s+/).length < 2) return toast.error("Enter your first and last name.");
-    if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) return toast.error("Use at least 8 characters, one uppercase letter and one number.");
+    if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) return toast.error("Use at least 8 characters with uppercase, lowercase and a number.");
     if (password !== confirmPassword) return toast.error("The passwords do not match.");
     setSubmitting(true);
     try {
@@ -39,36 +43,58 @@ const AreaReviewsRegisterPage = () => {
     }
   };
 
+  const handleGoogleSignUp = async () => {
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle("/area-reviews");
+    } catch (reason: unknown) {
+      toast.error(reason instanceof Error ? reason.message : "Unable to connect to Google.");
+      setGoogleLoading(false);
+    }
+  };
+
   if (verificationEmail) return (
-    <div className="bg-[#f7f6f1] px-4 py-20">
-      <div className="mx-auto max-w-lg rounded-[2rem] border border-white bg-white p-8 text-center shadow-xl shadow-slate-900/[0.06] sm:p-12">
+    <AuthLayout title="Check Your Email" subtitle="One last step to activate your Area Reviews account" brandName="LagosRentHelp" brandHref="/area-reviews" sideTitle="Your Experience Can Help Someone" sideSubtitle="Share what daily life and renting are really like" sideIcon={MapPinned}>
+      <div className="py-4 text-center">
         <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-50"><CheckCircle2 className="h-8 w-8 text-[#129B36]" /></span>
-        <h1 className="mt-6 text-3xl font-bold">Check your email</h1>
-        <p className="mt-4 leading-7 text-slate-600">We sent a verification link to <strong>{verificationEmail}</strong>. Open it to finish creating your Area Reviews account.</p>
-        <Link to="/area-reviews/login" className="mt-7 inline-flex rounded-xl bg-[#129B36] px-6 py-3 font-bold text-white">Return to sign in</Link>
+        <p className="mt-5 leading-7 text-slate-600">We sent a verification link to <strong>{verificationEmail}</strong>. Open it to finish creating your account.</p>
+        <Button asChild className="mt-7 bg-[#129B36] text-white hover:bg-[#41614F]"><Link to="/area-reviews/login">Return to Sign In</Link></Button>
       </div>
-    </div>
+    </AuthLayout>
   );
 
   return (
-    <div className="relative isolate overflow-hidden bg-[#f7f6f1] px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-      <div aria-hidden="true" className="absolute -right-40 top-10 -z-10 h-96 w-96 rounded-full bg-green-100/70 blur-3xl" />
-      <div className="mx-auto max-w-2xl rounded-[2rem] border border-white bg-white p-7 shadow-2xl shadow-slate-900/[0.08] sm:p-10 lg:p-12">
-        <p className="text-sm font-bold uppercase tracking-[0.16em] text-[#129B36]">Join Area Reviews</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Create your resident account</h1>
-        <p className="mt-3 text-sm leading-6 text-slate-600">Already registered on LagosRentHelp? <Link to="/area-reviews/login" className="font-bold text-[#0e7d2b] hover:underline">Sign in with the same details</Link>—do not create another account.</p>
-        <form onSubmit={handleSubmit} className="mt-8 grid gap-5 sm:grid-cols-2">
-          <div className="sm:col-span-2"><Label htmlFor="area-name">Full name</Label><div className="relative mt-2"><UserRound className="absolute left-3.5 top-3.5 h-5 w-5 text-slate-400" /><Input id="area-name" value={name} onChange={(event) => setName(event.target.value)} required autoComplete="name" placeholder="First and last name" className="h-12 rounded-xl pl-11" /></div></div>
-          <div className="sm:col-span-2"><Label htmlFor="register-area-email">Email address</Label><div className="relative mt-2"><Mail className="absolute left-3.5 top-3.5 h-5 w-5 text-slate-400" /><Input id="register-area-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" placeholder="you@example.com" className="h-12 rounded-xl pl-11" /></div></div>
-          <div className="sm:col-span-2"><Label htmlFor="area-phone">Phone number</Label><div className="relative mt-2"><Phone className="absolute left-3.5 top-3.5 h-5 w-5 text-slate-400" /><Input id="area-phone" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} required autoComplete="tel" placeholder="+234 800 000 0000" className="h-12 rounded-xl pl-11" /></div></div>
-          <div><Label htmlFor="register-area-password">Password</Label><div className="relative mt-2"><LockKeyhole className="absolute left-3.5 top-3.5 h-5 w-5 text-slate-400" /><Input id="register-area-password" type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} required autoComplete="new-password" className="h-12 rounded-xl px-11" /><button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute right-3 top-3 rounded-lg p-1 text-slate-500" aria-label={showPassword ? "Hide password" : "Show password"}>{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button></div></div>
-          <div><Label htmlFor="area-confirm-password">Confirm password</Label><Input id="area-confirm-password" type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required autoComplete="new-password" className="mt-2 h-12 rounded-xl" /></div>
-          <p className="text-xs leading-5 text-slate-500 sm:col-span-2">Use at least 8 characters with one uppercase letter and one number.</p>
-          <Button type="submit" disabled={submitting} className="h-12 rounded-xl bg-[#129B36] font-bold hover:bg-[#0e7d2b] sm:col-span-2">{submitting ? "Creating account..." : <>Create account <ArrowRight className="h-4 w-4" /></>}</Button>
-        </form>
-        <p className="mt-6 text-center text-sm text-slate-500">Already have an account? <Link to="/area-reviews/login" className="font-bold text-[#0e7d2b] hover:underline">Sign in</Link></p>
-      </div>
-    </div>
+    <AuthLayout
+      title="Create Account"
+      subtitle="Join residents sharing trusted local insight"
+      contentClassName="max-w-xl"
+      brandName="LagosRentHelp"
+      brandHref="/area-reviews"
+      sideTitle="Your Experience Can Help Someone"
+      sideSubtitle="Share what power, water, roads, costs and daily life are really like"
+      sideIcon={MapPinned}
+      sideStats={[
+        { number: "Private", label: "Account details" },
+        { number: "Optional", label: "Public first name" },
+        { number: "Human", label: "Moderation" },
+      ]}
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div><Label htmlFor="area-name" className="text-black">Full Name *</Label><div className="relative mt-2"><UserRound className="absolute left-3 top-3 h-5 w-5 text-grey" /><Input id="area-name" value={name} onChange={(event) => setName(event.target.value)} required autoComplete="name" placeholder="Enter your full name" disabled={submitting || googleLoading} className="pl-10 border-grey/30" /></div></div>
+        <div><Label htmlFor="register-area-email" className="text-black">Email Address *</Label><div className="relative mt-2"><Mail className="absolute left-3 top-3 h-5 w-5 text-grey" /><Input id="register-area-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" placeholder="your@email.com" disabled={submitting || googleLoading} className="pl-10 border-grey/30" /></div></div>
+        <div><Label htmlFor="area-phone" className="text-black">Phone Number *</Label><div className="relative mt-2"><Phone className="absolute left-3 top-3 h-5 w-5 text-grey" /><Input id="area-phone" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} required autoComplete="tel" placeholder="+234 800 000 0000" disabled={submitting || googleLoading} className="pl-10 border-grey/30" /></div></div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div><Label htmlFor="register-area-password" className="text-black">Password *</Label><div className="relative mt-2"><Lock className="absolute left-3 top-3 h-5 w-5 text-grey" /><Input id="register-area-password" type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} required autoComplete="new-password" disabled={submitting || googleLoading} className="pl-10 pr-10 border-grey/30" /><button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute right-0 top-0 flex h-full items-center px-3 text-grey" aria-label={showPassword ? "Hide password" : "Show password"}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div></div>
+          <div><Label htmlFor="area-confirm-password" className="text-black">Confirm Password *</Label><div className="relative mt-2"><Lock className="absolute left-3 top-3 h-5 w-5 text-grey" /><Input id="area-confirm-password" type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required autoComplete="new-password" disabled={submitting || googleLoading} className="pl-10 pr-10 border-grey/30" /><button type="button" onClick={() => setShowConfirmPassword((value) => !value)} className="absolute right-0 top-0 flex h-full items-center px-3 text-grey" aria-label={showConfirmPassword ? "Hide password" : "Show password"}>{showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div></div>
+        </div>
+        <p className="text-xs leading-5 text-slate-500">Password must have at least 8 characters, uppercase, lowercase and a number.</p>
+        <Button type="submit" disabled={submitting || googleLoading} className="w-full bg-[#129B36] text-white hover:bg-[#41614F]">{submitting ? "Creating account..." : "Create Account"}</Button>
+        <div className="flex items-center"><div className="flex-grow border-t border-gray-300" /><span className="mx-3 text-sm text-gray-500">OR</span><div className="flex-grow border-t border-gray-300" /></div>
+        <Button type="button" variant="outline" disabled={submitting || googleLoading} onClick={handleGoogleSignUp} className="w-full gap-3 border-gray-300 bg-white text-black hover:bg-gray-50"><GoogleLogo />{googleLoading ? "Connecting to Google..." : "Continue with Google"}</Button>
+        <p className="text-center text-grey">Already have an account? <Link to="/area-reviews/login" className="font-medium text-[#129B36] hover:text-[#41614F]">Sign In</Link></p>
+        <p className="rounded-lg bg-green-50 px-4 py-3 text-center text-xs leading-5 text-slate-600">Already registered on LagosRentHelp? Sign in with those same details instead.</p>
+      </form>
+    </AuthLayout>
   );
 };
 

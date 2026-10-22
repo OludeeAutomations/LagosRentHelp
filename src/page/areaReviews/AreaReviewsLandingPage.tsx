@@ -46,6 +46,9 @@ const AreaReviewsLandingPage = () => {
     );
   }, [locations, query]);
 
+  const locationTypeLabel = (type: AreaReviewLocation["type"]) =>
+    type === "lga" ? "Local government" : type;
+
   const submitSearch = (event: React.FormEvent) => {
     event.preventDefault();
     if (filteredLocations.length > 0) {
@@ -87,7 +90,7 @@ const AreaReviewsLandingPage = () => {
                   onChange={(event) => setQuery(event.target.value)}
                   onFocus={() => setSearchFocused(true)}
                   onBlur={() => window.setTimeout(() => setSearchFocused(false), 120)}
-                  placeholder="Try Yaba, Surulere or an estate name"
+                  placeholder="Try Ikeja, Alimosho, Yaba or an estate name"
                   className="min-w-0 flex-1 border-0 bg-transparent px-1 py-3 text-sm text-slate-950 outline-none placeholder:text-slate-400 sm:text-base"
                 />
                 <button type="submit" className="rounded-xl bg-[#129B36] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#0e7d2b]">
@@ -99,7 +102,7 @@ const AreaReviewsLandingPage = () => {
                   {filteredLocations.length > 0 ? filteredLocations.slice(0, 5).map((location) => (
                     <button key={location.slug} type="button" onMouseDown={() => navigate(`/area-reviews/${location.slug}`)} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-green-50">
                       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-50 text-[#129B36]"><MapPin className="h-4 w-4" /></span>
-                      <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold">{location.name}</span><span className="block text-xs text-slate-500">{location.lga} · {location.type}</span></span>
+                      <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold">{location.name}</span><span className="block text-xs text-slate-500">{location.lga} · {locationTypeLabel(location.type)}</span></span>
                       <ChevronRight className="h-4 w-4 text-slate-300" />
                     </button>
                   )) : (
@@ -154,8 +157,8 @@ const AreaReviewsLandingPage = () => {
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#129B36]">Explore Lagos</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Start with a neighbourhood</h2>
-            <p className="mt-3 max-w-2xl leading-7 text-slate-600">No polished sales pitch—just practical information from people who know the area.</p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Explore every Lagos local government</h2>
+            <p className="mt-3 max-w-2xl leading-7 text-slate-600">All 20 Lagos LGAs are covered, together with neighbourhoods, estates, streets and buildings added by residents.</p>
           </div>
           <Link to="/area-reviews/write" className="inline-flex items-center gap-2 text-sm font-bold text-[#0e7d2b] hover:underline">
             Review where you have lived <ArrowRight className="h-4 w-4" />
@@ -168,7 +171,7 @@ const AreaReviewsLandingPage = () => {
           </div>
         ) : (
           <div className="mt-9 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {filteredLocations.slice(0, 9).map((location, index) => (
+            {filteredLocations.map((location, index) => (
               <Link
                 key={location.slug}
                 to={`/area-reviews/${location.slug}`}
@@ -184,7 +187,7 @@ const AreaReviewsLandingPage = () => {
                   </span>
                 </div>
                 <div className="mt-8">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{location.type} · {location.lga}</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{locationTypeLabel(location.type)} · {location.lga}</p>
                   <h3 className="mt-2 text-2xl font-bold group-hover:text-[#0e7d2b]">{location.name}</h3>
                   <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{location.description}</p>
                 </div>

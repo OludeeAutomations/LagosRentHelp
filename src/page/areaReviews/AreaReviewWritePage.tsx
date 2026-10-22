@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { lagosLocalGovernmentAreas } from "@/data/areaReviewLocations";
 import { areaReviewService } from "@/services/areaReviewService";
 import { useAreaReviewsAuthStore } from "@/stores/areaReviewsAuthStore";
 import type {
@@ -23,13 +24,6 @@ import type {
   FloodRisk,
   ResidencyStatus,
 } from "@/types/areaReviews";
-
-const lgas = [
-  "Agege", "Ajeromi-Ifelodun", "Alimosho", "Amuwo-Odofin", "Apapa",
-  "Badagry", "Epe", "Eti-Osa", "Ibeju-Lekki", "Ifako-Ijaiye", "Ikeja",
-  "Ikorodu", "Kosofe", "Lagos Island", "Lagos Mainland", "Mushin", "Ojo",
-  "Oshodi-Isolo", "Shomolu", "Surulere",
-];
 
 const propertyTypes = [
   ["self-contained", "Self-contained"],
@@ -198,8 +192,8 @@ const AreaReviewWritePage = () => {
           <div className="mt-7 grid gap-5 sm:grid-cols-2">
             <div className="sm:col-span-2"><Label htmlFor="existing-location">Location</Label><select id="existing-location" className={fieldClass} value={selectedSlug} onChange={(event) => { setSelectedSlug(event.target.value); if (event.target.value === "new") { setLocationName(""); setLga(""); } }}><option value="new">Add a new location</option>{locations.map((location) => <option key={location.slug} value={location.slug}>{location.name} — {location.lga}</option>)}</select></div>
             <div><Label htmlFor="location-name">Area, estate, street or building</Label><Input id="location-name" className="mt-2 h-12 rounded-xl focus-visible:ring-green-100" value={locationName} disabled={Boolean(selectedLocation)} onChange={(event) => setLocationName(event.target.value)} placeholder="e.g. Alagomeji, Yaba" required /></div>
-            <div><Label htmlFor="location-type">Location type</Label><select id="location-type" className={fieldClass} value={locationType} disabled={Boolean(selectedLocation)} onChange={(event) => setLocationType(event.target.value as AreaLocationType)}><option value="neighbourhood">Neighbourhood</option><option value="estate">Estate</option><option value="street">Street</option><option value="building">Building</option></select></div>
-            <div><Label htmlFor="lga">Local government area</Label><select id="lga" className={fieldClass} value={lga} disabled={Boolean(selectedLocation)} onChange={(event) => setLga(event.target.value)} required><option value="">Select LGA</option>{lgas.map((item) => <option key={item}>{item}</option>)}</select></div>
+            <div><Label htmlFor="location-type">Location type</Label><select id="location-type" className={fieldClass} value={locationType} disabled={Boolean(selectedLocation)} onChange={(event) => setLocationType(event.target.value as AreaLocationType)}><option value="lga">Local government area</option><option value="neighbourhood">Neighbourhood</option><option value="estate">Estate</option><option value="street">Street</option><option value="building">Building</option></select></div>
+            <div><Label htmlFor="lga">Local government area</Label><select id="lga" className={fieldClass} value={lga} disabled={Boolean(selectedLocation)} onChange={(event) => setLga(event.target.value)} required><option value="">Select LGA</option>{lagosLocalGovernmentAreas.map((item) => <option key={item}>{item}</option>)}</select></div>
             <div><Label htmlFor="property-type">Home type</Label><select id="property-type" className={fieldClass} value={propertyType} onChange={(event) => setPropertyType(event.target.value)}>{propertyTypes.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
             <div><Label htmlFor="residency-status">Your relationship to the place</Label><select id="residency-status" className={fieldClass} value={residencyStatus} onChange={(event) => setResidencyStatus(event.target.value as ResidencyStatus)}><option value="current">I currently live here</option><option value="former">I previously lived here</option></select></div>
             <div className="grid grid-cols-2 gap-3"><div><Label htmlFor="lived-from">From year</Label><Input id="lived-from" className="mt-2 h-11 rounded-xl" type="number" min="2000" max={new Date().getFullYear()} value={livedFrom} onChange={(event) => setLivedFrom(event.target.value)} required /></div>{residencyStatus === "former" && <div><Label htmlFor="lived-to">To year</Label><Input id="lived-to" className="mt-2 h-11 rounded-xl" type="number" min={livedFrom} max={new Date().getFullYear()} value={livedTo} onChange={(event) => setLivedTo(event.target.value)} required /></div>}</div>
