@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -20,7 +20,6 @@ import { useAreaReviewsAuthStore } from "@/stores/areaReviewsAuthStore";
 import type {
   AreaLocationType,
   AreaRatingBreakdown,
-  AreaReviewLocation,
   FloodRisk,
   ResidencyStatus,
 } from "@/types/areaReviews";
@@ -72,8 +71,8 @@ const AreaReviewWritePage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, loading: authLoading } = useAreaReviewsAuthStore();
-  const [locations, setLocations] = useState<AreaReviewLocation[]>([]);
-  const [selectedSlug, setSelectedSlug] = useState(searchParams.get("location") || "new");
+  const sourceLocationSlug = searchParams.get("location") || "";
+  const returnTo = sourceLocationSlug ? `/area-reviews/write?location=${sourceLocationSlug}` : "/area-reviews/write";
   const [locationName, setLocationName] = useState(searchParams.get("name") || "");
   const [locationType, setLocationType] = useState<AreaLocationType>("neighbourhood");
   const [lga, setLga] = useState("");
@@ -94,31 +93,18 @@ const AreaReviewWritePage = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    areaReviewService.getLocations().then(setLocations).catch(() => setLocations([]));
-  }, []);
-
-  const selectedLocation = useMemo(
-    () => locations.find((location) => location.slug === selectedSlug),
-    [locations, selectedSlug],
-  );
-  const reviewableLocations = useMemo(
-    () => locations.filter((location) => location.type !== "lga"),
-    [locations],
-  );
-
-  useEffect(() => {
-    if (!selectedLocation) return;
-    if (selectedLocation.type === "lga") {
-      setSelectedSlug("new");
-      setLocationName("");
-      setLocationType("neighbourhood");
-      setLga(selectedLocation.lga);
-      return;
-    }
-    setLocationName(selectedLocation.name);
-    setLocationType(selectedLocation.type);
-    setLga(selectedLocation.lga);
-  }, [selectedLocation]);
+    if (!sourceLocationSlug) return;
+    let active = true;
+    areaReviewService.getLocation(sourceLocationSlug).then((location) => {
+      if (!active || !location) return;
+      setLga(location.lga);
+      if (location.type !== "lga") {
+        setLocationName(location.name);
+        setLocationType(location.type);
+      }
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, [sourceLocationSlug]);
 
   const setRating = (key: keyof AreaRatingBreakdown, value: number) =>
     setRatings((current) => ({ ...current, [key]: value }));
@@ -126,7 +112,7 @@ const AreaReviewWritePage = () => {
   const submitReview = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!user) {
-      navigate("/area-reviews/login", { state: { from: `/area-reviews/write?location=${selectedSlug}` } });
+      navigate("/area-reviews/login", { state: { from: returnTo } });
       return;
     }
     if (!locationName.trim() || !lga || !headline.trim() || review.trim().length < 80) {
@@ -140,7 +126,6 @@ const AreaReviewWritePage = () => {
     setSubmitting(true);
     try {
       await areaReviewService.submit({
-        locationId: selectedLocation?.id,
         locationName: locationName.trim(),
         locationType,
         lga,
@@ -159,7 +144,7 @@ const AreaReviewWritePage = () => {
         showFirstName,
       });
       toast.success("Thank you. Your review has been sent for moderation.");
-      navigate(selectedLocation ? `/area-reviews/${selectedLocation.slug}` : "/area-reviews", { replace: true });
+      navigate("/area-reviews", { replace: true });
     } catch (reason: unknown) {
       toast.error(reason instanceof Error ? reason.message : "Unable to submit your review.");
     } finally {
@@ -175,7 +160,7 @@ const AreaReviewWritePage = () => {
           <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-50"><LockKeyhole className="h-8 w-8 text-[#129B36]" /></span>
           <h1 className="mt-6 text-3xl font-bold">Sign in to share your experience</h1>
           <p className="mt-4 leading-7 text-slate-600">Accounts help us reduce duplicate and misleading submissions. Your account details will not be displayed with an anonymous review.</p>
-          <Link to="/area-reviews/login" state={{ from: `/area-reviews/write?location=${selectedSlug}` }} className="mt-7 inline-flex rounded-xl bg-[#129B36] px-6 py-3 font-bold text-white">Sign in to Area Reviews</Link>
+          <Link to="/area-reviews/login" state={{ from: returnTo }} className="mt-7 inline-flex rounded-xl bg-[#129B36] px-6 py-3 font-bold text-white">Sign in to Area Reviews</Link>
           <p className="mt-5 text-sm text-slate-500">New here? <Link to="/area-reviews/register" className="font-bold text-[#0e7d2b]">Create a resident account</Link></p>
         </div>
       </div>
@@ -185,7 +170,7 @@ const AreaReviewWritePage = () => {
   return (
     <div className="min-h-screen bg-slate-50 py-10 lg:py-14">
       <form onSubmit={submitReview} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <Link to={selectedLocation ? `/area-reviews/${selectedLocation.slug}` : "/area-reviews"} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-[#129B36]"><ArrowLeft className="h-4 w-4" /> Back to Area Reviews</Link>
+        <Link to={sourceLocationSlug ? `/area-reviews/${sourceLocationSlug}` : "/area-reviews"} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-[#129B36]"><ArrowLeft className="h-4 w-4" /> Back to Area Reviews</Link>
         <div className="relative mt-7 overflow-hidden rounded-[2rem] bg-[#103f2b] px-6 py-8 text-white shadow-xl shadow-green-950/10 sm:px-9 sm:py-10">
           <div aria-hidden="true" className="absolute -right-16 -top-24 h-72 w-72 rounded-full border-[45px] border-white/[0.04]" />
           <div className="relative flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
@@ -199,12 +184,11 @@ const AreaReviewWritePage = () => {
         </ol>
 
         <section className="mt-6 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_12px_35px_rgba(15,23,42,0.04)] sm:p-8">
-          <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#103f2b] text-sm font-bold text-white">1</span><div><h2 className="text-xl font-bold">Where did you live?</h2><p className="text-sm text-slate-500">Use an existing location or add a new one.</p></div></div>
+          <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#103f2b] text-sm font-bold text-white">1</span><div><h2 className="text-xl font-bold">Where did you live?</h2><p className="text-sm text-slate-500">Type the specific location and select its local government area.</p></div></div>
           <div className="mt-7 grid gap-5 sm:grid-cols-2">
-            <div className="sm:col-span-2"><Label htmlFor="existing-location">Existing area, estate, street or building (optional)</Label><select id="existing-location" className={fieldClass} value={selectedSlug} onChange={(event) => { setSelectedSlug(event.target.value); if (event.target.value === "new") { setLocationName(""); setLga(""); } }}><option value="new">Enter a location manually</option>{reviewableLocations.map((location) => <option key={location.slug} value={location.slug}>{location.name} — {location.lga}</option>)}</select></div>
-            <div><Label htmlFor="location-name">Area, estate, street or building</Label><Input id="location-name" className="mt-2 h-12 rounded-xl focus-visible:ring-green-100" value={locationName} disabled={Boolean(selectedLocation && selectedLocation.type !== "lga")} onChange={(event) => setLocationName(event.target.value)} placeholder="e.g. Alagomeji, Yaba" required /></div>
-            <div><Label htmlFor="location-type">Location type</Label><select id="location-type" className={fieldClass} value={locationType} disabled={Boolean(selectedLocation && selectedLocation.type !== "lga")} onChange={(event) => setLocationType(event.target.value as AreaLocationType)}><option value="neighbourhood">Neighbourhood</option><option value="estate">Estate</option><option value="street">Street</option><option value="building">Building</option></select></div>
-            <div><Label htmlFor="lga">Local government area</Label><select id="lga" className={fieldClass} value={lga} disabled={Boolean(selectedLocation && selectedLocation.type !== "lga")} onChange={(event) => setLga(event.target.value)} required><option value="">Select LGA</option>{lagosLocalGovernmentAreas.map((item) => <option key={item}>{item}</option>)}</select></div>
+            <div><Label htmlFor="location-name">Location (area, estate, street or building)</Label><Input id="location-name" className="mt-2 h-12 rounded-xl focus-visible:ring-green-100" value={locationName} onChange={(event) => setLocationName(event.target.value)} placeholder="e.g. Alagomeji, Yaba" required /></div>
+            <div><Label htmlFor="location-type">Location type</Label><select id="location-type" className={fieldClass} value={locationType} onChange={(event) => setLocationType(event.target.value as AreaLocationType)}><option value="neighbourhood">Neighbourhood</option><option value="estate">Estate</option><option value="street">Street</option><option value="building">Building</option></select></div>
+            <div><Label htmlFor="lga">Local government area</Label><select id="lga" className={fieldClass} value={lga} onChange={(event) => setLga(event.target.value)} required><option value="">Select LGA</option>{lagosLocalGovernmentAreas.map((item) => <option key={item}>{item}</option>)}</select></div>
             <div><Label htmlFor="property-type">Home type</Label><select id="property-type" className={fieldClass} value={propertyType} onChange={(event) => setPropertyType(event.target.value)}>{propertyTypes.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
             <div><Label htmlFor="residency-status">Your relationship to the place</Label><select id="residency-status" className={fieldClass} value={residencyStatus} onChange={(event) => setResidencyStatus(event.target.value as ResidencyStatus)}><option value="current">I currently live here</option><option value="former">I previously lived here</option></select></div>
             <div className="grid grid-cols-2 gap-3"><div><Label htmlFor="lived-from">From year</Label><Input id="lived-from" className="mt-2 h-11 rounded-xl" type="number" min="2000" max={new Date().getFullYear()} value={livedFrom} onChange={(event) => setLivedFrom(event.target.value)} required /></div>{residencyStatus === "former" && <div><Label htmlFor="lived-to">To year</Label><Input id="lived-to" className="mt-2 h-11 rounded-xl" type="number" min={livedFrom} max={new Date().getFullYear()} value={livedTo} onChange={(event) => setLivedTo(event.target.value)} required /></div>}</div>
