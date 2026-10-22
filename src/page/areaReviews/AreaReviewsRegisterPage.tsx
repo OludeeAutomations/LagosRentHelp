@@ -66,7 +66,7 @@ const AreaReviewsRegisterPage = () => {
   return (
     <AuthLayout
       title="Create Account"
-      subtitle="Join residents sharing trusted local insight"
+      subtitle="Join Lagos residents sharing insights and checking areas"
       contentClassName="max-w-xl"
       brandName="LagosRentHelp"
       brandHref="/area-reviews"

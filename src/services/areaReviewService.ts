@@ -198,4 +198,11 @@ export const areaReviewService = {
     });
     if (error) throw new Error(error.message);
   },
+
+  deleteReview: async (reviewId: string) => {
+    const { error } = await supabase.rpc("delete_area_review", {
+      p_review_id: reviewId,
+    });
+    if (error) throw new Error(error.message);
+  },
 };

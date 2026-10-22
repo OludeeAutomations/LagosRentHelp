@@ -593,12 +593,31 @@ begin
 end;
 $$;
 
+create or replace function public.delete_area_review(p_review_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if coalesce(public.current_app_role(), '') <> 'super_admin' then
+    raise exception 'Super administrator access required';
+  end if;
+
+  delete from public.area_reviews
+  where id = p_review_id;
+
+  if not found then raise exception 'Review not found'; end if;
+end;
+$$;
+
 revoke all on function public.get_area_review_locations(text) from public;
 revoke all on function public.get_area_review_location(text) from public;
 revoke all on function public.get_latest_area_reviews(integer) from public;
 revoke all on function public.submit_area_review(uuid, text, text, text, text, text, integer, integer, numeric, numeric, numeric, integer, integer, integer, integer, integer, integer, integer, text, text, text, boolean) from public;
 revoke all on function public.get_admin_area_reviews() from public;
 revoke all on function public.moderate_area_review(uuid, text, text) from public;
+revoke all on function public.delete_area_review(uuid) from public;
 
 grant execute on function public.get_area_review_locations(text) to anon, authenticated;
 grant execute on function public.get_area_review_location(text) to anon, authenticated;
@@ -606,5 +625,6 @@ grant execute on function public.get_latest_area_reviews(integer) to anon, authe
 grant execute on function public.submit_area_review(uuid, text, text, text, text, text, integer, integer, numeric, numeric, numeric, integer, integer, integer, integer, integer, integer, integer, text, text, text, boolean) to authenticated;
 grant execute on function public.get_admin_area_reviews() to authenticated;
 grant execute on function public.moderate_area_review(uuid, text, text) to authenticated;
+grant execute on function public.delete_area_review(uuid) to authenticated;
 
 commit;

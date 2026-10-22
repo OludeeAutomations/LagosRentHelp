@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Clock3, Loader2, MapPin, RefreshCw, Star, XCircle } from "lucide-react";
+import { CheckCircle2, Clock3, Loader2, MapPin, RefreshCw, Star, Trash2, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { areaReviewService } from "@/services/areaReviewService";
+import { useAuthStore } from "@/stores/authStore";
 import type { ModerationAreaReview } from "@/types/areaReviews";
 
 const statusStyle = {
@@ -14,6 +15,7 @@ const statusStyle = {
 };
 
 const AdminAreaReviewsPage = () => {
+  const user = useAuthStore((state) => state.user);
   const [reviews, setReviews] = useState<ModerationAreaReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState("");
@@ -50,6 +52,21 @@ const AdminAreaReviewsPage = () => {
     }
   };
 
+  const deleteReview = async (review: ModerationAreaReview) => {
+    if (!window.confirm(`Permanently delete “${review.headline}”? This cannot be undone.`)) return;
+
+    setActionId(review.id);
+    try {
+      await areaReviewService.deleteReview(review.id);
+      setReviews((current) => current.filter((item) => item.id !== review.id));
+      toast.success("Review deleted permanently.");
+    } catch (reason: unknown) {
+      toast.error(reason instanceof Error ? reason.message : "Unable to delete this review.");
+    } finally {
+      setActionId("");
+    }
+  };
+
   return (
     <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
@@ -81,12 +98,19 @@ const AdminAreaReviewsPage = () => {
                   </div>
                   {review.moderationNote && <p className="mt-3 rounded-lg bg-red-50 p-3 text-xs text-red-700"><strong>Moderation note:</strong> {review.moderationNote}</p>}
                 </div>
-                {review.status === "pending" && (
-                  <div className="flex shrink-0 gap-2 lg:flex-col">
-                    <Button onClick={() => void moderate(review, "approved")} disabled={actionId === review.id} className="bg-[#129B36] hover:bg-[#0e7d2b]"><CheckCircle2 className="h-4 w-4" /> Approve</Button>
-                    <Button variant="outline" onClick={() => void moderate(review, "rejected")} disabled={actionId === review.id} className="border-red-200 text-red-600 hover:bg-red-50"><XCircle className="h-4 w-4" /> Reject</Button>
-                  </div>
-                )}
+                <div className="flex shrink-0 gap-2 lg:flex-col">
+                  {review.status === "pending" && (
+                    <>
+                      <Button onClick={() => void moderate(review, "approved")} disabled={actionId === review.id} className="bg-[#129B36] hover:bg-[#0e7d2b]"><CheckCircle2 className="h-4 w-4" /> Approve</Button>
+                      <Button variant="outline" onClick={() => void moderate(review, "rejected")} disabled={actionId === review.id} className="border-red-200 text-red-600 hover:bg-red-50"><XCircle className="h-4 w-4" /> Reject</Button>
+                    </>
+                  )}
+                  {user?.role === "super_admin" && (
+                    <Button variant="outline" onClick={() => void deleteReview(review)} disabled={actionId === review.id} className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700">
+                      {actionId === review.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Delete
+                    </Button>
+                  )}
+                </div>
               </div>
             </article>
           ))}
