@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import type {
   AreaReviewLocation,
   AreaReviewLocationDetail,
+  FeaturedAreaReview,
   ModerationAreaReview,
   ReviewModerationStatus,
   SubmitAreaReviewPayload,
@@ -109,6 +110,22 @@ export const areaReviewService = {
       ...location,
       reviews: ((result.reviews || []) as UnknownRecord[]).map(mapPublicReview),
     };
+  },
+
+  getLatestApproved: async (limit = 6): Promise<FeaturedAreaReview[]> => {
+    const { data, error } = await areaReviewsSupabase.rpc("get_latest_area_reviews", {
+      p_limit: limit,
+    });
+    if (error) {
+      if (relationMissing(error.message)) return [];
+      throw new Error(error.message);
+    }
+    return ((data || []) as UnknownRecord[]).map((row) => ({
+      ...mapPublicReview(row),
+      locationName: String(row.location_name),
+      locationSlug: String(row.location_slug),
+      lga: String(row.lga),
+    }));
   },
 
   submit: async (payload: SubmitAreaReviewPayload): Promise<string> => {

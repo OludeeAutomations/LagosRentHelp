@@ -53,7 +53,7 @@ const AreaReviewsLayout = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#f7f6f1]">
-      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
+      {!isAuthPage && <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
         <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <Link to="/area-reviews" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>
             <img src="/icon.png" alt="LagosRentHelp" className="h-11 w-11 object-contain" />
@@ -98,7 +98,7 @@ const AreaReviewsLayout = () => {
             </nav>
           </div>
         )}
-      </header>
+      </header>}
 
       <main className="flex-1"><Outlet /></main>
 

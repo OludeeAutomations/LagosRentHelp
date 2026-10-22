@@ -49,6 +49,12 @@ export interface PublicAreaReview {
   createdAt: string;
 }
 
+export interface FeaturedAreaReview extends PublicAreaReview {
+  locationName: string;
+  locationSlug: string;
+  lga: string;
+}
+
 export interface AreaReviewLocationDetail extends AreaReviewLocation {
   reviews: PublicAreaReview[];
 }

@@ -5,16 +5,18 @@ import {
   ChevronRight,
   Droplets,
   MapPin,
+  Quote,
   Search,
   ShieldCheck,
   Sparkles,
+  Star,
   Users,
   Waves,
   Zap,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { areaReviewService } from "@/services/areaReviewService";
-import type { AreaReviewLocation } from "@/types/areaReviews";
+import type { AreaReviewLocation, FeaturedAreaReview } from "@/types/areaReviews";
 import AreaLocationCard from "./AreaLocationCard";
 import { locationTypeLabel } from "./areaReviewUtils";
 
@@ -30,16 +32,27 @@ const featuredLgaSlugs = [
 const AreaReviewsLandingPage = () => {
   const navigate = useNavigate();
   const [locations, setLocations] = useState<AreaReviewLocation[]>([]);
+  const [latestReviews, setLatestReviews] = useState<FeaturedAreaReview[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [searchFocused, setSearchFocused] = useState(false);
 
   useEffect(() => {
     let active = true;
-    areaReviewService
-      .getLocations()
-      .then((result) => active && setLocations(result))
-      .catch(() => active && setLocations([]))
+    Promise.all([
+      areaReviewService.getLocations(),
+      areaReviewService.getLatestApproved(),
+    ])
+      .then(([locationResults, reviewResults]) => {
+        if (!active) return;
+        setLocations(locationResults);
+        setLatestReviews(reviewResults);
+      })
+      .catch(() => {
+        if (!active) return;
+        setLocations([]);
+        setLatestReviews([]);
+      })
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
@@ -200,6 +213,36 @@ const AreaReviewsLandingPage = () => {
           </div>
         )}
       </section>
+
+      {latestReviews.length > 0 && (
+        <section className="border-y border-slate-200/70 bg-white">
+          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+            <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+              <div>
+                <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#129B36]">Approved resident experiences</p>
+                <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">What Lagos residents are saying</h2>
+                <p className="mt-3 max-w-2xl leading-7 text-slate-600">Recently approved experiences about rent, utilities and everyday living conditions.</p>
+              </div>
+              <Link to="/area-reviews/areas" className="inline-flex items-center gap-2 text-sm font-bold text-[#0e7d2b] hover:underline">Explore all areas <ArrowRight className="h-4 w-4" /></Link>
+            </div>
+
+            <div className="mt-9 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+              {latestReviews.map((review) => (
+                <Link key={review.id} to={`/area-reviews/${review.locationSlug}`} className="group relative flex min-h-72 flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-[#fafaf8] p-6 transition hover:-translate-y-1 hover:border-green-200 hover:shadow-xl hover:shadow-green-950/[0.06]">
+                  <Quote className="absolute right-5 top-5 h-12 w-12 text-green-100/70" />
+                  <div className="relative flex items-start justify-between gap-4">
+                    <div><p className="text-xs font-bold uppercase tracking-wider text-[#129B36]">{review.locationName}</p><p className="mt-1 text-xs text-slate-500">{review.lga}, Lagos</p></div>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-bold shadow-sm"><Star className="h-3.5 w-3.5 fill-[#e8b949] text-[#e8b949]" />{review.overallRating.toFixed(1)}</span>
+                  </div>
+                  <h3 className="relative mt-6 text-xl font-bold transition group-hover:text-[#0e7d2b]">{review.headline}</h3>
+                  <p className="relative mt-3 line-clamp-3 text-sm leading-7 text-slate-600">{review.review}</p>
+                  <div className="relative mt-auto flex items-center justify-between gap-4 border-t border-slate-200/70 pt-5 text-xs"><span className="font-semibold text-slate-600">{review.displayName} · {review.residencyStatus === "current" ? "Current resident" : "Former resident"}</span><span className="inline-flex items-center gap-1 font-bold text-[#129B36]">Read review <ChevronRight className="h-3.5 w-3.5" /></span></div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section id="how-it-works" className="scroll-mt-24 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
