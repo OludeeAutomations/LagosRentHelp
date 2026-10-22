@@ -1,5 +1,6 @@
--- Fix false users_phone_key errors caused by multiple accounts having a blank
--- phone value. Run once in Supabase Dashboard -> SQL Editor.
+-- Remove the invalid phone-identity rule. LagosRentHelp authenticates by
+-- email/Google; phone is contact information and may legitimately be shared.
+-- Run once in Supabase Dashboard -> SQL Editor.
 
 begin;
 
@@ -12,7 +13,7 @@ where nullif(trim(phone), '') is null;
 alter table public.users drop constraint if exists users_phone_key;
 drop index if exists public.users_phone_key;
 
-create unique index users_phone_key
+create index if not exists users_phone_lookup_idx
   on public.users (phone)
   where nullif(trim(phone), '') is not null;
 

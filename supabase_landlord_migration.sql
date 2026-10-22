@@ -6,14 +6,15 @@ begin;
 alter table public.users
   add column if not exists auth_user_id uuid references auth.users(id) on delete set null;
 
--- Blank phone values are not identities. The original column-level unique
--- constraint treated every empty string as the same phone number, preventing
--- unrelated accounts from completing profile or landlord setup.
+-- Phone is contact information, not an authentication identity. Accounts sign
+-- in with email/Google, while landlord identity is protected by NIN and
+-- ownership verification. A uniqueness rule here wrongly blocks shared
+-- household/business numbers and stale imported test records.
 alter table public.users alter column phone drop not null;
 update public.users set phone = null where nullif(trim(phone), '') is null;
 alter table public.users drop constraint if exists users_phone_key;
 drop index if exists public.users_phone_key;
-create unique index users_phone_key
+create index if not exists users_phone_lookup_idx
   on public.users (phone)
   where nullif(trim(phone), '') is not null;
 
