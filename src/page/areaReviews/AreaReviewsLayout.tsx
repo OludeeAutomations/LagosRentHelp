@@ -10,6 +10,9 @@ const AreaReviewsLayout = () => {
   const { user, loading, initialize, signOut } = useAreaReviewsAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
   const returnTo = `${location.pathname}${location.search}`;
+  const isAuthPage = location.pathname === "/area-reviews/login"
+    || location.pathname === "/area-reviews/register"
+    || location.pathname.startsWith("/area-reviews/auth/");
 
   useEffect(() => initialize(), [initialize]);
 
@@ -25,7 +28,7 @@ const AreaReviewsLayout = () => {
   };
 
   const navigation = [
-    { label: "Explore areas", href: "/area-reviews", icon: Search },
+    { label: "Explore areas", href: "/area-reviews/areas", icon: Search },
     { label: "Share a review", href: "/area-reviews/write", icon: MessageSquareText },
   ];
 
@@ -43,7 +46,7 @@ const AreaReviewsLayout = () => {
 
           <nav className="hidden items-center gap-1 md:flex">
             {navigation.map(({ label, href, icon: Icon }) => {
-              const active = href === "/area-reviews" ? location.pathname === href : location.pathname.startsWith(href);
+              const active = location.pathname.startsWith(href);
               return <Link key={href} to={href} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${active ? "bg-green-50 text-[#0e7d2b]" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}><Icon className="h-4 w-4" />{label}</Link>;
             })}
           </nav>
@@ -77,14 +80,14 @@ const AreaReviewsLayout = () => {
 
       <main className="flex-1"><Outlet /></main>
 
-      <footer className="border-t border-white/10 bg-[#0c3021] text-white">
+      {!isAuthPage && <footer className="border-t border-white/10 bg-[#0c3021] text-white">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.2fr_0.8fr_0.8fr] lg:px-8">
           <div><div className="flex items-center gap-3"><img src="/icon.png" alt="" className="h-10 w-10 object-contain" /><span><span className="block font-bold">LagosRentHelp</span><span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-[#f4ce70]">Area Reviews</span></span></div><p className="mt-4 max-w-md text-sm leading-7 text-green-50/65">Honest, moderated housing experiences shared by Lagos residents.</p></div>
-          <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-green-100/50">Explore</p><div className="mt-4 space-y-3 text-sm"><Link to="/area-reviews" className="block text-green-50/75 hover:text-white">Browse areas</Link><Link to="/area-reviews/write" className="block text-green-50/75 hover:text-white">Share a review</Link></div></div>
+          <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-green-100/50">Explore</p><div className="mt-4 space-y-3 text-sm"><Link to="/area-reviews/areas" className="block text-green-50/75 hover:text-white">Browse all LGAs</Link><Link to="/area-reviews/write" className="block text-green-50/75 hover:text-white">Share a review</Link></div></div>
           <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-green-100/50">Trust</p><div className="mt-4 space-y-3 text-sm"><span className="flex items-center gap-2 text-green-50/75"><ShieldCheck className="h-4 w-4" />Moderated reviews</span><Link to="/privacy" className="block text-green-50/75 hover:text-white">Privacy policy</Link></div></div>
         </div>
         <div className="border-t border-white/10 px-4 py-5 text-center text-xs text-green-50/45">© {new Date().getFullYear()} LagosRentHelp Area Reviews</div>
-      </footer>
+      </footer>}
     </div>
   );
 };

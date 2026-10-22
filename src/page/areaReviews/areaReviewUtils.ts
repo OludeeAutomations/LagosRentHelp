@@ -1,3 +1,5 @@
+import type { AreaReviewLocation } from "@/types/areaReviews";
+
 export const formatNaira = (value: number | null) =>
   value === null
     ? "Not enough data"
@@ -9,6 +11,9 @@ export const formatNaira = (value: number | null) =>
 
 export const formatRating = (value: number | null) =>
   value === null ? "New" : value.toFixed(1);
+
+export const locationTypeLabel = (type: AreaReviewLocation["type"]) =>
+  type === "lga" ? "Local government" : type;
 
 export const formatPropertyType = (value: string) =>
   value

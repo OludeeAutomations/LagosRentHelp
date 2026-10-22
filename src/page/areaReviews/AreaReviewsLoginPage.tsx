@@ -59,6 +59,7 @@ const AreaReviewsLoginPage = () => {
     <AuthLayout
       title="Welcome Back"
       subtitle="Sign in to your Area Reviews account"
+      shellClassName="mx-auto w-full max-w-7xl"
       brandName="LagosRentHelp"
       brandHref="/area-reviews"
       sideTitle="Know Before You Rent"

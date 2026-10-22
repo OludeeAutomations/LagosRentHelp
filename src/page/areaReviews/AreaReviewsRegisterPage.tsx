@@ -54,7 +54,7 @@ const AreaReviewsRegisterPage = () => {
   };
 
   if (verificationEmail) return (
-    <AuthLayout title="Check Your Email" subtitle="One last step to activate your Area Reviews account" brandName="LagosRentHelp" brandHref="/area-reviews" sideTitle="Your Experience Can Help Someone" sideSubtitle="Share what daily life and renting are really like" sideIcon={MapPinned}>
+    <AuthLayout title="Check Your Email" subtitle="One last step to activate your Area Reviews account" shellClassName="mx-auto w-full max-w-7xl" brandName="LagosRentHelp" brandHref="/area-reviews" sideTitle="Your Experience Can Help Someone" sideSubtitle="Share what daily life and renting are really like" sideIcon={MapPinned}>
       <div className="py-4 text-center">
         <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-50"><CheckCircle2 className="h-8 w-8 text-[#129B36]" /></span>
         <p className="mt-5 leading-7 text-slate-600">We sent a verification link to <strong>{verificationEmail}</strong>. Open it to finish creating your account.</p>
@@ -67,6 +67,7 @@ const AreaReviewsRegisterPage = () => {
     <AuthLayout
       title="Create Account"
       subtitle="Join residents sharing trusted local insight"
+      shellClassName="mx-auto w-full max-w-7xl"
       contentClassName="max-w-xl"
       brandName="LagosRentHelp"
       brandHref="/area-reviews"

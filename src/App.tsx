@@ -57,6 +57,7 @@ const LandlordLogs = React.lazy(() => import("./page/landlord/LandlordLogs"));
 const LandlordSubscription = React.lazy(() => import("./page/landlord/LandlordSubscription"));
 const DashboardSecuritySettings = React.lazy(() => import("./page/settings/DashboardSecuritySettings"));
 const AreaReviewsLandingPage = React.lazy(() => import("./page/areaReviews/AreaReviewsLandingPage"));
+const AreaReviewsDirectoryPage = React.lazy(() => import("./page/areaReviews/AreaReviewsDirectoryPage"));
 const AreaReviewDetailPage = React.lazy(() => import("./page/areaReviews/AreaReviewDetailPage"));
 const AreaReviewWritePage = React.lazy(() => import("./page/areaReviews/AreaReviewWritePage"));
 const AreaReviewsLayout = React.lazy(() => import("./page/areaReviews/AreaReviewsLayout"));
@@ -145,6 +146,7 @@ const AppContent: React.FC = () => {
             />
             <Route element={<AreaReviewsLayout />}>
               <Route path="/area-reviews" element={<AreaReviewsLandingPage />} />
+              <Route path="/area-reviews/areas" element={<AreaReviewsDirectoryPage />} />
               <Route path="/area-reviews/write" element={<AreaReviewWritePage />} />
               <Route path="/area-reviews/login" element={<AreaReviewsLoginPage />} />
               <Route path="/area-reviews/register" element={<AreaReviewsRegisterPage />} />
