@@ -250,11 +250,14 @@ security definer
 set search_path = public
 as $$
 declare
-  v_user_id text := public.current_public_user_id();
+  v_profile jsonb;
+  v_user_id text;
   v_location_id uuid := p_location_id;
   v_slug text;
   v_review public.area_reviews%rowtype;
 begin
+  v_profile := public.ensure_my_profile();
+  v_user_id := v_profile ->> 'id';
   if v_user_id is null then raise exception 'Sign in to submit a resident review'; end if;
   if p_location_type not in ('lga', 'neighbourhood', 'estate', 'street', 'building') then raise exception 'Select a valid location type'; end if;
   if p_residency_status not in ('current', 'former') then raise exception 'Select a valid residency status'; end if;
