@@ -6,6 +6,17 @@ begin;
 alter table public.users
   add column if not exists auth_user_id uuid references auth.users(id) on delete set null;
 
+-- Blank phone values are not identities. The original column-level unique
+-- constraint treated every empty string as the same phone number, preventing
+-- unrelated accounts from completing profile or landlord setup.
+alter table public.users alter column phone drop not null;
+update public.users set phone = null where nullif(trim(phone), '') is null;
+alter table public.users drop constraint if exists users_phone_key;
+drop index if exists public.users_phone_key;
+create unique index users_phone_key
+  on public.users (phone)
+  where nullif(trim(phone), '') is not null;
+
 create unique index if not exists users_auth_user_id_unique
   on public.users (auth_user_id)
   where auth_user_id is not null;
@@ -125,14 +136,9 @@ set search_path = public, auth
 as $$
 declare
   v_auth_id uuid := auth.uid();
-  v_email text := lower(coalesce(auth.jwt() ->> 'email', ''));
-  v_name text := coalesce(
-    auth.jwt() -> 'user_metadata' ->> 'full_name',
-    auth.jwt() -> 'user_metadata' ->> 'name',
-    split_part(v_email, '@', 1),
-    'User'
-  );
-  v_phone text := coalesce(auth.jwt() -> 'user_metadata' ->> 'phone', '');
+  v_email text;
+  v_name text;
+  v_phone text;
   -- A signup preference is not authorization. A new account remains a normal
   -- user until submit_landlord_application validates a complete application.
   v_requested_role text := 'user';
@@ -143,10 +149,25 @@ begin
     raise exception 'Authentication required';
   end if;
 
-  select (email_confirmed_at is not null)
-  into v_email_confirmed
-  from auth.users
-  where id = v_auth_id;
+  -- Read directly from auth.users. Immediately after signup, the JWT can be
+  -- older than the stored signup metadata and may incorrectly expose a blank
+  -- phone number.
+  select
+    auth_account.email_confirmed_at is not null,
+    lower(coalesce(auth_account.email, '')),
+    coalesce(
+      nullif(trim(auth_account.raw_user_meta_data ->> 'full_name'), ''),
+      nullif(trim(auth_account.raw_user_meta_data ->> 'name'), ''),
+      split_part(lower(coalesce(auth_account.email, '')), '@', 1),
+      'User'
+    ),
+    coalesce(
+      nullif(trim(auth_account.raw_user_meta_data ->> 'phone'), ''),
+      nullif(trim(auth_account.phone), '')
+    )
+  into v_email_confirmed, v_email, v_name, v_phone
+  from auth.users auth_account
+  where auth_account.id = v_auth_id;
 
   select * into v_profile
   from public.users
