@@ -1,5 +1,5 @@
-import { LogIn, LogOut, Menu, MessageSquareText, Search, ShieldCheck, UserPlus, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ChevronDown, LogIn, LogOut, Menu, MessageSquareText, Search, Settings, ShieldCheck, UserPlus, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAreaReviewsAuthStore } from "@/stores/areaReviewsAuthStore";
@@ -9,6 +9,8 @@ const AreaReviewsLayout = () => {
   const navigate = useNavigate();
   const { user, loading, initialize, signOut } = useAreaReviewsAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
   const returnTo = `${location.pathname}${location.search}`;
   const isAuthPage = location.pathname === "/area-reviews/login"
     || location.pathname === "/area-reviews/register"
@@ -16,10 +18,27 @@ const AreaReviewsLayout = () => {
 
   useEffect(() => initialize(), [initialize]);
 
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    const closeMenu = (event: MouseEvent) => {
+      if (!accountMenuRef.current?.contains(event.target as Node)) setAccountMenuOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setAccountMenuOpen(false);
+    };
+    document.addEventListener("mousedown", closeMenu);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeMenu);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [accountMenuOpen]);
+
   const handleSignOut = async () => {
     try {
       await signOut();
       setMobileOpen(false);
+      setAccountMenuOpen(false);
       toast.success("You have been signed out of Area Reviews.");
       navigate("/area-reviews", { replace: true });
     } catch {
@@ -53,11 +72,14 @@ const AreaReviewsLayout = () => {
 
           <div className="hidden items-center gap-3 md:flex">
             {!loading && user ? <>
-              <div className="flex items-center gap-3 rounded-full border border-slate-200 bg-white py-1.5 pl-2 pr-4">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#129B36] text-xs font-bold text-white">{user.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</span>
-                <span className="max-w-32 truncate text-sm font-semibold text-slate-700">{user.name.split(" ")[0]}</span>
+              <div ref={accountMenuRef} className="relative">
+                <button type="button" onClick={() => setAccountMenuOpen((open) => !open)} aria-expanded={accountMenuOpen} aria-haspopup="menu" className="flex items-center gap-3 rounded-full border border-slate-200 bg-white py-1.5 pl-2 pr-3 transition hover:border-green-200 hover:bg-green-50/50">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#129B36] text-xs font-bold text-white">{user.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</span>
+                  <span className="max-w-32 truncate text-sm font-semibold text-slate-700">{user.name.split(" ")[0]}</span>
+                  <ChevronDown className={`h-4 w-4 text-slate-400 transition ${accountMenuOpen ? "rotate-180" : ""}`} />
+                </button>
+                {accountMenuOpen && <div role="menu" className="absolute right-0 top-[calc(100%+0.65rem)] w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10"><div className="border-b border-slate-100 px-3 py-2.5"><p className="truncate text-sm font-bold text-slate-900">{user.name}</p><p className="mt-0.5 truncate text-xs text-slate-500">{user.email}</p></div><Link to="/area-reviews/settings" role="menuitem" onClick={() => setAccountMenuOpen(false)} className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-green-50 hover:text-[#0e7d2b]"><Settings className="h-4 w-4" />Account settings</Link><button type="button" role="menuitem" onClick={handleSignOut} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50"><LogOut className="h-4 w-4" />Log out</button></div>}
               </div>
-              <button type="button" onClick={handleSignOut} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"><LogOut className="h-4 w-4" />Log out</button>
             </> : !loading && <>
               <Link to="/area-reviews/login" state={{ from: returnTo }} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-green-200 hover:bg-green-50 hover:text-[#0e7d2b]"><LogIn className="h-4 w-4" />Sign in</Link>
               <Link to="/area-reviews/register" className="inline-flex items-center gap-2 rounded-xl bg-[#129B36] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#0e7d2b]"><UserPlus className="h-4 w-4" />Create account</Link>
@@ -72,7 +94,7 @@ const AreaReviewsLayout = () => {
             <nav className="mx-auto max-w-7xl space-y-1">
               {navigation.map(({ label, href, icon: Icon }) => <Link key={href} to={href} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-green-50"><Icon className="h-5 w-5 text-[#129B36]" />{label}</Link>)}
               {!loading && !user && <><Link to="/area-reviews/login" state={{ from: returnTo }} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-green-50"><LogIn className="h-5 w-5 text-[#129B36]" />Sign in</Link><Link to="/area-reviews/register" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-green-50"><UserPlus className="h-5 w-5 text-[#129B36]" />Create account</Link></>}
-              {!loading && user && <><div className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#129B36] text-xs font-bold text-white">{user.name.slice(0, 1).toUpperCase()}</span>Signed in as {user.name.split(" ")[0]}</div><button type="button" onClick={handleSignOut} className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-red-700 hover:bg-red-50"><LogOut className="h-5 w-5" />Log out</button></>}
+              {!loading && user && <><div className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#129B36] text-xs font-bold text-white">{user.name.slice(0, 1).toUpperCase()}</span>Signed in as {user.name.split(" ")[0]}</div><Link to="/area-reviews/settings" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-green-50"><Settings className="h-5 w-5 text-[#129B36]" />Account settings</Link><button type="button" onClick={handleSignOut} className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-red-700 hover:bg-red-50"><LogOut className="h-5 w-5" />Log out</button></>}
             </nav>
           </div>
         )}

@@ -13,9 +13,9 @@ const AreaLocationCard = ({ location, index = 0 }: { location: AreaReviewLocatio
       <span className={`flex h-11 w-11 items-center justify-center rounded-2xl ${index % 3 === 0 ? "bg-amber-50 text-amber-700" : "bg-green-50 text-[#129B36]"}`}>
         <Building2 className="h-5 w-5" />
       </span>
-      <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700">
+      {location.averageRating !== null && <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700">
         <Star className="h-3.5 w-3.5 fill-[#e8b949] text-[#e8b949]" /> {formatRating(location.averageRating)}
-      </span>
+      </span>}
     </div>
     <div className="mt-8">
       <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{locationTypeLabel(location.type)} · {location.lga}</p>
@@ -27,7 +27,7 @@ const AreaLocationCard = ({ location, index = 0 }: { location: AreaReviewLocatio
         <p className="text-xs text-slate-400">Reported average rent</p>
         <p className="mt-1 text-sm font-bold">{formatNaira(location.averageRent)}</p>
       </div>
-      <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#129B36]">{location.reviewCount ? `${location.reviewCount} reviews` : "Be first"}<ChevronRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" /></span>
+      <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#129B36]">{location.reviewCount ? `${location.reviewCount} reviews` : "View area"}<ChevronRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" /></span>
     </div>
   </Link>
 );

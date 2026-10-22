@@ -64,6 +64,7 @@ const AreaReviewsLayout = React.lazy(() => import("./page/areaReviews/AreaReview
 const AreaReviewsLoginPage = React.lazy(() => import("./page/areaReviews/AreaReviewsLoginPage"));
 const AreaReviewsRegisterPage = React.lazy(() => import("./page/areaReviews/AreaReviewsRegisterPage"));
 const AreaReviewsAuthCallback = React.lazy(() => import("./page/areaReviews/AreaReviewsAuthCallback"));
+const AreaReviewsSettingsPage = React.lazy(() => import("./page/areaReviews/AreaReviewsSettingsPage"));
 const AdminAreaReviewsPage = React.lazy(() => import("./page/admin/AdminAreaReviewsPage"));
 
 const RouteFallback = () => (
@@ -151,6 +152,7 @@ const AppContent: React.FC = () => {
               <Route path="/area-reviews/login" element={<AreaReviewsLoginPage />} />
               <Route path="/area-reviews/register" element={<AreaReviewsRegisterPage />} />
               <Route path="/area-reviews/auth/callback" element={<AreaReviewsAuthCallback />} />
+              <Route path="/area-reviews/settings" element={<AreaReviewsSettingsPage />} />
               <Route path="/area-reviews/:slug" element={<AreaReviewDetailPage />} />
             </Route>
             <Route

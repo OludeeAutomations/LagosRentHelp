@@ -27,8 +27,8 @@ const AreaReviewsDirectoryPage = () => {
 
   return (
     <div className="min-h-screen bg-[#f7f6f1] text-slate-950">
-      <section className="bg-[#103f2b] px-4 py-14 text-white sm:px-6 lg:px-8 lg:py-18">
-        <div className="mx-auto max-w-7xl">
+      <section className="bg-[#103f2b] py-14 text-white lg:py-18">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Link to="/area-reviews" className="inline-flex items-center gap-2 text-sm font-semibold text-green-50/70 hover:text-white"><ArrowLeft className="h-4 w-4" /> Back to Area Reviews</Link>
           <div className="mt-7 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
             <div><p className="text-sm font-bold uppercase tracking-[0.18em] text-[#f4ce70]">Lagos directory</p><h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">All 20 Lagos LGAs</h1><p className="mt-4 max-w-2xl leading-7 text-green-50/70">Choose a local government area to read resident experiences about rent, utilities, roads, flooding, security and daily life.</p></div>

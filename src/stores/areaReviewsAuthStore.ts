@@ -17,6 +17,7 @@ interface AreaReviewsAuthState {
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGoogle: (returnTo?: string) => Promise<void>;
   signUp: (details: { name: string; email: string; phone: string; password: string }) => Promise<{ requiresVerification: boolean }>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -113,6 +114,18 @@ export const useAreaReviewsAuthStore = create<AreaReviewsAuthState>((set) => ({
     }
     set({ user: data.session ? mapAccount(data.session.user) : null, loading: false, initialized: true });
     return { requiresVerification: !data.session };
+  },
+
+  changePassword: async (currentPassword, newPassword) => {
+    const account = useAreaReviewsAuthStore.getState().user;
+    if (!account?.email) throw new Error("Sign in again before changing your password.");
+    const { error: verificationError } = await areaReviewsSupabase.auth.signInWithPassword({
+      email: account.email,
+      password: currentPassword,
+    });
+    if (verificationError) throw new Error("Your current password is incorrect.");
+    const { error } = await areaReviewsSupabase.auth.updateUser({ password: newPassword });
+    if (error) throw new Error(error.message);
   },
 
   signOut: async () => {

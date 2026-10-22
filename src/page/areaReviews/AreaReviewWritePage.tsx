@@ -172,8 +172,8 @@ const AreaReviewWritePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-      <form onSubmit={submitReview} className="mx-auto max-w-7xl">
+    <div className="min-h-screen bg-slate-50 py-10 lg:py-14">
+      <form onSubmit={submitReview} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Link to={selectedLocation ? `/area-reviews/${selectedLocation.slug}` : "/area-reviews"} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-[#129B36]"><ArrowLeft className="h-4 w-4" /> Back to Area Reviews</Link>
         <div className="relative mt-7 overflow-hidden rounded-[2rem] bg-[#103f2b] px-6 py-8 text-white shadow-xl shadow-green-950/10 sm:px-9 sm:py-10">
           <div aria-hidden="true" className="absolute -right-16 -top-24 h-72 w-72 rounded-full border-[45px] border-white/[0.04]" />
