@@ -117,14 +117,6 @@ export const areaReviewService = {
       throw new Error("Your Area Reviews session has expired. Please sign in again.");
     }
 
-    // Older LagosRentHelp accounts may have a Supabase Auth session without
-    // their legacy public.users row being linked yet. Reviews reference that
-    // public profile, so ensure it exists before calling the submission RPC.
-    const { error: profileError } = await areaReviewsSupabase.rpc("ensure_my_profile");
-    if (profileError) {
-      throw new Error(`Unable to prepare your account for review submission: ${profileError.message}`);
-    }
-
     const databaseLocationId = payload.locationId?.startsWith("starter-")
       ? null
       : payload.locationId || null;

@@ -63,6 +63,33 @@ create table if not exists public.area_reviews (
   unique (location_id, user_id)
 );
 
+-- Area Reviews uses the same Supabase login as LagosRentHelp, but it must not
+-- depend on a legacy public.users profile. Some older profiles were imported
+-- with a phone number already attached to another auth identity, which made a
+-- valid signed-in resident hit users_phone_key while submitting a review.
+alter table public.area_reviews
+  add column if not exists auth_user_id uuid references auth.users(id) on delete cascade,
+  add column if not exists reviewer_name text,
+  add column if not exists reviewer_email text;
+
+alter table public.area_reviews alter column user_id drop not null;
+
+update public.area_reviews review
+set auth_user_id = app_user.auth_user_id,
+    reviewer_name = coalesce(review.reviewer_name, app_user.name),
+    reviewer_email = coalesce(review.reviewer_email, app_user.email)
+from public.users app_user
+where review.user_id = app_user.id
+  and review.auth_user_id is null
+  and app_user.auth_user_id is not null;
+
+alter table public.area_reviews
+  drop constraint if exists area_reviews_location_id_user_id_key;
+
+create unique index if not exists area_reviews_location_auth_user_unique
+  on public.area_reviews (location_id, auth_user_id)
+  where auth_user_id is not null;
+
 create index if not exists area_review_locations_search_idx
   on public.area_review_locations (lower(name), lower(lga));
 create index if not exists area_reviews_public_idx
@@ -185,7 +212,11 @@ begin
     select
       review.id,
       case
-        when review.show_first_name then split_part(app_user.name, ' ', 1)
+        when review.show_first_name then split_part(
+          coalesce(nullif(review.reviewer_name, ''), app_user.name, 'Lagos resident'),
+          ' ',
+          1
+        )
         else 'Lagos resident'
       end as display_name,
       review.residency_status,
@@ -208,7 +239,7 @@ begin
       review.evidence_verified,
       review.created_at
     from public.area_reviews review
-    join public.users app_user on app_user.id = review.user_id
+    left join public.users app_user on app_user.id = review.user_id
     where review.location_id = v_location.id
       and review.status = 'approved'
   ) review_row;
@@ -250,15 +281,21 @@ security definer
 set search_path = public
 as $$
 declare
-  v_profile jsonb;
+  v_auth_user_id uuid := auth.uid();
   v_user_id text;
+  v_reviewer_name text := coalesce(
+    auth.jwt() -> 'user_metadata' ->> 'full_name',
+    auth.jwt() -> 'user_metadata' ->> 'name',
+    split_part(coalesce(auth.jwt() ->> 'email', ''), '@', 1),
+    'Lagos resident'
+  );
+  v_reviewer_email text := lower(coalesce(auth.jwt() ->> 'email', ''));
   v_location_id uuid := p_location_id;
   v_slug text;
   v_review public.area_reviews%rowtype;
 begin
-  v_profile := public.ensure_my_profile();
-  v_user_id := v_profile ->> 'id';
-  if v_user_id is null then raise exception 'Sign in to submit a resident review'; end if;
+  if v_auth_user_id is null then raise exception 'Sign in to submit a resident review'; end if;
+  v_user_id := public.current_public_user_id();
   if p_location_type not in ('lga', 'neighbourhood', 'estate', 'street', 'building') then raise exception 'Select a valid location type'; end if;
   if p_residency_status not in ('current', 'former') then raise exception 'Select a valid residency status'; end if;
   if p_flood_risk not in ('none', 'low', 'moderate', 'high', 'unsure') then raise exception 'Select a valid flooding experience'; end if;
@@ -300,20 +337,25 @@ begin
   end if;
 
   insert into public.area_reviews (
-    location_id, user_id, residency_status, property_type, lived_from, lived_to,
+    location_id, user_id, auth_user_id, reviewer_name, reviewer_email,
+    residency_status, property_type, lived_from, lived_to,
     rent_amount, service_charge, move_in_cost, overall_rating,
     electricity_rating, water_rating, security_rating, roads_rating,
     noise_rating, maintenance_rating, flood_risk, headline, review_text,
     show_first_name, status, moderation_note, reviewed_by, reviewed_at
   ) values (
-    v_location_id, v_user_id, p_residency_status, trim(p_property_type), p_lived_from,
+    v_location_id, v_user_id, v_auth_user_id, v_reviewer_name, v_reviewer_email,
+    p_residency_status, trim(p_property_type), p_lived_from,
     case when p_residency_status = 'current' then null else p_lived_to end,
     p_rent_amount, p_service_charge, p_move_in_cost, p_overall_rating,
     p_electricity_rating, p_water_rating, p_security_rating, p_roads_rating,
     p_noise_rating, p_maintenance_rating, p_flood_risk, trim(p_headline),
     trim(p_review_text), p_show_first_name, 'pending', null, null, null
   )
-  on conflict (location_id, user_id) do update set
+  on conflict (location_id, auth_user_id) where auth_user_id is not null do update set
+    user_id = excluded.user_id,
+    reviewer_name = excluded.reviewer_name,
+    reviewer_email = excluded.reviewer_email,
     residency_status = excluded.residency_status,
     property_type = excluded.property_type,
     lived_from = excluded.lived_from,
@@ -391,9 +433,16 @@ begin
     location.name,
     location.slug,
     location.lga,
-    app_user.name,
-    app_user.email,
-    case when review.show_first_name then split_part(app_user.name, ' ', 1) else 'Lagos resident' end,
+    coalesce(nullif(review.reviewer_name, ''), app_user.name, 'Lagos resident'),
+    coalesce(nullif(review.reviewer_email, ''), app_user.email, ''),
+    case
+      when review.show_first_name then split_part(
+        coalesce(nullif(review.reviewer_name, ''), app_user.name, 'Lagos resident'),
+        ' ',
+        1
+      )
+      else 'Lagos resident'
+    end,
     review.residency_status,
     review.property_type,
     review.lived_from,
@@ -418,7 +467,7 @@ begin
     review.created_at
   from public.area_reviews review
   join public.area_review_locations location on location.id = review.location_id
-  join public.users app_user on app_user.id = review.user_id
+  left join public.users app_user on app_user.id = review.user_id
   order by case when review.status = 'pending' then 0 else 1 end, review.created_at desc;
 end;
 $$;
