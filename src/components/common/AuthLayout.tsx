@@ -14,6 +14,9 @@ interface AuthLayoutProps {
   sideSubtitle?: string;
   sideIcon?: React.ElementType;
   contentClassName?: string;
+  brandName?: string;
+  brandHref?: string;
+  sideStats?: Array<{ number: string; label: string }>;
 }
 
 const AuthLayout: React.FC<AuthLayoutProps> = ({
@@ -24,6 +27,13 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   sideSubtitle = "Join thousands of happy renters across Lagos",
   sideIcon: SideIcon = Heart,
   contentClassName,
+  brandName = "LagosRentHelp",
+  brandHref = "/",
+  sideStats = [
+    { number: "500+", label: "Properties" },
+    { number: "100+", label: "Listings" },
+    { number: "1000+", label: "Happy Users" },
+  ],
 }) => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -32,12 +42,12 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
         <div className={cn("mx-auto w-full max-w-md", contentClassName)}>
           {/* Header */}
           <div className="text-center mb-8">
-            <Link to="/" className="inline-flex items-center space-x-2 mb-6">
+            <Link to={brandHref} className="inline-flex items-center space-x-2 mb-6">
               <div className="w-12 h-12 bg-[#129B36] rounded-xl flex items-center justify-center">
                 <img src="/icon.png" alt="" className=" w-14" />
               </div>
               <span className="text-xl font-bold text-black">
-                LagosRentHelp
+                {brandName}
               </span>
             </Link>
 
@@ -94,11 +104,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.3 }}
                 className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 justify-center">
-                {[
-                  { number: "500+", label: "Properties" },
-                  { number: "100+", label: "Listings" },
-                  { number: "1000+", label: "Happy Users" },
-                ].map((stat, index) => (
+                {sideStats.map((stat, index) => (
                   <div key={index} className="text-center">
                     <div className="text-2xl font-bold">{stat.number}</div>
                     <div className="text-sm opacity-80">{stat.label}</div>

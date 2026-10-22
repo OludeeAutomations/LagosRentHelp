@@ -51,10 +51,10 @@ const defaultRatings: AreaRatingBreakdown = {
   maintenance: 3,
 };
 
-const fieldClass = "mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#129B36] focus:ring-2 focus:ring-green-100";
+const fieldClass = "mt-2 h-12 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm outline-none transition focus:border-[#129B36] focus:ring-4 focus:ring-green-100/70";
 
 const RatingField = ({ label, value, onChange }: { label: string; value: number; onChange: (rating: number) => void }) => (
-  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+  <div className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-4 transition hover:border-green-200">
     <p className="text-sm font-semibold text-slate-700">{label}</p>
     <div className="mt-3 flex gap-1" role="radiogroup" aria-label={label}>
       {[1, 2, 3, 4, 5].map((rating) => (
@@ -65,7 +65,7 @@ const RatingField = ({ label, value, onChange }: { label: string; value: number;
           aria-checked={value === rating}
           aria-label={`${rating} out of 5`}
           onClick={() => onChange(rating)}
-          className="rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-[#129B36]"
+          className={`rounded-lg p-1.5 transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#129B36] ${value === rating ? "bg-amber-50" : ""}`}
         >
           <Star className={`h-6 w-6 ${rating <= value ? "fill-[#e8b949] text-[#e8b949]" : "fill-white text-slate-300"}`} />
         </button>
@@ -121,7 +121,7 @@ const AreaReviewWritePage = () => {
   const submitReview = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!user) {
-      navigate("/login", { state: { from: `/area-reviews/write?location=${selectedSlug}` } });
+      navigate("/login?source=area-reviews", { state: { from: `/area-reviews/write?location=${selectedSlug}` } });
       return;
     }
     if (!locationName.trim() || !lga || !headline.trim() || review.trim().length < 80) {
@@ -164,32 +164,40 @@ const AreaReviewWritePage = () => {
 
   if (!authLoading && !user) {
     return (
-      <div className="min-h-[70vh] bg-[#f7f6f1] px-4 py-20">
-        <div className="mx-auto max-w-xl rounded-3xl border border-black/5 bg-white p-8 text-center shadow-sm sm:p-12">
-          <LockKeyhole className="mx-auto h-12 w-12 text-[#129B36]" />
+      <div className="relative isolate min-h-[70vh] overflow-hidden bg-[#f7f6f1] px-4 py-20">
+        <div aria-hidden="true" className="absolute -right-32 -top-32 -z-10 h-96 w-96 rounded-full bg-green-100/70 blur-3xl" />
+        <div className="mx-auto max-w-xl rounded-[2rem] border border-white bg-white p-8 text-center shadow-xl shadow-slate-900/[0.06] sm:p-12">
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-50"><LockKeyhole className="h-8 w-8 text-[#129B36]" /></span>
           <h1 className="mt-6 text-3xl font-bold">Sign in to share your experience</h1>
           <p className="mt-4 leading-7 text-slate-600">Accounts help us reduce duplicate and misleading submissions. Your account details will not be displayed with an anonymous review.</p>
-          <Link to="/login" state={{ from: `/area-reviews/write?location=${selectedSlug}` }} className="mt-7 inline-flex rounded-xl bg-[#129B36] px-6 py-3 font-bold text-white">Sign in</Link>
-          <p className="mt-5 text-sm text-slate-500">New here? <Link to="/register" className="font-bold text-[#0e7d2b]">Create an account</Link></p>
+          <Link to="/login?source=area-reviews" state={{ from: `/area-reviews/write?location=${selectedSlug}` }} className="mt-7 inline-flex rounded-xl bg-[#129B36] px-6 py-3 font-bold text-white">Sign in to Area Reviews</Link>
+          <p className="mt-5 text-sm text-slate-500">New here? <Link to="/register?source=area-reviews" className="font-bold text-[#0e7d2b]">Create a resident account</Link></p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f6f1] px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-      <form onSubmit={submitReview} className="mx-auto max-w-4xl">
+    <div className="min-h-screen bg-slate-50 px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+      <form onSubmit={submitReview} className="mx-auto max-w-5xl">
         <Link to={selectedLocation ? `/area-reviews/${selectedLocation.slug}` : "/area-reviews"} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-[#129B36]"><ArrowLeft className="h-4 w-4" /> Back to Area Reviews</Link>
-        <div className="mt-7 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-          <div><p className="text-sm font-bold uppercase tracking-[0.18em] text-[#129B36]">Resident review</p><h1 className="mt-2 text-4xl font-bold tracking-tight">Share what living there is really like</h1><p className="mt-3 max-w-2xl leading-7 text-slate-600">Your review will be checked before it is published. Anonymous is the default.</p></div>
-          <div className="flex items-center gap-2 rounded-xl bg-green-50 px-4 py-3 text-xs font-semibold text-[#0e7d2b]"><ShieldCheck className="h-4 w-4" /> Moderated before publishing</div>
+        <div className="relative mt-7 overflow-hidden rounded-[2rem] bg-[#103f2b] px-6 py-8 text-white shadow-xl shadow-green-950/10 sm:px-9 sm:py-10">
+          <div aria-hidden="true" className="absolute -right-16 -top-24 h-72 w-72 rounded-full border-[45px] border-white/[0.04]" />
+          <div className="relative flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+            <div><p className="text-sm font-bold uppercase tracking-[0.18em] text-[#f4ce70]">Resident review</p><h1 className="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.03em] sm:text-4xl">Share what living there is really like</h1><p className="mt-4 max-w-2xl leading-7 text-green-50/70">Your review will be checked before it is published. Anonymous is the default.</p></div>
+            <div className="flex shrink-0 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-xs font-semibold text-green-50"><ShieldCheck className="h-4 w-4 text-[#f4ce70]" /> Moderated before publishing</div>
+          </div>
         </div>
 
-        <section className="mt-8 rounded-3xl border border-black/5 bg-white p-6 shadow-sm sm:p-8">
+        <ol className="mt-6 grid grid-cols-2 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-sm sm:grid-cols-4">
+          {["Location", "Costs", "Living scores", "Your story"].map((label, index) => <li key={label} className="flex items-center gap-2 rounded-xl px-3 py-3 text-xs font-semibold text-slate-600"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-green-50 font-bold text-[#129B36]">{index + 1}</span>{label}</li>)}
+        </ol>
+
+        <section className="mt-6 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_12px_35px_rgba(15,23,42,0.04)] sm:p-8">
           <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#103f2b] text-sm font-bold text-white">1</span><div><h2 className="text-xl font-bold">Where did you live?</h2><p className="text-sm text-slate-500">Use an existing location or add a new one.</p></div></div>
           <div className="mt-7 grid gap-5 sm:grid-cols-2">
             <div className="sm:col-span-2"><Label htmlFor="existing-location">Location</Label><select id="existing-location" className={fieldClass} value={selectedSlug} onChange={(event) => { setSelectedSlug(event.target.value); if (event.target.value === "new") { setLocationName(""); setLga(""); } }}><option value="new">Add a new location</option>{locations.map((location) => <option key={location.slug} value={location.slug}>{location.name} — {location.lga}</option>)}</select></div>
-            <div><Label htmlFor="location-name">Area, estate, street or building</Label><Input id="location-name" className="mt-2 h-11 rounded-xl" value={locationName} disabled={Boolean(selectedLocation)} onChange={(event) => setLocationName(event.target.value)} placeholder="e.g. Alagomeji, Yaba" required /></div>
+            <div><Label htmlFor="location-name">Area, estate, street or building</Label><Input id="location-name" className="mt-2 h-12 rounded-xl focus-visible:ring-green-100" value={locationName} disabled={Boolean(selectedLocation)} onChange={(event) => setLocationName(event.target.value)} placeholder="e.g. Alagomeji, Yaba" required /></div>
             <div><Label htmlFor="location-type">Location type</Label><select id="location-type" className={fieldClass} value={locationType} disabled={Boolean(selectedLocation)} onChange={(event) => setLocationType(event.target.value as AreaLocationType)}><option value="neighbourhood">Neighbourhood</option><option value="estate">Estate</option><option value="street">Street</option><option value="building">Building</option></select></div>
             <div><Label htmlFor="lga">Local government area</Label><select id="lga" className={fieldClass} value={lga} disabled={Boolean(selectedLocation)} onChange={(event) => setLga(event.target.value)} required><option value="">Select LGA</option>{lgas.map((item) => <option key={item}>{item}</option>)}</select></div>
             <div><Label htmlFor="property-type">Home type</Label><select id="property-type" className={fieldClass} value={propertyType} onChange={(event) => setPropertyType(event.target.value)}>{propertyTypes.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
@@ -198,7 +206,7 @@ const AreaReviewWritePage = () => {
           </div>
         </section>
 
-        <section className="mt-6 rounded-3xl border border-black/5 bg-white p-6 shadow-sm sm:p-8">
+        <section className="mt-6 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_12px_35px_rgba(15,23,42,0.04)] sm:p-8">
           <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#103f2b] text-sm font-bold text-white">2</span><div><h2 className="text-xl font-bold">What did it cost?</h2><p className="text-sm text-slate-500">Optional, but extremely useful to other renters.</p></div></div>
           <div className="mt-7 grid gap-5 sm:grid-cols-3">
             <div><Label htmlFor="rent">Annual rent (₦)</Label><Input id="rent" className="mt-2 h-11 rounded-xl" type="number" min="0" value={rentAmount} onChange={(event) => setRentAmount(event.target.value)} placeholder="1800000" /></div>
@@ -207,7 +215,7 @@ const AreaReviewWritePage = () => {
           </div>
         </section>
 
-        <section className="mt-6 rounded-3xl border border-black/5 bg-white p-6 shadow-sm sm:p-8">
+        <section className="mt-6 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_12px_35px_rgba(15,23,42,0.04)] sm:p-8">
           <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#103f2b] text-sm font-bold text-white">3</span><div><h2 className="text-xl font-bold">Rate daily living</h2><p className="text-sm text-slate-500">One star is poor; five stars is excellent.</p></div></div>
           <div className="mt-7"><RatingField label="Overall experience" value={overallRating} onChange={setOverallRating} /></div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -221,7 +229,7 @@ const AreaReviewWritePage = () => {
           <div className="mt-5 max-w-sm"><Label htmlFor="flood-risk">Flooding experience</Label><select id="flood-risk" className={fieldClass} value={floodRisk} onChange={(event) => setFloodRisk(event.target.value as FloodRisk)}><option value="none">No flooding noticed</option><option value="low">Low</option><option value="moderate">Moderate</option><option value="high">High</option><option value="unsure">Not sure</option></select></div>
         </section>
 
-        <section className="mt-6 rounded-3xl border border-black/5 bg-white p-6 shadow-sm sm:p-8">
+        <section className="mt-6 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_12px_35px_rgba(15,23,42,0.04)] sm:p-8">
           <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#103f2b] text-sm font-bold text-white">4</span><div><h2 className="text-xl font-bold">Tell the useful story</h2><p className="text-sm text-slate-500">Discuss the place—not a landlord or neighbour by name.</p></div></div>
           <div className="mt-7"><Label htmlFor="headline">Short headline</Label><Input id="headline" className="mt-2 h-11 rounded-xl" maxLength={90} value={headline} onChange={(event) => setHeadline(event.target.value)} placeholder="Reliable water, but the road floods after heavy rain" required /></div>
           <div className="mt-5"><Label htmlFor="review">Your experience</Label><Textarea id="review" className="mt-2 min-h-40 rounded-xl leading-7" minLength={80} maxLength={1500} value={review} onChange={(event) => setReview(event.target.value)} placeholder="What should a renter know about power, water, roads, security, noise, repairs and unexpected costs?" required /><div className="mt-2 flex justify-between text-xs text-slate-400"><span>Minimum 80 characters</span><span>{review.length}/1500</span></div></div>

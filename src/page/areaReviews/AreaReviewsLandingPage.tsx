@@ -3,6 +3,7 @@ import {
   ArrowRight,
   BadgeCheck,
   Building2,
+  ChevronRight,
   Droplets,
   MapPin,
   Search,
@@ -23,6 +24,7 @@ const AreaReviewsLandingPage = () => {
   const [locations, setLocations] = useState<AreaReviewLocation[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [searchFocused, setSearchFocused] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -75,7 +77,7 @@ const AreaReviewsLandingPage = () => {
               Search honest experiences from people who live there—real costs, power, water, flooding, roads, security and the details property adverts leave out.
             </p>
 
-            <form onSubmit={submitSearch} className="mt-9 max-w-2xl rounded-2xl bg-white p-2 shadow-2xl shadow-black/20">
+            <form onSubmit={submitSearch} className="relative mt-9 max-w-2xl rounded-2xl border border-white/10 bg-white p-2 shadow-2xl shadow-black/20">
               <label htmlFor="area-search" className="sr-only">Search an area, estate or street</label>
               <div className="flex items-center gap-2">
                 <Search className="ml-3 h-5 w-5 shrink-0 text-slate-400" />
@@ -83,6 +85,8 @@ const AreaReviewsLandingPage = () => {
                   id="area-search"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => window.setTimeout(() => setSearchFocused(false), 120)}
                   placeholder="Try Yaba, Surulere or an estate name"
                   className="min-w-0 flex-1 border-0 bg-transparent px-1 py-3 text-sm text-slate-950 outline-none placeholder:text-slate-400 sm:text-base"
                 />
@@ -90,6 +94,19 @@ const AreaReviewsLandingPage = () => {
                   Search
                 </button>
               </div>
+              {searchFocused && query.trim() && (
+                <div className="absolute left-0 right-0 top-[calc(100%+0.65rem)] z-20 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 text-slate-950 shadow-2xl">
+                  {filteredLocations.length > 0 ? filteredLocations.slice(0, 5).map((location) => (
+                    <button key={location.slug} type="button" onMouseDown={() => navigate(`/area-reviews/${location.slug}`)} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-green-50">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-50 text-[#129B36]"><MapPin className="h-4 w-4" /></span>
+                      <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold">{location.name}</span><span className="block text-xs text-slate-500">{location.lga} · {location.type}</span></span>
+                      <ChevronRight className="h-4 w-4 text-slate-300" />
+                    </button>
+                  )) : (
+                    <button type="submit" className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left hover:bg-green-50"><span><span className="block text-sm font-bold">Add “{query.trim()}”</span><span className="mt-0.5 block text-xs text-slate-500">Be the first resident to review this location</span></span><ChevronRight className="h-4 w-4 text-[#129B36]" /></button>
+                  )}
+                </div>
+              )}
             </form>
 
             <div className="mt-6 flex flex-wrap gap-x-6 gap-y-3 text-sm text-green-50/75">
@@ -100,8 +117,8 @@ const AreaReviewsLandingPage = () => {
           </div>
 
           <div className="relative mx-auto w-full max-w-md lg:max-w-none">
-            <div className="rotate-2 rounded-[2rem] bg-[#f2e9d2] p-3 shadow-2xl shadow-black/20">
-              <div className="-rotate-2 rounded-[1.55rem] bg-white p-6 text-slate-950 sm:p-8">
+            <div className="rounded-[2rem] border border-white/15 bg-white/[0.08] p-3 shadow-2xl shadow-black/20 backdrop-blur-sm">
+              <div className="rounded-[1.55rem] bg-white p-6 text-slate-950 sm:p-8">
                 <div className="flex items-start justify-between gap-5">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#129B36]">A clearer renting decision</p>
@@ -116,16 +133,16 @@ const AreaReviewsLandingPage = () => {
                     { icon: Waves, label: "Flooding" },
                     { icon: ShieldCheck, label: "Security" },
                   ].map(({ icon: Icon, label }) => (
-                    <div key={label} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                      <Icon className="h-5 w-5 text-[#129B36]" />
-                      <p className="mt-5 text-sm font-semibold">{label}</p>
+                    <div key={label} className="rounded-2xl border border-slate-100 bg-[#fafaf8] p-4 transition hover:border-green-100 hover:bg-green-50/40">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#129B36] shadow-sm"><Icon className="h-4 w-4" /></span>
+                      <p className="mt-4 text-sm font-semibold">{label}</p>
                       <p className="mt-1 text-xs text-slate-500">First-hand insight</p>
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 rounded-2xl bg-[#103f2b] p-5 text-white">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-green-100/70">Founding access</p>
-                  <p className="mt-2 text-lg font-bold">All area insights are free during launch.</p>
+                <div className="mt-4 flex items-center justify-between gap-4 rounded-2xl bg-[#103f2b] p-5 text-white">
+                  <div><p className="text-xs font-semibold uppercase tracking-wider text-green-100/70">Founding access</p><p className="mt-2 text-base font-bold sm:text-lg">All insights are free during launch.</p></div>
+                  <BadgeCheck className="h-8 w-8 shrink-0 text-[#f4ce70]" />
                 </div>
               </div>
             </div>
@@ -155,8 +172,9 @@ const AreaReviewsLandingPage = () => {
               <Link
                 key={location.slug}
                 to={`/area-reviews/${location.slug}`}
-                className="group flex min-h-64 flex-col rounded-3xl border border-black/5 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+                className="group relative flex min-h-64 flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_12px_35px_rgba(15,23,42,0.04)] transition duration-300 hover:-translate-y-1 hover:border-green-200 hover:shadow-[0_20px_45px_rgba(15,61,42,0.10)]"
               >
+                <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#129B36] via-emerald-300 to-[#e8bb50] opacity-0 transition group-hover:opacity-100" />
                 <div className="flex items-start justify-between gap-4">
                   <span className={`flex h-11 w-11 items-center justify-center rounded-2xl ${index % 3 === 0 ? "bg-amber-50 text-amber-700" : "bg-green-50 text-[#129B36]"}`}>
                     <Building2 className="h-5 w-5" />
@@ -175,15 +193,23 @@ const AreaReviewsLandingPage = () => {
                     <p className="text-xs text-slate-400">Reported average rent</p>
                     <p className="mt-1 text-sm font-bold">{formatNaira(location.averageRent)}</p>
                   </div>
-                  <span className="text-xs font-semibold text-[#129B36]">{location.reviewCount ? `${location.reviewCount} reviews` : "Be first"}</span>
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#129B36]">{location.reviewCount ? `${location.reviewCount} reviews` : "Be first"}<ChevronRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" /></span>
                 </div>
               </Link>
             ))}
           </div>
         )}
+        {!loading && filteredLocations.length === 0 && (
+          <div className="mt-9 rounded-3xl border border-dashed border-green-200 bg-white px-6 py-14 text-center">
+            <MapPin className="mx-auto h-10 w-10 text-[#129B36]" />
+            <h3 className="mt-4 text-xl font-bold">No location matches “{query}” yet</h3>
+            <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-500">Add the area, estate, street or building and become its first resident contributor.</p>
+            <Link to={`/area-reviews/write?name=${encodeURIComponent(query.trim())}`} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#129B36] px-5 py-3 text-sm font-bold text-white">Add this location <ArrowRight className="h-4 w-4" /></Link>
+          </div>
+        )}
       </section>
 
-      <section className="bg-white">
+      <section id="how-it-works" className="scroll-mt-24 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
           <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
             <div>

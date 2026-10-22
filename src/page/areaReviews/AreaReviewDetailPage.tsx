@@ -8,6 +8,7 @@ import {
   MapPin,
   MessageSquareText,
   Navigation,
+  Quote,
   ShieldCheck,
   Star,
   Volume2,
@@ -79,37 +80,41 @@ const AreaReviewDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-[#f7f6f1] text-slate-950">
-      <section className="border-b border-black/5 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-          <Link to="/area-reviews" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-[#129B36]"><ArrowLeft className="h-4 w-4" /> All area reviews</Link>
-          <div className="mt-7 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
+      <section className="relative isolate overflow-hidden bg-[#103f2b] text-white">
+        <div aria-hidden="true" className="absolute inset-0 -z-10 overflow-hidden">
+          <span className="absolute -right-28 -top-44 h-[30rem] w-[30rem] rounded-full border-[70px] border-white/[0.04]" />
+          <span className="absolute -bottom-36 left-1/3 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl" />
+        </div>
+        <div className="mx-auto max-w-7xl px-4 pb-20 pt-10 sm:px-6 lg:px-8 lg:pb-24 lg:pt-14">
+          <Link to="/area-reviews" className="inline-flex items-center gap-2 text-sm font-semibold text-green-50/70 transition hover:text-white"><ArrowLeft className="h-4 w-4" /> All area reviews</Link>
+          <div className="mt-8 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
             <div>
-              <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[#0e7d2b]">
+              <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[#f4ce70]">
                 <span className="capitalize">{location.type}</span><span>·</span><span>{location.lga}, Lagos</span>
               </div>
-              <h1 className="mt-3 text-4xl font-bold tracking-[-0.035em] sm:text-5xl">Living in {location.name}</h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">{location.description}</p>
+              <h1 className="mt-3 text-4xl font-bold tracking-[-0.04em] sm:text-5xl lg:text-6xl">Living in {location.name}</h1>
+              <p className="mt-5 max-w-2xl text-base leading-8 text-green-50/75">{location.description}</p>
             </div>
-            <Link to={`/area-reviews/write?location=${location.slug}`} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#129B36] px-6 py-3.5 text-sm font-bold text-white shadow-sm hover:bg-[#0e7d2b]">
+            <Link to={`/area-reviews/write?location=${location.slug}`} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-[#103f2b] shadow-lg shadow-black/10 transition hover:bg-green-50">
               <MessageSquareText className="h-4 w-4" /> Review this place
             </Link>
           </div>
         </div>
       </section>
 
-      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-        <div className="grid gap-5 md:grid-cols-3">
-          <div className="rounded-3xl bg-[#103f2b] p-6 text-white">
-            <p className="text-xs font-bold uppercase tracking-wider text-green-100/60">Resident score</p>
-            <div className="mt-6 flex items-end gap-3"><span className="text-5xl font-bold">{formatRating(location.averageRating)}</span>{location.averageRating !== null && <span className="pb-1 text-green-100/60">/ 5</span>}</div>
-            <p className="mt-3 text-sm text-green-50/70">Based on {location.reviewCount} approved {location.reviewCount === 1 ? "review" : "reviews"}</p>
+      <main className="relative z-10 mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8 lg:pb-20">
+        <div className="-mt-9 grid gap-4 md:grid-cols-3">
+          <div className="rounded-3xl border border-white/60 bg-white p-6 shadow-xl shadow-slate-900/[0.06]">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Resident score</p>
+            <div className="mt-5 flex items-end gap-3"><span className="text-5xl font-bold text-[#103f2b]">{formatRating(location.averageRating)}</span>{location.averageRating !== null && <span className="pb-1 text-slate-400">/ 5</span>}</div>
+            <p className="mt-3 text-sm text-slate-500">Based on {location.reviewCount} approved {location.reviewCount === 1 ? "review" : "reviews"}</p>
           </div>
-          <div className="rounded-3xl border border-black/5 bg-white p-6">
+          <div className="rounded-3xl border border-white/60 bg-white p-6 shadow-xl shadow-slate-900/[0.06]">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Reported annual rent</p>
             <p className="mt-6 text-2xl font-bold">{formatNaira(location.averageRent)}</p>
             <p className="mt-3 text-sm text-slate-500">Average of resident-submitted figures</p>
           </div>
-          <div className="rounded-3xl border border-black/5 bg-white p-6">
+          <div className="rounded-3xl border border-white/60 bg-white p-6 shadow-xl shadow-slate-900/[0.06]">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Reported move-in cost</p>
             <p className="mt-6 text-2xl font-bold">{formatNaira(location.averageMoveInCost)}</p>
             <p className="mt-3 text-sm text-slate-500">Rent and additional charges combined</p>
@@ -117,13 +122,13 @@ const AreaReviewDetailPage = () => {
         </div>
 
         {location.reviewCount > 0 && (
-          <section className="mt-10">
-            <h2 className="text-2xl font-bold">Daily living scores</h2>
+          <section className="mt-14">
+            <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#129B36]">At a glance</p><h2 className="mt-2 text-2xl font-bold">Daily living scores</h2></div>
             <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {ratingCards.map(({ key, label, icon: Icon }) => (
-                <div key={key} className="flex items-center gap-4 rounded-2xl border border-black/5 bg-white p-5">
+                <div key={key} className="flex items-center gap-4 rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm">
                   <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-50 text-[#129B36]"><Icon className="h-5 w-5" /></span>
-                  <div className="min-w-0 flex-1"><p className="text-sm text-slate-500">{label}</p><p className="mt-0.5 text-xl font-bold">{location.ratings[key].toFixed(1)} <span className="text-xs font-medium text-slate-400">/ 5</span></p></div>
+                  <div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-3"><p className="text-sm text-slate-500">{label}</p><p className="text-base font-bold">{location.ratings[key].toFixed(1)}</p></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#129B36]" style={{ width: `${(location.ratings[key] / 5) * 100}%` }} /></div></div>
                 </div>
               ))}
             </div>
@@ -145,7 +150,8 @@ const AreaReviewDetailPage = () => {
           ) : (
             <div className="mt-6 grid gap-5 lg:grid-cols-2">
               {location.reviews.map((review) => (
-                <article key={review.id} className="rounded-3xl border border-black/5 bg-white p-6 sm:p-7">
+                <article key={review.id} className="relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-6 shadow-sm sm:p-7">
+                  <Quote className="absolute right-6 top-5 h-12 w-12 text-green-50" />
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#103f2b] text-sm font-bold text-white">{review.displayName.charAt(0).toUpperCase()}</span>

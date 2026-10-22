@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Eye, EyeOff, Mail, Lock, MapPinned } from "lucide-react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import AuthLayout from "@/components/common/AuthLayout";
 import { Button } from "@/components/ui/button";
@@ -35,11 +35,14 @@ const Login: React.FC = () => {
   const { login, loginWithGoogle, setError } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const requestedDestination =
     typeof (location.state as { from?: unknown } | null)?.from === "string" &&
     ((location.state as { from: string }).from.startsWith("/area-reviews/"))
       ? (location.state as { from: string }).from
       : null;
+  const areaReviewsMode = searchParams.get("source") === "area-reviews" || Boolean(requestedDestination);
+  const areaReviewsDestination = requestedDestination || "/area-reviews";
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -57,14 +60,18 @@ const Login: React.FC = () => {
       await login(data.email, data.password);
       const signedInUser = useAuthStore.getState().user;
       let destination: string;
-      if (signedInUser?.role === "admin" || signedInUser?.role === "super_admin") {
+      if (!signedInUser?.phone) {
+        destination = "/complete-profile";
+      } else if (areaReviewsMode) {
+        destination = areaReviewsDestination;
+      } else if (signedInUser?.role === "admin" || signedInUser?.role === "super_admin") {
         destination = "/admin/verifications";
       } else if (signedInUser?.role === "landlord") {
         destination = "/landlord";
       } else if (localStorage.getItem("needs_renter_preferences") === "true") {
         destination = "/renter/preferences";
       } else {
-        destination = signedInUser?.phone ? requestedDestination || "/" : "/complete-profile";
+        destination = "/";
       }
 
       if (await accountSecurityService.requiresMfaChallenge()) {
@@ -111,6 +118,7 @@ const Login: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
+      if (areaReviewsMode) localStorage.setItem("oauth_return_to", areaReviewsDestination);
       await loginWithGoogle();
     } catch (error: unknown) {
       const errorMessage =
@@ -123,7 +131,20 @@ const Login: React.FC = () => {
   };
 
   return (
-    <AuthLayout title="Welcome Back" subtitle="Sign in to your account">
+    <AuthLayout
+      title={areaReviewsMode ? "Welcome back" : "Welcome Back"}
+      subtitle={areaReviewsMode ? "Sign in to continue to Lagos Area Reviews" : "Sign in to your account"}
+      brandName={areaReviewsMode ? "Lagos Area Reviews" : "LagosRentHelp"}
+      brandHref={areaReviewsMode ? "/area-reviews" : "/"}
+      sideTitle={areaReviewsMode ? "Know before you rent" : undefined}
+      sideSubtitle={areaReviewsMode ? "Resident-powered insight on Lagos neighbourhoods, estates and buildings" : undefined}
+      sideIcon={areaReviewsMode ? MapPinned : undefined}
+      sideStats={areaReviewsMode ? [
+        { number: "Private", label: "Account details" },
+        { number: "Human", label: "Moderation" },
+        { number: "Useful", label: "Resident insight" },
+      ] : undefined}
+    >
       <Form {...form}>
         <motion.form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -255,9 +276,9 @@ const Login: React.FC = () => {
             <p className="text-center text-grey">
               Don't have an account?{" "}
               <Link
-                to="/register"
+                to={areaReviewsMode ? "/register?source=area-reviews" : "/register"}
                 className="text-[#129B36] hover:text-[#41614F] font-medium">
-                Choose account type
+                {areaReviewsMode ? "Create a resident account" : "Choose account type"}
               </Link>
             </p>
           </motion.div>

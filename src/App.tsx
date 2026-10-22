@@ -59,6 +59,7 @@ const DashboardSecuritySettings = React.lazy(() => import("./page/settings/Dashb
 const AreaReviewsLandingPage = React.lazy(() => import("./page/areaReviews/AreaReviewsLandingPage"));
 const AreaReviewDetailPage = React.lazy(() => import("./page/areaReviews/AreaReviewDetailPage"));
 const AreaReviewWritePage = React.lazy(() => import("./page/areaReviews/AreaReviewWritePage"));
+const AreaReviewsLayout = React.lazy(() => import("./page/areaReviews/AreaReviewsLayout"));
 const AdminAreaReviewsPage = React.lazy(() => import("./page/admin/AdminAreaReviewsPage"));
 
 const RouteFallback = () => (
@@ -139,9 +140,11 @@ const AppContent: React.FC = () => {
                 </Layout>
               }
             />
-            <Route path="/area-reviews" element={<Layout><AreaReviewsLandingPage /></Layout>} />
-            <Route path="/area-reviews/write" element={<Layout><AreaReviewWritePage /></Layout>} />
-            <Route path="/area-reviews/:slug" element={<Layout><AreaReviewDetailPage /></Layout>} />
+            <Route element={<AreaReviewsLayout />}>
+              <Route path="/area-reviews" element={<AreaReviewsLandingPage />} />
+              <Route path="/area-reviews/write" element={<AreaReviewWritePage />} />
+              <Route path="/area-reviews/:slug" element={<AreaReviewDetailPage />} />
+            </Route>
             <Route
               path="/privacy"
               element={
