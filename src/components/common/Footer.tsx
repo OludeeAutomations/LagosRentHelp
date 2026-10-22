@@ -75,13 +75,6 @@ const Footer: React.FC = () => {
               </li>
               <li>
                 <Link
-                  to="/area-reviews"
-                  className="text-white hover:text-[#129B36] transition-colors">
-                  Area Reviews
-                </Link>
-              </li>
-              <li>
-                <Link
                   to="/about"
                   className="text-white hover:text-[#129B36] transition-colors">
                   About Us

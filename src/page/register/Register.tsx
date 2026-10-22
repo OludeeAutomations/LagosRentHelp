@@ -12,9 +12,8 @@ import {
   Building2,
   Search,
   Loader2,
-  MapPinned,
 } from "lucide-react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import AuthLayout from "@/components/common/AuthLayout";
 import { Button } from "@/components/ui/button";
@@ -80,8 +79,6 @@ const Register: React.FC = () => {
   const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
   const { register: registerUser, loginWithGoogle, setError } = useAuthStore();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const areaReviewsMode = searchParams.get("source") === "area-reviews";
 
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
@@ -113,12 +110,10 @@ const Register: React.FC = () => {
         role: data.accountType,
       };
 
-      if (areaReviewsMode) localStorage.setItem("oauth_return_to", "/area-reviews");
-
       const result = await registerUser(formData);
 
       if (result.success) {
-        if (data.accountType === "user" && !areaReviewsMode) {
+        if (data.accountType === "user") {
           localStorage.setItem("needs_renter_preferences", "true");
         }
         if (result.requiresVerification) {
@@ -128,7 +123,7 @@ const Register: React.FC = () => {
           navigate("/verify-email");
         } else {
           toast.success("Your account is ready.");
-          navigate(areaReviewsMode ? "/area-reviews" : data.accountType === "landlord" ? "/landlord/onboarding" : "/renter/preferences");
+          navigate(data.accountType === "landlord" ? "/landlord/onboarding" : "/renter/preferences");
         }
       } else {
         toast.error(result.error || "Registration failed");
@@ -147,10 +142,9 @@ const Register: React.FC = () => {
     setIsGoogleLoading(true);
     setError(null);
     try {
-      if (accountType === "user" && !areaReviewsMode) {
+      if (accountType === "user") {
         localStorage.setItem("needs_renter_preferences", "true");
       }
-      if (areaReviewsMode) localStorage.setItem("oauth_return_to", "/area-reviews");
       await loginWithGoogle(accountType);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Google signup failed.";
@@ -197,20 +191,9 @@ const Register: React.FC = () => {
 
   return (
     <AuthLayout
-      title={areaReviewsMode ? "Join Area Reviews" : "Create Account"}
-      subtitle={areaReviewsMode ? "Create one resident account to share trusted local insight" : "Join thousands of users finding their perfect home"}
-      contentClassName="max-w-xl"
-      brandName={areaReviewsMode ? "Lagos Area Reviews" : "LagosRentHelp"}
-      brandHref={areaReviewsMode ? "/area-reviews" : "/"}
-      sideTitle={areaReviewsMode ? "Your experience can help someone" : undefined}
-      sideSubtitle={areaReviewsMode ? "Share what power, water, roads, costs and daily life are really like" : undefined}
-      sideIcon={areaReviewsMode ? MapPinned : undefined}
-      sideStats={areaReviewsMode ? [
-        { number: "Anonymous", label: "By default" },
-        { number: "Private", label: "Personal details" },
-        { number: "Checked", label: "Before publishing" },
-      ] : undefined}
-    >
+      title="Create Account"
+      subtitle="Join thousands of users finding their perfect home"
+      contentClassName="max-w-xl">
       <Form {...form}>
         <motion.form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -218,7 +201,7 @@ const Register: React.FC = () => {
           variants={containerVariants}
           initial="hidden"
           animate="visible">
-          {!areaReviewsMode && <motion.div variants={itemVariants}>
+          <motion.div variants={itemVariants}>
             <FormField
               control={form.control}
               name="accountType"
@@ -261,7 +244,7 @@ const Register: React.FC = () => {
                 </FormItem>
               )}
             />
-          </motion.div>}
+          </motion.div>
 
           {/* Name */}
           <motion.div variants={itemVariants}>
@@ -590,7 +573,7 @@ const Register: React.FC = () => {
             <p className="text-center text-grey">
               Already have an account?{" "}
               <Link
-                to={areaReviewsMode ? "/login?source=area-reviews" : "/login"}
+                to="/login"
                 className="text-[#129B36] hover:text-[#41614F] font-medium">
                 Sign in
               </Link>

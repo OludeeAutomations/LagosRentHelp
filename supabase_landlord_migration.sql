@@ -51,6 +51,17 @@ alter table public.landlord_profiles
   add column if not exists state text not null default '',
   add column if not exists local_government text not null default '';
 
+-- A landlord profile is trusted evidence that onboarding was completed.
+-- Restore any legacy account whose public role was accidentally reset.
+update public.users app_user
+set role = 'landlord'
+where app_user.role = 'user'
+  and exists (
+    select 1
+    from public.landlord_profiles landlord_profile
+    where landlord_profile.user_id = app_user.id
+  );
+
 -- Sensitive identity and ownership evidence is deliberately kept outside the
 -- public-facing landlord profile. Applications can only be written through
 -- the validated security-definer function below.
@@ -174,6 +185,17 @@ begin
       'SUPABASE_AUTH_MANAGED',
       v_requested_role
     )
+    returning * into v_profile;
+  end if;
+
+  if v_profile.role = 'user' and exists (
+    select 1
+    from public.landlord_profiles landlord_profile
+    where landlord_profile.user_id = v_profile.id
+  ) then
+    update public.users
+    set role = 'landlord'
+    where id = v_profile.id
     returning * into v_profile;
   end if;
 
