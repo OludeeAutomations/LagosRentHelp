@@ -87,7 +87,7 @@ const AreaReviewsLayout = () => {
             </>}
           </div>
 
-          <button type="button" onClick={() => setMobileOpen((open) => !open)} className="rounded-xl border border-slate-200 p-2.5 text-slate-700 md:hidden" aria-label="Toggle Area Reviews menu">{mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
+          <button type="button" onClick={() => setMobileOpen((open) => !open)} className="p-2 text-slate-700 transition hover:text-[#129B36] md:hidden" aria-label="Toggle Area Reviews menu">{mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}</button>
         </div>
 
         {mobileOpen && (

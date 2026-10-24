@@ -94,10 +94,10 @@ const AreaReviewsLandingPage = () => {
 
   return (
     <div className="bg-[#f7f6f1] text-slate-950">
-      <section className="bg-white px-4 pb-8 pt-10 sm:px-6 sm:pb-10 sm:pt-12 lg:px-8 lg:pb-12 lg:pt-14">
-        <div className="mx-auto grid max-w-7xl gap-3 lg:grid-cols-2 lg:items-stretch">
-          <div className="order-1 flex h-[min(720px,125vw)] items-stretch justify-center bg-white lg:h-auto lg:justify-start" aria-roledescription="carousel" aria-label="Lagos Area Reviews highlights">
-            <div className="relative aspect-[4/5] h-full max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <section className="bg-white pb-8 pt-10 sm:pb-10 sm:pt-12 lg:pb-12 lg:pt-14">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 lg:grid-cols-[0.88fr_1.12fr] lg:items-center lg:px-8">
+          <div className="order-1 flex items-stretch justify-center bg-white lg:justify-start" aria-roledescription="carousel" aria-label="Lagos Area Reviews highlights">
+            <div className="relative aspect-[4/5] w-full max-w-[600px] overflow-hidden rounded-2xl border border-slate-200 bg-white">
               {heroSlides.map((slide, index) => (
                 <img key={slide.src} src={slide.src} alt={index === activeHeroSlide ? slide.alt : ""} aria-hidden={index !== activeHeroSlide} loading={index === 0 ? "eager" : "lazy"} className={`absolute inset-0 h-full w-full rounded-2xl object-cover transition-opacity duration-700 ${index === activeHeroSlide ? "opacity-100" : "opacity-0"}`} />
               ))}
@@ -109,7 +109,7 @@ const AreaReviewsLandingPage = () => {
             </div>
           </div>
 
-          <div className="order-2 flex w-full bg-white px-4 py-6 text-slate-950 sm:px-6 sm:py-8 lg:py-10 lg:pl-8 lg:pr-8 xl:pl-12 xl:pr-10">
+          <div className="order-2 flex w-full bg-white py-6 text-slate-950 sm:py-8 lg:py-10 lg:pl-4 xl:pl-6">
             <div className="flex w-full flex-col justify-center">
               <span className="inline-flex w-fit items-center gap-2 rounded-full border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-[#173f2a]"><Sparkles className="h-4 w-4 text-[#129B36]" /> Resident-powered Lagos housing insights</span>
               <h1 className="mt-6 max-w-2xl text-4xl font-extrabold leading-[1.05] tracking-[-0.035em] sm:text-5xl xl:text-6xl">Know the area <span className="text-[#129B36]">before you pay the rent.</span></h1>
