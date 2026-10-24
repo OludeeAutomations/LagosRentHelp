@@ -96,7 +96,7 @@ const AreaReviewsLandingPage = () => {
     <div className="bg-[#f7f6f1] text-slate-950">
       <section className="bg-white px-4 pb-8 pt-10 sm:px-6 sm:pb-10 sm:pt-12 lg:px-8 lg:pb-12 lg:pt-14">
         <div className="mx-auto grid max-w-7xl gap-3 lg:grid-cols-2 lg:items-stretch">
-          <div className="order-1 flex h-[min(720px,125vw)] items-stretch justify-center bg-white lg:h-auto lg:justify-end" aria-roledescription="carousel" aria-label="Lagos Area Reviews highlights">
+          <div className="order-1 flex h-[min(720px,125vw)] items-stretch justify-center bg-white lg:h-auto lg:justify-start" aria-roledescription="carousel" aria-label="Lagos Area Reviews highlights">
             <div className="relative aspect-[4/5] h-full max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white">
               {heroSlides.map((slide, index) => (
                 <img key={slide.src} src={slide.src} alt={index === activeHeroSlide ? slide.alt : ""} aria-hidden={index !== activeHeroSlide} loading={index === 0 ? "eager" : "lazy"} className={`absolute inset-0 h-full w-full rounded-2xl object-cover transition-opacity duration-700 ${index === activeHeroSlide ? "opacity-100" : "opacity-0"}`} />
