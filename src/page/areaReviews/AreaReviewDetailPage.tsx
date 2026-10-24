@@ -17,6 +17,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
+import PropertyMap from "@/components/common/PropertyMap";
 import { areaReviewService } from "@/services/areaReviewService";
 import type { AreaReviewLocationDetail } from "@/types/areaReviews";
 import {
@@ -120,6 +121,17 @@ const AreaReviewDetailPage = () => {
             <p className="mt-3 text-sm text-slate-500">Rent and additional charges combined</p>
           </div>
         </div>
+
+        <section className="mt-12 overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-sm">
+          <div className="flex flex-col justify-between gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:px-7">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#129B36]">Explore the location</p>
+              <h2 className="mt-1 text-xl font-bold text-[#103f2b]">Map of {location.name}</h2>
+            </div>
+            <p className="inline-flex items-center gap-1.5 text-sm text-slate-500"><MapPin className="h-4 w-4 text-[#129B36]" />{location.name}, {location.lga}, Lagos</p>
+          </div>
+          <PropertyMap address={`${location.name}, ${location.lga}, Lagos, Nigeria`} height="420px" showStreetViewButton={true} />
+        </section>
 
         {location.reviewCount > 0 && (
           <section className="mt-14">
