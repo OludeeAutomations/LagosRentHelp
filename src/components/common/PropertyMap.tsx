@@ -45,10 +45,14 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
   });
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    const mapElement = mapRef.current;
+    if (!mapElement) return;
 
     const initializeMap = async () => {
       try {
+        setStatus("loading");
+        setError("");
+
         // If we already have an instance, just update it
         if (mapInstanceRef.current) {
           mapInstanceRef.current.remove();
@@ -57,21 +61,41 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         let mapLat = coordinates?.lat;
         let mapLng = coordinates?.lng;
 
-        // Fallback to geocoding if coordinates are missing
+        // Fallback to progressively broader geocoding if coordinates are missing.
+        // Area-review names can contain both a neighbourhood and a nearby district,
+        // which a geocoder may not recognise when combined with the LGA.
         if (!mapLat || !mapLng) {
-          try {
-            const response = await fetch(
-              `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-                address,
-              )}`,
-            );
-            const data = await response.json();
-            if (data && data.length > 0) {
-              mapLat = parseFloat(data[0].lat);
-              mapLng = parseFloat(data[0].lon);
+          const addressParts = address.split(",").map((part) => part.trim()).filter(Boolean);
+          const country = addressParts[addressParts.length - 1] || "Nigeria";
+          const state = addressParts[addressParts.length - 2] || "Lagos";
+          const candidates = [
+            address,
+            addressParts[0] ? `${addressParts[0]}, ${state}, ${country}` : "",
+            addressParts[1] ? `${addressParts[1]}, ${state}, ${country}` : "",
+            `${state}, ${country}`,
+          ].filter((candidate, index, list) => candidate && list.indexOf(candidate) === index);
+
+          for (const candidate of candidates) {
+            try {
+              const params = new URLSearchParams({
+                format: "jsonv2",
+                q: candidate,
+                countrycodes: "ng",
+                limit: "1",
+              });
+              const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
+                headers: { Accept: "application/json" },
+              });
+              if (!response.ok) continue;
+              const data = await response.json();
+              if (Array.isArray(data) && data.length > 0) {
+                mapLat = Number.parseFloat(data[0].lat);
+                mapLng = Number.parseFloat(data[0].lon);
+                break;
+              }
+            } catch (geocodingError) {
+              console.error(`Geocoding failed for ${candidate}`, geocodingError);
             }
-          } catch (e) {
-            console.error("Geocoding failed", e);
           }
         }
 
@@ -81,7 +105,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           return;
         }
 
-        const map = L.map(mapRef.current).setView([mapLat, mapLng], 15);
+        const map = L.map(mapElement).setView([mapLat, mapLng], 15);
 
         const tiles = L.tileLayer(
           isSatellite ? SATELLITE_TILES : STREETS_TILES,
