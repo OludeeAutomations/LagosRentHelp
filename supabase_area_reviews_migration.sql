@@ -324,6 +324,91 @@ as $$
   limit least(greatest(coalesce(p_limit, 6), 1), 12);
 $$;
 
+create or replace function public.get_approved_area_reviews(
+  p_limit integer default 7,
+  p_offset integer default 0,
+  p_search text default null
+)
+returns table (
+  id uuid,
+  location_name text,
+  location_slug text,
+  lga text,
+  display_name text,
+  residency_status text,
+  property_type text,
+  lived_from integer,
+  lived_to integer,
+  rent_amount numeric,
+  service_charge numeric,
+  move_in_cost numeric,
+  overall_rating integer,
+  electricity_rating integer,
+  water_rating integer,
+  security_rating integer,
+  roads_rating integer,
+  noise_rating integer,
+  maintenance_rating integer,
+  flood_risk text,
+  headline text,
+  review_text text,
+  evidence_verified boolean,
+  created_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    review.id,
+    location.name,
+    location.slug,
+    location.lga,
+    case
+      when review.show_first_name then split_part(
+        coalesce(nullif(review.reviewer_name, ''), app_user.name, 'Lagos resident'),
+        ' ',
+        1
+      )
+      else 'Lagos resident'
+    end,
+    review.residency_status,
+    review.property_type,
+    review.lived_from,
+    review.lived_to,
+    review.rent_amount,
+    review.service_charge,
+    review.move_in_cost,
+    review.overall_rating,
+    review.electricity_rating,
+    review.water_rating,
+    review.security_rating,
+    review.roads_rating,
+    review.noise_rating,
+    review.maintenance_rating,
+    review.flood_risk,
+    review.headline,
+    review.review_text,
+    review.evidence_verified,
+    review.created_at
+  from public.area_reviews review
+  join public.area_review_locations location on location.id = review.location_id
+  left join public.users app_user on app_user.id = review.user_id
+  where review.status = 'approved'
+    and location.status = 'active'
+    and (
+      nullif(trim(p_search), '') is null
+      or location.name ilike '%' || trim(p_search) || '%'
+      or location.lga ilike '%' || trim(p_search) || '%'
+      or review.headline ilike '%' || trim(p_search) || '%'
+      or review.review_text ilike '%' || trim(p_search) || '%'
+    )
+  order by review.reviewed_at desc nulls last, review.created_at desc
+  limit least(greatest(coalesce(p_limit, 7), 1), 24)
+  offset greatest(coalesce(p_offset, 0), 0);
+$$;
+
 create or replace function public.submit_area_review(
   p_location_id uuid,
   p_location_name text,
@@ -614,6 +699,7 @@ $$;
 revoke all on function public.get_area_review_locations(text) from public;
 revoke all on function public.get_area_review_location(text) from public;
 revoke all on function public.get_latest_area_reviews(integer) from public;
+revoke all on function public.get_approved_area_reviews(integer, integer, text) from public;
 revoke all on function public.submit_area_review(uuid, text, text, text, text, text, integer, integer, numeric, numeric, numeric, integer, integer, integer, integer, integer, integer, integer, text, text, text, boolean) from public;
 revoke all on function public.get_admin_area_reviews() from public;
 revoke all on function public.moderate_area_review(uuid, text, text) from public;
@@ -622,6 +708,7 @@ revoke all on function public.delete_area_review(uuid) from public;
 grant execute on function public.get_area_review_locations(text) to anon, authenticated;
 grant execute on function public.get_area_review_location(text) to anon, authenticated;
 grant execute on function public.get_latest_area_reviews(integer) to anon, authenticated;
+grant execute on function public.get_approved_area_reviews(integer, integer, text) to anon, authenticated;
 grant execute on function public.submit_area_review(uuid, text, text, text, text, text, integer, integer, numeric, numeric, numeric, integer, integer, integer, integer, integer, integer, integer, text, text, text, boolean) to authenticated;
 grant execute on function public.get_admin_area_reviews() to authenticated;
 grant execute on function public.moderate_area_review(uuid, text, text) to authenticated;

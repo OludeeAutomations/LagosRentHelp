@@ -64,12 +64,12 @@ const AreaReviewDetailPage = () => {
   }, [slug]);
 
   if (loading) {
-    return <div className="flex min-h-[65vh] items-center justify-center bg-[#f7f6f1]"><span className="h-10 w-10 animate-spin rounded-full border-4 border-green-100 border-t-[#129B36]" /></div>;
+    return <div className="flex min-h-[65vh] items-center justify-center bg-[#fafafa]"><span className="h-10 w-10 animate-spin rounded-full border-4 border-green-100 border-t-[#129B36]" /></div>;
   }
 
   if (!location || error) {
     return (
-      <div className="bg-[#f7f6f1] px-4 py-24 text-center">
+      <div className="bg-[#fafafa] px-4 py-24 text-center">
         <MapPin className="mx-auto h-12 w-12 text-[#129B36]" />
         <h1 className="mt-5 text-3xl font-bold">We do not have this location yet</h1>
         <p className="mx-auto mt-3 max-w-xl text-slate-600">Be the first resident to add it and share a useful, honest experience.</p>
@@ -79,7 +79,7 @@ const AreaReviewDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f6f1] text-slate-950">
+    <div className="min-h-screen bg-[#fafafa] text-slate-950">
       <section className="relative isolate overflow-hidden bg-[#103f2b] text-white">
         <div aria-hidden="true" className="absolute inset-0 -z-10 overflow-hidden">
           <span className="absolute -right-28 -top-44 h-[30rem] w-[30rem] rounded-full border-[70px] border-white/[0.04]" />

@@ -15,6 +15,7 @@ const AreaReviewsLayout = () => {
   const isAuthPage = location.pathname === "/area-reviews/login"
     || location.pathname === "/area-reviews/register"
     || location.pathname.startsWith("/area-reviews/auth/");
+  const isHomePage = location.pathname === "/area-reviews";
 
   useEffect(() => initialize(), [initialize]);
 
@@ -52,7 +53,7 @@ const AreaReviewsLayout = () => {
   ];
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f7f6f1]">
+    <div className={`flex min-h-screen flex-col ${isHomePage ? "bg-[#f7f6f1]" : "bg-[#fafafa]"}`}>
       {!isAuthPage && <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
         <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <Link to="/area-reviews" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>

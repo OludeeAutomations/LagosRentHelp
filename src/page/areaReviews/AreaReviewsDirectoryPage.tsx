@@ -26,7 +26,7 @@ const AreaReviewsDirectoryPage = () => {
   }, [locations, query]);
 
   return (
-    <div className="min-h-screen bg-[#f7f6f1] text-slate-950">
+    <div className="min-h-screen bg-[#fafafa] text-slate-950">
       <section className="bg-[#103f2b] py-14 text-white lg:py-18">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Link to="/area-reviews" className="inline-flex items-center gap-2 text-sm font-semibold text-green-50/70 hover:text-white"><ArrowLeft className="h-4 w-4" /> Back to Area Reviews</Link>

@@ -44,7 +44,7 @@ const AreaReviewsAuthCallback = () => {
   }, [navigate, setSession]);
 
   return (
-    <div className="bg-[#f7f6f1] px-4 py-24">
+    <div className="bg-[#fafafa] px-4 py-24">
       <div className="mx-auto max-w-lg rounded-[2rem] bg-white p-10 text-center shadow-xl shadow-slate-900/[0.06]">
         {errorMessage ? <><h1 className="text-2xl font-bold">We could not complete verification</h1><p className="mt-4 text-slate-600">{errorMessage}</p><Link to="/area-reviews/login" className="mt-7 inline-flex rounded-xl bg-[#129B36] px-6 py-3 font-bold text-white">Go to sign in</Link></> : <><Loader2 className="mx-auto h-9 w-9 animate-spin text-[#129B36]" /><h1 className="mt-6 text-2xl font-bold">Completing your account...</h1><p className="mt-3 text-slate-600">You will be redirected to Area Reviews shortly.</p></>}
       </div>

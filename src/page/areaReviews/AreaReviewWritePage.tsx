@@ -154,7 +154,7 @@ const AreaReviewWritePage = () => {
 
   if (!authLoading && !user) {
     return (
-      <div className="relative isolate min-h-[70vh] overflow-hidden bg-[#f7f6f1] px-4 py-20">
+      <div className="relative isolate min-h-[70vh] overflow-hidden bg-[#fafafa] px-4 py-20">
         <div aria-hidden="true" className="absolute -right-32 -top-32 -z-10 h-96 w-96 rounded-full bg-green-100/70 blur-3xl" />
         <div className="mx-auto max-w-xl rounded-[2rem] border border-white bg-white p-8 text-center shadow-xl shadow-slate-900/[0.06] sm:p-12">
           <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-50"><LockKeyhole className="h-8 w-8 text-[#129B36]" /></span>
@@ -168,7 +168,7 @@ const AreaReviewWritePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 lg:py-14">
+    <div className="min-h-screen bg-[#fafafa] py-10 lg:py-14">
       <form onSubmit={submitReview} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Link to={sourceLocationSlug ? `/area-reviews/${sourceLocationSlug}` : "/area-reviews"} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-[#129B36]"><ArrowLeft className="h-4 w-4" /> Back to Area Reviews</Link>
         <div className="relative mt-7 overflow-hidden rounded-[2rem] bg-[#103f2b] px-6 py-8 text-white shadow-xl shadow-green-950/10 sm:px-9 sm:py-10">

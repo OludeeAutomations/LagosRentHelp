@@ -55,10 +55,10 @@ const AreaReviewsSettingsPage = () => {
     }
   };
 
-  if (loading || !user) return <div className="min-h-[60vh] bg-[#f7f6f1]" />;
+  if (loading || !user) return <div className="min-h-[60vh] bg-[#fafafa]" />;
 
   return (
-    <div className="min-h-screen bg-[#f7f6f1] py-12 sm:py-16">
+    <div className="min-h-screen bg-[#fafafa] py-12 sm:py-16">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.75fr_1.25fr] lg:px-8">
         <aside className="h-fit rounded-3xl bg-[#103f2b] p-7 text-white sm:p-8">
           <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10"><ShieldCheck className="h-6 w-6 text-[#f4ce70]" /></span>

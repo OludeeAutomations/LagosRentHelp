@@ -14,6 +14,7 @@ interface AuthLayoutProps {
   sideSubtitle?: string;
   sideIcon?: React.ElementType;
   contentClassName?: string;
+  backgroundClassName?: string;
   brandName?: string;
   brandHref?: string;
   sideStats?: Array<{ number: string; label: string }>;
@@ -27,6 +28,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   sideSubtitle = "Join thousands of happy renters across Lagos",
   sideIcon: SideIcon = Heart,
   contentClassName,
+  backgroundClassName = "bg-gray-50",
   brandName = "LagosRentHelp",
   brandHref = "/",
   sideStats = [
@@ -36,7 +38,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   ],
 }) => {
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className={cn("min-h-screen flex", backgroundClassName)}>
       {/* Left Side - Form */}
       <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24">
         <div className={cn("mx-auto w-full max-w-md", contentClassName)}>

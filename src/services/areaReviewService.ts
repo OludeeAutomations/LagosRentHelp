@@ -58,6 +58,13 @@ const mapPublicReview = (row: UnknownRecord) => ({
   createdAt: String(row.created_at),
 });
 
+const mapFeaturedReview = (row: UnknownRecord): FeaturedAreaReview => ({
+  ...mapPublicReview(row),
+  locationName: String(row.location_name),
+  locationSlug: String(row.location_slug),
+  lga: String(row.lga),
+});
+
 const relationMissing = (message: string) =>
   message.includes("area_review") || message.includes("Could not find the function");
 
@@ -120,12 +127,38 @@ export const areaReviewService = {
       if (relationMissing(error.message)) return [];
       throw new Error(error.message);
     }
-    return ((data || []) as UnknownRecord[]).map((row) => ({
-      ...mapPublicReview(row),
-      locationName: String(row.location_name),
-      locationSlug: String(row.location_slug),
-      lga: String(row.lga),
-    }));
+    return ((data || []) as UnknownRecord[]).map(mapFeaturedReview);
+  },
+
+  getApprovedReviews: async ({
+    limit = 6,
+    offset = 0,
+    search = "",
+  }: {
+    limit?: number;
+    offset?: number;
+    search?: string;
+  } = {}): Promise<{ reviews: FeaturedAreaReview[]; hasMore: boolean }> => {
+    const { data, error } = await areaReviewsSupabase.rpc("get_approved_area_reviews", {
+      p_limit: limit + 1,
+      p_offset: offset,
+      p_search: search.trim() || null,
+    });
+    if (error) {
+      if (relationMissing(error.message)) {
+        if (offset > 0 || search.trim()) return { reviews: [], hasMore: false };
+        const { data: fallbackData, error: fallbackError } = await areaReviewsSupabase.rpc("get_latest_area_reviews", {
+          p_limit: limit,
+        });
+        if (fallbackError) return { reviews: [], hasMore: false };
+        const reviews = ((fallbackData || []) as UnknownRecord[]).map(mapFeaturedReview);
+        return { reviews, hasMore: false };
+      }
+      throw new Error(error.message);
+    }
+    const rows = (data || []) as UnknownRecord[];
+    const reviews = rows.slice(0, limit).map(mapFeaturedReview);
+    return { reviews, hasMore: rows.length > limit };
   },
 
   submit: async (payload: SubmitAreaReviewPayload): Promise<string> => {
