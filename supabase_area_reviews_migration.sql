@@ -409,6 +409,93 @@ as $$
   offset greatest(coalesce(p_offset, 0), 0);
 $$;
 
+create or replace function public.get_my_area_reviews()
+returns table (
+  id uuid,
+  location_id uuid,
+  location_name text,
+  location_slug text,
+  location_type text,
+  lga text,
+  display_name text,
+  residency_status text,
+  property_type text,
+  lived_from integer,
+  lived_to integer,
+  rent_amount numeric,
+  service_charge numeric,
+  move_in_cost numeric,
+  overall_rating integer,
+  electricity_rating integer,
+  water_rating integer,
+  security_rating integer,
+  roads_rating integer,
+  noise_rating integer,
+  maintenance_rating integer,
+  flood_risk text,
+  headline text,
+  review_text text,
+  evidence_verified boolean,
+  show_first_name boolean,
+  status text,
+  moderation_note text,
+  created_at timestamptz,
+  updated_at timestamptz
+)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then raise exception 'Sign in to view your reviews'; end if;
+
+  return query
+  select
+    review.id,
+    location.id,
+    location.name,
+    location.slug,
+    location.location_type,
+    location.lga,
+    case
+      when review.show_first_name then split_part(
+        coalesce(nullif(review.reviewer_name, ''), 'Lagos resident'),
+        ' ',
+        1
+      )
+      else 'Lagos resident'
+    end,
+    review.residency_status,
+    review.property_type,
+    review.lived_from,
+    review.lived_to,
+    review.rent_amount,
+    review.service_charge,
+    review.move_in_cost,
+    review.overall_rating,
+    review.electricity_rating,
+    review.water_rating,
+    review.security_rating,
+    review.roads_rating,
+    review.noise_rating,
+    review.maintenance_rating,
+    review.flood_risk,
+    review.headline,
+    review.review_text,
+    review.evidence_verified,
+    review.show_first_name,
+    review.status,
+    review.moderation_note,
+    review.created_at,
+    review.updated_at
+  from public.area_reviews review
+  join public.area_review_locations location on location.id = review.location_id
+  where review.auth_user_id = auth.uid()
+  order by review.updated_at desc;
+end;
+$$;
+
 create or replace function public.submit_area_review(
   p_location_id uuid,
   p_location_name text,
@@ -463,6 +550,10 @@ begin
 
   if v_location_id is not null and not exists (
     select 1 from public.area_review_locations where id = v_location_id and status = 'active'
+  ) and not exists (
+    select 1 from public.area_reviews
+    where location_id = v_location_id
+      and auth_user_id = v_auth_user_id
   ) then
     raise exception 'This review location is no longer available';
   end if;
@@ -700,6 +791,7 @@ revoke all on function public.get_area_review_locations(text) from public;
 revoke all on function public.get_area_review_location(text) from public;
 revoke all on function public.get_latest_area_reviews(integer) from public;
 revoke all on function public.get_approved_area_reviews(integer, integer, text) from public;
+revoke all on function public.get_my_area_reviews() from public;
 revoke all on function public.submit_area_review(uuid, text, text, text, text, text, integer, integer, numeric, numeric, numeric, integer, integer, integer, integer, integer, integer, integer, text, text, text, boolean) from public;
 revoke all on function public.get_admin_area_reviews() from public;
 revoke all on function public.moderate_area_review(uuid, text, text) from public;
@@ -709,6 +801,7 @@ grant execute on function public.get_area_review_locations(text) to anon, authen
 grant execute on function public.get_area_review_location(text) to anon, authenticated;
 grant execute on function public.get_latest_area_reviews(integer) to anon, authenticated;
 grant execute on function public.get_approved_area_reviews(integer, integer, text) to anon, authenticated;
+grant execute on function public.get_my_area_reviews() to authenticated;
 grant execute on function public.submit_area_review(uuid, text, text, text, text, text, integer, integer, numeric, numeric, numeric, integer, integer, integer, integer, integer, integer, integer, text, text, text, boolean) to authenticated;
 grant execute on function public.get_admin_area_reviews() to authenticated;
 grant execute on function public.moderate_area_review(uuid, text, text) to authenticated;

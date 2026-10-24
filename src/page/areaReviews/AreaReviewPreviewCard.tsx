@@ -5,7 +5,7 @@ import type { FeaturedAreaReview } from "@/types/areaReviews";
 const AreaReviewPreviewCard = ({ review }: { review: FeaturedAreaReview }) => (
   <Link
     to={`/area-reviews/${review.locationSlug}`}
-    className="group relative flex min-h-72 flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-[#fafaf8] p-6 transition hover:-translate-y-1 hover:border-green-200 hover:shadow-xl hover:shadow-green-950/[0.06]"
+    className="group relative flex min-h-72 flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-green-200 hover:shadow-xl hover:shadow-green-950/[0.06]"
   >
     <Quote className="absolute right-5 top-5 h-12 w-12 text-green-100/70" />
     <div className="relative flex items-start justify-between gap-4">

@@ -5,6 +5,7 @@ import type {
   AreaReviewLocation,
   AreaReviewLocationDetail,
   FeaturedAreaReview,
+  MyAreaReview,
   ModerationAreaReview,
   ReviewModerationStatus,
   SubmitAreaReviewPayload,
@@ -63,6 +64,16 @@ const mapFeaturedReview = (row: UnknownRecord): FeaturedAreaReview => ({
   locationName: String(row.location_name),
   locationSlug: String(row.location_slug),
   lga: String(row.lga),
+});
+
+const mapMyReview = (row: UnknownRecord): MyAreaReview => ({
+  ...mapFeaturedReview(row),
+  locationId: String(row.location_id),
+  locationType: row.location_type as MyAreaReview["locationType"],
+  showFirstName: Boolean(row.show_first_name),
+  status: row.status as ReviewModerationStatus,
+  moderationNote: row.moderation_note ? String(row.moderation_note) : null,
+  updatedAt: String(row.updated_at),
 });
 
 const relationMissing = (message: string) =>
@@ -159,6 +170,19 @@ export const areaReviewService = {
     const rows = (data || []) as UnknownRecord[];
     const reviews = rows.slice(0, limit).map(mapFeaturedReview);
     return { reviews, hasMore: rows.length > limit };
+  },
+
+  getMyReviews: async (): Promise<MyAreaReview[]> => {
+    const { data, error } = await areaReviewsSupabase.rpc("get_my_area_reviews");
+    if (error) throw new Error(error.message);
+    return ((data || []) as UnknownRecord[]).map(mapMyReview);
+  },
+
+  getMyReview: async (reviewId: string): Promise<MyAreaReview | null> => {
+    const { data, error } = await areaReviewsSupabase.rpc("get_my_area_reviews");
+    if (error) throw new Error(error.message);
+    const reviews = ((data || []) as UnknownRecord[]).map(mapMyReview);
+    return reviews.find((review) => review.id === reviewId) || null;
   },
 
   submit: async (payload: SubmitAreaReviewPayload): Promise<string> => {

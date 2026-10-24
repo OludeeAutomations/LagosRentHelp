@@ -71,8 +71,10 @@ const AreaReviewWritePage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, loading: authLoading } = useAreaReviewsAuthStore();
+  const reviewId = searchParams.get("review") || "";
   const sourceLocationSlug = searchParams.get("location") || "";
-  const returnTo = sourceLocationSlug ? `/area-reviews/write?location=${sourceLocationSlug}` : "/area-reviews/write";
+  const returnTo = reviewId ? `/area-reviews/write?review=${reviewId}` : sourceLocationSlug ? `/area-reviews/write?location=${sourceLocationSlug}` : "/area-reviews/write";
+  const [editingLocationId, setEditingLocationId] = useState("");
   const [locationName, setLocationName] = useState(searchParams.get("name") || "");
   const [locationType, setLocationType] = useState<AreaLocationType>("neighbourhood");
   const [lga, setLga] = useState("");
@@ -91,9 +93,10 @@ const AreaReviewWritePage = () => {
   const [showFirstName, setShowFirstName] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingReview, setLoadingReview] = useState(Boolean(reviewId));
 
   useEffect(() => {
-    if (!sourceLocationSlug) return;
+    if (!sourceLocationSlug || reviewId) return;
     let active = true;
     areaReviewService.getLocation(sourceLocationSlug).then((location) => {
       if (!active || !location) return;
@@ -104,7 +107,44 @@ const AreaReviewWritePage = () => {
       }
     }).catch(() => undefined);
     return () => { active = false; };
-  }, [sourceLocationSlug]);
+  }, [reviewId, sourceLocationSlug]);
+
+  useEffect(() => {
+    if (!reviewId || !user) return;
+    let active = true;
+    setLoadingReview(true);
+    areaReviewService.getMyReview(reviewId)
+      .then((existingReview) => {
+        if (!active) return;
+        if (!existingReview) {
+          toast.error("This review could not be found in your account.");
+          navigate("/area-reviews/my-reviews", { replace: true });
+          return;
+        }
+        setEditingLocationId(existingReview.locationId);
+        setLocationName(existingReview.locationName);
+        setLocationType(existingReview.locationType);
+        setLga(existingReview.lga);
+        setResidencyStatus(existingReview.residencyStatus);
+        setPropertyType(existingReview.propertyType);
+        setLivedFrom(String(existingReview.livedFrom));
+        setLivedTo(existingReview.livedTo ? String(existingReview.livedTo) : "");
+        setRentAmount(existingReview.rentAmount === null ? "" : String(existingReview.rentAmount));
+        setServiceCharge(existingReview.serviceCharge === null ? "" : String(existingReview.serviceCharge));
+        setMoveInCost(existingReview.moveInCost === null ? "" : String(existingReview.moveInCost));
+        setOverallRating(existingReview.overallRating);
+        setRatings(existingReview.ratings);
+        setFloodRisk(existingReview.floodRisk);
+        setHeadline(existingReview.headline);
+        setReview(existingReview.review);
+        setShowFirstName(existingReview.showFirstName);
+      })
+      .catch((reason: unknown) => {
+        if (active) toast.error(reason instanceof Error ? reason.message : "Unable to load this review.");
+      })
+      .finally(() => active && setLoadingReview(false));
+    return () => { active = false; };
+  }, [navigate, reviewId, user]);
 
   const setRating = (key: keyof AreaRatingBreakdown, value: number) =>
     setRatings((current) => ({ ...current, [key]: value }));
@@ -126,6 +166,7 @@ const AreaReviewWritePage = () => {
     setSubmitting(true);
     try {
       await areaReviewService.submit({
+        locationId: editingLocationId || undefined,
         locationName: locationName.trim(),
         locationType,
         lga,
@@ -143,8 +184,8 @@ const AreaReviewWritePage = () => {
         review: review.trim(),
         showFirstName,
       });
-      toast.success("Thank you. Your review has been sent for moderation.");
-      navigate("/area-reviews", { replace: true });
+      toast.success(reviewId ? "Your updated review has been sent for moderation." : "Thank you. Your review has been sent for moderation.");
+      navigate(reviewId ? "/area-reviews/my-reviews" : "/area-reviews", { replace: true });
     } catch (reason: unknown) {
       toast.error(reason instanceof Error ? reason.message : "Unable to submit your review.");
     } finally {
@@ -167,14 +208,18 @@ const AreaReviewWritePage = () => {
     );
   }
 
+  if (reviewId && (authLoading || loadingReview)) {
+    return <div className="flex min-h-[65vh] items-center justify-center bg-[#fafafa]"><span className="h-10 w-10 animate-spin rounded-full border-4 border-green-100 border-t-[#129B36]" /></div>;
+  }
+
   return (
     <div className="min-h-screen bg-[#fafafa] py-10 lg:py-14">
       <form onSubmit={submitReview} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <Link to={sourceLocationSlug ? `/area-reviews/${sourceLocationSlug}` : "/area-reviews"} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-[#129B36]"><ArrowLeft className="h-4 w-4" /> Back to Area Reviews</Link>
+        <Link to={reviewId ? "/area-reviews/my-reviews" : sourceLocationSlug ? `/area-reviews/${sourceLocationSlug}` : "/area-reviews"} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-[#129B36]"><ArrowLeft className="h-4 w-4" /> {reviewId ? "Back to My Reviews" : "Back to Area Reviews"}</Link>
         <div className="relative mt-7 overflow-hidden rounded-[2rem] bg-[#103f2b] px-6 py-8 text-white shadow-xl shadow-green-950/10 sm:px-9 sm:py-10">
           <div aria-hidden="true" className="absolute -right-16 -top-24 h-72 w-72 rounded-full border-[45px] border-white/[0.04]" />
           <div className="relative flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
-            <div><p className="text-sm font-bold uppercase tracking-[0.18em] text-[#f4ce70]">Resident review</p><h1 className="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.03em] sm:text-4xl">Share what living there is really like</h1><p className="mt-4 max-w-2xl leading-7 text-green-50/70">Your review will be checked before it is published. Anonymous is the default.</p></div>
+            <div><p className="text-sm font-bold uppercase tracking-[0.18em] text-[#f4ce70]">{reviewId ? "Update review" : "Resident review"}</p><h1 className="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.03em] sm:text-4xl">{reviewId ? "Update your experience" : "Share what living there is really like"}</h1><p className="mt-4 max-w-2xl leading-7 text-green-50/70">{reviewId ? "Your changes will return to moderation before appearing publicly." : "Your review will be checked before it is published. Anonymous is the default."}</p></div>
             <div className="flex shrink-0 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-xs font-semibold text-green-50"><ShieldCheck className="h-4 w-4 text-[#f4ce70]" /> Moderated before publishing</div>
           </div>
         </div>
@@ -186,9 +231,9 @@ const AreaReviewWritePage = () => {
         <section className="mt-6 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_12px_35px_rgba(15,23,42,0.04)] sm:p-8">
           <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#103f2b] text-sm font-bold text-white">1</span><div><h2 className="text-xl font-bold">Where did you live?</h2><p className="text-sm text-slate-500">Type the specific location and select its local government area.</p></div></div>
           <div className="mt-7 grid gap-5 sm:grid-cols-2">
-            <div><Label htmlFor="location-name">Location (area, estate, street or building)</Label><Input id="location-name" className="mt-2 h-12 rounded-xl focus-visible:ring-green-100" value={locationName} onChange={(event) => setLocationName(event.target.value)} placeholder="e.g. Alagomeji, Yaba" required /></div>
-            <div><Label htmlFor="location-type">Location type</Label><select id="location-type" className={fieldClass} value={locationType} onChange={(event) => setLocationType(event.target.value as AreaLocationType)}><option value="neighbourhood">Neighbourhood</option><option value="estate">Estate</option><option value="street">Street</option><option value="building">Building</option></select></div>
-            <div><Label htmlFor="lga">Local government area</Label><select id="lga" className={fieldClass} value={lga} onChange={(event) => setLga(event.target.value)} required><option value="">Select LGA</option>{lagosLocalGovernmentAreas.map((item) => <option key={item}>{item}</option>)}</select></div>
+            <div><Label htmlFor="location-name">Location (area, estate, street or building)</Label><Input id="location-name" className="mt-2 h-12 rounded-xl focus-visible:ring-green-100" value={locationName} onChange={(event) => setLocationName(event.target.value)} placeholder="e.g. Alagomeji, Yaba" disabled={Boolean(reviewId)} required /></div>
+            <div><Label htmlFor="location-type">Location type</Label><select id="location-type" className={fieldClass} value={locationType} onChange={(event) => setLocationType(event.target.value as AreaLocationType)} disabled={Boolean(reviewId)}><option value="neighbourhood">Neighbourhood</option><option value="estate">Estate</option><option value="street">Street</option><option value="building">Building</option></select></div>
+            <div><Label htmlFor="lga">Local government area</Label><select id="lga" className={fieldClass} value={lga} onChange={(event) => setLga(event.target.value)} disabled={Boolean(reviewId)} required><option value="">Select LGA</option>{lagosLocalGovernmentAreas.map((item) => <option key={item}>{item}</option>)}</select></div>
             <div><Label htmlFor="property-type">Home type</Label><select id="property-type" className={fieldClass} value={propertyType} onChange={(event) => setPropertyType(event.target.value)}>{propertyTypes.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
             <div><Label htmlFor="residency-status">Your relationship to the place</Label><select id="residency-status" className={fieldClass} value={residencyStatus} onChange={(event) => setResidencyStatus(event.target.value as ResidencyStatus)}><option value="current">I currently live here</option><option value="former">I previously lived here</option></select></div>
             <div className="grid grid-cols-2 gap-3"><div><Label htmlFor="lived-from">From year</Label><Input id="lived-from" className="mt-2 h-11 rounded-xl" type="number" min="2000" max={new Date().getFullYear()} value={livedFrom} onChange={(event) => setLivedFrom(event.target.value)} required /></div>{residencyStatus === "former" && <div><Label htmlFor="lived-to">To year</Label><Input id="lived-to" className="mt-2 h-11 rounded-xl" type="number" min={livedFrom} max={new Date().getFullYear()} value={livedTo} onChange={(event) => setLivedTo(event.target.value)} required /></div>}</div>
@@ -236,7 +281,7 @@ const AreaReviewWritePage = () => {
 
         <div className="mt-6 flex flex-col gap-4 rounded-3xl bg-[#103f2b] p-6 text-white sm:flex-row sm:items-center sm:justify-between sm:p-8">
           <div className="flex gap-3"><Info className="mt-1 h-5 w-5 shrink-0 text-[#f4ce70]" /><div><p className="font-bold">Nothing publishes immediately</p><p className="mt-1 text-sm text-green-50/70">An administrator will check the review for privacy, usefulness and community standards.</p></div></div>
-          <Button type="submit" disabled={submitting || !confirmed} className="h-12 shrink-0 rounded-xl bg-[#e8bb50] px-7 font-bold text-[#103f2b] hover:bg-[#f4ce70]">{submitting ? "Submitting…" : <><CheckCircle2 className="h-4 w-4" /> Submit for review</>}</Button>
+          <Button type="submit" disabled={submitting || !confirmed} className="h-12 shrink-0 rounded-xl bg-[#e8bb50] px-7 font-bold text-[#103f2b] hover:bg-[#f4ce70]">{submitting ? "Submitting…" : <><CheckCircle2 className="h-4 w-4" /> {reviewId ? "Submit update" : "Submit for review"}</>}</Button>
         </div>
       </form>
     </div>

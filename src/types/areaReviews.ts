@@ -55,6 +55,15 @@ export interface FeaturedAreaReview extends PublicAreaReview {
   lga: string;
 }
 
+export interface MyAreaReview extends FeaturedAreaReview {
+  locationId: string;
+  locationType: AreaLocationType;
+  showFirstName: boolean;
+  status: ReviewModerationStatus;
+  moderationNote: string | null;
+  updatedAt: string;
+}
+
 export interface AreaReviewLocationDetail extends AreaReviewLocation {
   reviews: PublicAreaReview[];
 }

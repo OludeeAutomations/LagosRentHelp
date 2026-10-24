@@ -95,7 +95,7 @@ const AreaReviewsLandingPage = () => {
   return (
     <div className="bg-[#f7f6f1] text-slate-950">
       <section className="bg-white px-4 pb-8 pt-10 sm:px-6 sm:pb-10 sm:pt-12 lg:px-8 lg:pb-12 lg:pt-14">
-        <div className="mx-auto grid max-w-[1600px] gap-3 lg:grid-cols-2 lg:items-stretch">
+        <div className="mx-auto grid max-w-7xl gap-3 lg:grid-cols-2 lg:items-stretch">
           <div className="order-1 flex h-[min(720px,125vw)] items-stretch justify-center bg-white lg:h-auto lg:justify-end" aria-roledescription="carousel" aria-label="Lagos Area Reviews highlights">
             <div className="relative aspect-[4/5] h-full max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white">
               {heroSlides.map((slide, index) => (
@@ -153,12 +153,12 @@ const AreaReviewsLandingPage = () => {
       </section>
 
       {latestReviews.length > 0 && (
-        <section className="border-b border-slate-200/70 bg-white">
+        <section className="border-b border-slate-200/70 bg-[#fafafa]">
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
             <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
               <div>
                 <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#129B36]">Approved resident experiences</p>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">What Lagos residents are saying</h2>
+                <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#103f2b] sm:text-4xl">What Lagos residents are saying</h2>
                 <p className="mt-3 max-w-2xl leading-7 text-slate-600">Recently approved experiences about rent, utilities and everyday living conditions.</p>
               </div>
               {latestReviews.length > 6 && (
@@ -173,14 +173,15 @@ const AreaReviewsLandingPage = () => {
         </section>
       )}
 
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+      <section className="bg-[#103f2b] text-white">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#129B36]">Explore Lagos</p>
+            <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#8dd9a1]">Explore Lagos</p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Explore Lagos local governments</h2>
-            <p className="mt-3 max-w-2xl leading-7 text-slate-600">Start with a few Lagos LGAs, or open the complete directory to browse all 20.</p>
+            <p className="mt-3 max-w-2xl leading-7 text-green-50/70">Start with a few Lagos LGAs, or open the complete directory to browse all 20.</p>
           </div>
-          <Link to="/area-reviews/write" className="inline-flex items-center gap-2 text-sm font-bold text-[#0e7d2b] hover:underline">
+          <Link to="/area-reviews/write" className="inline-flex items-center gap-2 text-sm font-bold text-[#f4ce70] hover:underline">
             Review where you have lived <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -195,7 +196,7 @@ const AreaReviewsLandingPage = () => {
           </div>
         )}
         {!loading && filteredLocations.length === 0 && (
-          <div className="mt-9 rounded-3xl border border-dashed border-green-200 bg-white px-6 py-14 text-center">
+          <div className="mt-9 rounded-3xl border border-dashed border-green-200 bg-white px-6 py-14 text-center text-slate-950">
             <MapPin className="mx-auto h-10 w-10 text-[#129B36]" />
             <h3 className="mt-4 text-xl font-bold">No location matches “{query}” yet</h3>
             <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-500">Add the area, estate, street or building and become its first resident contributor.</p>
@@ -204,9 +205,10 @@ const AreaReviewsLandingPage = () => {
         )}
         {!loading && !query.trim() && (
           <div className="mt-10 text-center">
-            <Link to="/area-reviews/areas" className="inline-flex items-center gap-2 rounded-xl bg-[#103f2b] px-7 py-3.5 text-sm font-bold text-white transition hover:bg-[#0b2f20]">Show all 20 LGAs <ArrowRight className="h-4 w-4" /></Link>
+            <Link to="/area-reviews/areas" className="inline-flex items-center gap-2 rounded-xl bg-white px-7 py-3.5 text-sm font-bold text-[#103f2b] transition hover:bg-green-50">Show all 20 LGAs <ArrowRight className="h-4 w-4" /></Link>
           </div>
         )}
+        </div>
       </section>
 
       <section id="how-it-works" className="scroll-mt-24 bg-white">
