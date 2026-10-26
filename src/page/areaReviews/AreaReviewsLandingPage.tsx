@@ -94,7 +94,7 @@ const AreaReviewsLandingPage = () => {
 
   return (
     <div className="bg-[#f7f6f1] text-slate-950">
-      <section className="bg-white pb-8 pt-10 sm:pb-10 sm:pt-12 lg:pb-12 lg:pt-14">
+      <section className="bg-white pb-8 pt-4 sm:pb-10 sm:pt-12 lg:pb-12 lg:pt-14">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 lg:grid-cols-[0.88fr_1.12fr] lg:items-center lg:px-8">
           <div className="order-1 flex items-stretch justify-center bg-white lg:justify-start" aria-roledescription="carousel" aria-label="Lagos Area Reviews highlights">
             <div className="relative aspect-[4/5] w-full max-w-[600px] overflow-hidden rounded-2xl border border-slate-200 bg-white">
@@ -115,9 +115,9 @@ const AreaReviewsLandingPage = () => {
               <h1 className="mt-6 max-w-2xl text-4xl font-extrabold leading-[1.05] tracking-[-0.035em] sm:text-5xl xl:text-6xl">Know the area <span className="text-[#129B36]">before you pay the rent.</span></h1>
               <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">Search honest experiences from Lagos residents—real costs, power, water, flooding, roads, security and the details property adverts leave out.</p>
 
-              <div className="mt-7 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
-                <Link to="/area-reviews/reviews" className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-xl bg-[#18a83f] px-3 py-3 text-center text-sm font-semibold leading-tight text-white transition hover:bg-[#129B36] sm:gap-2 sm:px-6 sm:text-base">Explore reviews <ArrowRight className="h-4 w-4 shrink-0" /></Link>
-                <Link to="/area-reviews/write" className="inline-flex min-w-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-3 text-center text-sm font-semibold leading-tight text-[#173f2a] shadow-sm transition hover:border-green-300 hover:bg-green-50 sm:px-6 sm:text-base">Share your experience</Link>
+              <div className="mt-7 grid grid-cols-[0.85fr_1.15fr] gap-2 sm:flex sm:flex-wrap sm:gap-3">
+                <Link to="/area-reviews/reviews" className="inline-flex min-w-0 items-center justify-center gap-1 rounded-xl bg-[#18a83f] px-2 py-3 text-center text-xs font-semibold leading-tight text-white transition hover:bg-[#129B36] sm:gap-2 sm:px-6 sm:text-base">Explore reviews <ArrowRight className="h-4 w-4 shrink-0" /></Link>
+                <Link to="/area-reviews/write" className="inline-flex min-w-0 items-center justify-center whitespace-nowrap rounded-xl border border-[#103f2b] bg-white px-2 py-3 text-center text-xs font-semibold leading-tight text-[#173f2a] shadow-sm transition hover:border-[#129B36] hover:bg-green-50 sm:px-6 sm:text-base">Share your experience</Link>
               </div>
 
               <form onSubmit={submitSearch} className="relative mt-8 max-w-2xl rounded-2xl border border-slate-200 bg-[#fafafa] p-2 shadow-sm">

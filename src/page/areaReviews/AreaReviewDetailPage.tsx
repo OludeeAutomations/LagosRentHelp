@@ -169,7 +169,7 @@ const AreaReviewDetailPage = () => {
                       <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#103f2b] text-sm font-bold text-white">{review.displayName.charAt(0).toUpperCase()}</span>
                       <div><p className="font-bold">{review.displayName}</p><p className="text-xs text-slate-500">{review.residencyStatus === "current" ? "Current resident" : "Former resident"}{review.evidenceVerified ? " · Evidence checked" : ""}</p></div>
                     </div>
-                    <div className="text-right">{stars(review.overallRating)}<p className="mt-1 text-xs font-semibold text-slate-500">{review.overallRating.toFixed(1)}</p></div>
+                    <div className="relative z-10 flex shrink-0 flex-col items-center gap-1.5 bg-white/90 pl-2">{stars(review.overallRating)}<p className="text-xs font-semibold leading-none text-slate-500">{review.overallRating.toFixed(1)}</p></div>
                   </div>
                   <h3 className="mt-6 text-xl font-bold">{review.headline}</h3>
                   <p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-600">{review.review}</p>

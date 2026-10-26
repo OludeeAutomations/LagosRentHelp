@@ -142,9 +142,8 @@ const AreaReviewsAiAssistant = ({ user, authLoading }: Props) => {
           </>
         </div>
       ) : (
-        <button type="button" onClick={() => setOpen(true)} className="group relative flex h-14 w-14 items-center justify-center rounded-2xl border border-green-800/10 bg-[#0c3021] text-white shadow-xl shadow-slate-950/20 transition hover:-translate-y-0.5 hover:bg-[#12442f]" aria-label="Open LagosRentHelp AI assistant" title="Ask LagosRentHelp AI">
+        <button type="button" onClick={() => setOpen(true)} className="group relative flex h-14 w-14 items-center justify-center rounded-2xl border border-green-800/10 bg-[#0c3021] text-white shadow-xl shadow-slate-950/20 transition after:absolute after:-bottom-1 after:right-2.5 after:h-3 after:w-3 after:rotate-45 after:rounded-[2px] after:bg-[#0c3021] after:content-[''] hover:-translate-y-0.5 hover:bg-[#12442f] hover:after:bg-[#12442f]" aria-label="Open LagosRentHelp AI assistant" title="Ask LagosRentHelp AI">
           <Bot className="h-7 w-7 transition group-hover:scale-105" />
-          <Sparkles className="absolute right-2 top-2 h-3.5 w-3.5 text-[#f4ce70]" />
         </button>
       )}
     </aside>

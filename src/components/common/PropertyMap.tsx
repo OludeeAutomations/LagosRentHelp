@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import L from "leaflet";
-import { Navigation, Layers } from "lucide-react";
-import StreetViewModal from "./StreetViewMap";
+import { ExternalLink, Navigation, Layers } from "lucide-react";
 
 interface PropertyMapProps {
   address: string;
@@ -23,7 +22,10 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
     "loading",
   );
   const [error, setError] = useState("");
-  const [isStreetViewModalOpen, setIsStreetViewModalOpen] = useState(false);
+  const [resolvedCoordinates, setResolvedCoordinates] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(coordinates ?? null);
   const [isSatellite, setIsSatellite] = useState(true);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
 
@@ -105,6 +107,8 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           return;
         }
 
+        setResolvedCoordinates({ lat: mapLat, lng: mapLng });
+
         const map = L.map(mapElement).setView([mapLat, mapLng], 15);
 
         const tiles = L.tileLayer(
@@ -161,6 +165,10 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
     tileLayerRef.current = newTiles;
   }, [isSatellite]);
 
+  const streetViewUrl = resolvedCoordinates
+    ? `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${resolvedCoordinates.lat},${resolvedCoordinates.lng}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+
   if (status === "error") {
     return (
       <div
@@ -172,7 +180,6 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
   }
 
   return (
-    <>
       <div className="relative">
         <div
           ref={mapRef}
@@ -180,18 +187,17 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           className="w-full rounded-lg border border-gray-200 z-0"
         />
 
-        {/* Note: Street View is a Google Maps specific feature. 
-            If the user wants to keep it, it will require Google Maps API.
-            For now, we'll keep the button but it might need coordinates passed to the modal.
-        */}
         {showStreetViewButton && (
           <div className="absolute top-2 right-2 z-10 flex flex-col gap-2">
-            <button
-              onClick={() => setIsStreetViewModalOpen(true)}
+            <a
+              href={streetViewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors text-sm font-medium border border-gray-200">
               <Navigation className="h-4 w-4 text-blue-600" />
-              Street View
-            </button>
+              Open Street View
+              <ExternalLink className="h-3.5 w-3.5 text-gray-500" />
+            </a>
             <button
               onClick={() => setIsSatellite(!isSatellite)}
               className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors text-xs font-medium border border-gray-200">
@@ -201,14 +207,6 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           </div>
         )}
       </div>
-
-      <StreetViewModal
-        isOpen={isStreetViewModalOpen}
-        onClose={() => setIsStreetViewModalOpen(false)}
-        address={address}
-        coordinates={coordinates}
-      />
-    </>
   );
 };
 
