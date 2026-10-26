@@ -1,4 +1,4 @@
-import { ChevronDown, Loader2, LogIn, MessageCircle, RotateCcw, Send, Sparkles, X } from "lucide-react";
+import { Bot, Loader2, LogIn, RotateCcw, Send, Sparkles, X } from "lucide-react";
 import { FormEvent, Fragment, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { areaReviewAiService, type AreaAiMessage } from "@/services/areaReviewAiService";
@@ -23,11 +23,17 @@ const suggestedQuestions = [
   "Compare areas with lower reported flood risk.",
 ];
 
-const linkedAnswer = (content: string) => {
-  const parts = content.split(/(\/(?:area-reviews|properties)\/[a-z0-9-]+)/gi);
-  return parts.map((part, index) => part.match(/^\/(?:area-reviews|properties)\/[a-z0-9-]+$/i)
-    ? <Link key={`${part}-${index}`} to={part} className="font-bold text-[#0e7d2b] underline decoration-green-300 underline-offset-2 hover:text-[#095d21]">View page</Link>
-    : <Fragment key={`${part}-${index}`}>{part}</Fragment>);
+const formattedAnswer = (content: string) => {
+  const parts = content.split(/(\*\*[^*\n]+\*\*|\/(?:area-reviews|properties)\/[a-z0-9-]+)/gi);
+  return parts.map((part, index) => {
+    if (part.match(/^\*\*[^*\n]+\*\*$/)) {
+      return <strong key={`${part}-${index}`} className="font-extrabold text-slate-900">{part.slice(2, -2)}</strong>;
+    }
+    if (part.match(/^\/(?:area-reviews|properties)\/[a-z0-9-]+$/i)) {
+      return <Link key={`${part}-${index}`} to={part} className="font-bold text-[#0e7d2b] underline decoration-green-300 underline-offset-2 hover:text-[#095d21]">View page</Link>;
+    }
+    return <Fragment key={`${part}-${index}`}>{part}</Fragment>;
+  });
 };
 
 const AreaReviewsAiAssistant = ({ user, authLoading }: Props) => {
@@ -114,7 +120,7 @@ const AreaReviewsAiAssistant = ({ user, authLoading }: Props) => {
                 {messages.map((message) => (
                   <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                     <div className={`max-w-[88%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-6 ${message.role === "user" ? "rounded-br-md bg-[#129B36] text-white" : "rounded-bl-md border border-slate-200 bg-white text-slate-700 shadow-sm"}`}>
-                      {message.role === "assistant" ? linkedAnswer(message.content) : message.content}
+                      {message.role === "assistant" ? formattedAnswer(message.content) : message.content}
                     </div>
                   </div>
                 ))}
@@ -136,10 +142,9 @@ const AreaReviewsAiAssistant = ({ user, authLoading }: Props) => {
           </>
         </div>
       ) : (
-        <button type="button" onClick={() => setOpen(true)} className="group flex items-center gap-3 rounded-2xl border border-green-800/10 bg-[#0c3021] p-2.5 pr-4 text-left text-white shadow-xl shadow-slate-950/20 transition hover:-translate-y-0.5 hover:bg-[#12442f]" aria-label="Open LagosRentHelp AI assistant">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#129B36]"><MessageCircle className="h-5 w-5" /></span>
-          <span><span className="flex items-center gap-1.5 text-sm font-extrabold">Ask LagosRentHelp AI <Sparkles className="h-3.5 w-3.5 text-[#f4ce70]" /></span><span className="block text-[11px] text-green-100/65">Compare Lagos areas</span></span>
-          <ChevronDown className="ml-1 h-4 w-4 rotate-180 text-green-100/60" />
+        <button type="button" onClick={() => setOpen(true)} className="group relative flex h-14 w-14 items-center justify-center rounded-2xl border border-green-800/10 bg-[#0c3021] text-white shadow-xl shadow-slate-950/20 transition hover:-translate-y-0.5 hover:bg-[#12442f]" aria-label="Open LagosRentHelp AI assistant" title="Ask LagosRentHelp AI">
+          <Bot className="h-7 w-7 transition group-hover:scale-105" />
+          <Sparkles className="absolute right-2 top-2 h-3.5 w-3.5 text-[#f4ce70]" />
         </button>
       )}
     </aside>
