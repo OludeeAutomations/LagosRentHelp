@@ -2,6 +2,7 @@ import { ChevronDown, FileText, LogIn, LogOut, Menu, MessageSquareText, Search, 
 import { useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import AreaReviewsAiAssistant from "@/components/areaReviews/AreaReviewsAiAssistant";
 import { useAreaReviewsAuthStore } from "@/stores/areaReviewsAuthStore";
 
 const AreaReviewsLayout = () => {
@@ -102,6 +103,8 @@ const AreaReviewsLayout = () => {
       </header>}
 
       <main className="flex-1"><Outlet /></main>
+
+      {!isAuthPage && <AreaReviewsAiAssistant user={user} authLoading={loading} />}
 
       {!isAuthPage && <footer className="border-t border-white/10 bg-[#0c3021] text-white">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.2fr_0.8fr_0.8fr] lg:px-8">

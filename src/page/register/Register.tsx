@@ -13,7 +13,7 @@ import {
   Search,
   Loader2,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import AuthLayout from "@/components/common/AuthLayout";
 import { Button } from "@/components/ui/button";
@@ -79,6 +79,8 @@ const Register: React.FC = () => {
   const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
   const { register: registerUser, loginWithGoogle, setError } = useAuthStore();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const landlordInvite = searchParams.get("account") === "landlord";
 
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
@@ -86,7 +88,7 @@ const Register: React.FC = () => {
       name: "",
       email: "",
       phone: "",
-      accountType: "user",
+      accountType: landlordInvite ? "landlord" : "user",
       password: "",
       confirmPassword: "",
     },
@@ -192,7 +194,9 @@ const Register: React.FC = () => {
   return (
     <AuthLayout
       title="Create Account"
-      subtitle="Join thousands of users finding their perfect home"
+      subtitle={landlordInvite ? "Create a landlord account to verify and list a property" : "Join thousands of users finding their perfect home"}
+      sideTitle={landlordInvite ? "List with confidence" : undefined}
+      sideSubtitle={landlordInvite ? "Verify your identity and property before publishing trusted Lagos listings" : undefined}
       contentClassName="max-w-xl">
       <Form {...form}>
         <motion.form

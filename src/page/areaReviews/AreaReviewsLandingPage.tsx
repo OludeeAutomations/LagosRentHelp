@@ -115,9 +115,9 @@ const AreaReviewsLandingPage = () => {
               <h1 className="mt-6 max-w-2xl text-4xl font-extrabold leading-[1.05] tracking-[-0.035em] sm:text-5xl xl:text-6xl">Know the area <span className="text-[#129B36]">before you pay the rent.</span></h1>
               <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">Search honest experiences from Lagos residents—real costs, power, water, flooding, roads, security and the details property adverts leave out.</p>
 
-              <div className="mt-7 flex flex-wrap gap-3">
-                <Link to="/area-reviews/reviews" className="inline-flex items-center gap-2 rounded-xl bg-[#18a83f] px-6 py-3 font-semibold text-white transition hover:bg-[#129B36]">Explore reviews <ArrowRight className="h-4 w-4" /></Link>
-                <Link to="/area-reviews/write" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3 font-semibold text-[#173f2a] shadow-sm transition hover:border-green-300 hover:bg-green-50">Share your experience</Link>
+              <div className="mt-7 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
+                <Link to="/area-reviews/reviews" className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-xl bg-[#18a83f] px-3 py-3 text-center text-sm font-semibold leading-tight text-white transition hover:bg-[#129B36] sm:gap-2 sm:px-6 sm:text-base">Explore reviews <ArrowRight className="h-4 w-4 shrink-0" /></Link>
+                <Link to="/area-reviews/write" className="inline-flex min-w-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-3 text-center text-sm font-semibold leading-tight text-[#173f2a] shadow-sm transition hover:border-green-300 hover:bg-green-50 sm:px-6 sm:text-base">Share your experience</Link>
               </div>
 
               <form onSubmit={submitSearch} className="relative mt-8 max-w-2xl rounded-2xl border border-slate-200 bg-[#fafafa] p-2 shadow-sm">

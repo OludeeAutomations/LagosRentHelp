@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
+  Building2,
   CheckCircle2,
   EyeOff,
   Info,
   LockKeyhole,
+  MessageCircle,
   ShieldCheck,
   Star,
 } from "lucide-react";
@@ -17,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { lagosLocalGovernmentAreas } from "@/data/areaReviewLocations";
 import { areaReviewService } from "@/services/areaReviewService";
 import { useAreaReviewsAuthStore } from "@/stores/areaReviewsAuthStore";
+import { getLandlordWhatsAppInviteUrl } from "@/utils/landlordInvite";
 import type {
   AreaLocationType,
   AreaRatingBreakdown,
@@ -94,6 +97,7 @@ const AreaReviewWritePage = () => {
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loadingReview, setLoadingReview] = useState(Boolean(reviewId));
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     if (!sourceLocationSlug || reviewId) return;
@@ -185,7 +189,12 @@ const AreaReviewWritePage = () => {
         showFirstName,
       });
       toast.success(reviewId ? "Your updated review has been sent for moderation." : "Thank you. Your review has been sent for moderation.");
-      navigate(reviewId ? "/area-reviews/my-reviews" : "/area-reviews", { replace: true });
+      if (reviewId) {
+        navigate("/area-reviews/my-reviews", { replace: true });
+      } else {
+        setSubmitted(true);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     } catch (reason: unknown) {
       toast.error(reason instanceof Error ? reason.message : "Unable to submit your review.");
     } finally {
@@ -210,6 +219,36 @@ const AreaReviewWritePage = () => {
 
   if (reviewId && (authLoading || loadingReview)) {
     return <div className="flex min-h-[65vh] items-center justify-center bg-[#fafafa]"><span className="h-10 w-10 animate-spin rounded-full border-4 border-green-100 border-t-[#129B36]" /></div>;
+  }
+
+  if (submitted) {
+    const whatsappUrl = getLandlordWhatsAppInviteUrl();
+
+    return (
+      <div className="min-h-[78vh] bg-[#fafafa] px-4 py-12 sm:py-20">
+        <div className="mx-auto max-w-2xl overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-xl shadow-slate-900/[0.06]">
+          <div className="bg-[#103f2b] px-6 py-10 text-center text-white sm:px-10">
+            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10"><CheckCircle2 className="h-9 w-9 text-[#f4ce70]" /></span>
+            <h1 className="mt-5 text-3xl font-bold">Your review has been received</h1>
+            <p className="mx-auto mt-3 max-w-lg leading-7 text-green-50/70">It will remain private until an administrator has checked and approved it.</p>
+          </div>
+
+          <div className="p-6 sm:p-10">
+            <div className="rounded-3xl border border-green-100 bg-green-50 p-6 text-center sm:p-8">
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#129B36] shadow-sm"><Building2 className="h-6 w-6" /></span>
+              <h2 className="mt-4 text-xl font-bold text-[#103f2b]">Know a landlord, developer or caretaker?</h2>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">Help us bring more verified homes to Lagos renters. If you know a landlord, property developer or caretaker you trust, please share this optional invitation with them.</p>
+              <a href={whatsappUrl} target="_blank" rel="noreferrer" className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-[#129B36] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#0e7d2b]"><MessageCircle className="h-4 w-4" />Invite through WhatsApp</a>
+              <p className="mt-4 text-xs leading-5 text-slate-500">This invitation is separate from your review. It does not contain or link to your review, rating or reviewed location.</p>
+            </div>
+
+            <div className="mt-6 flex justify-center">
+              <Link to="/area-reviews" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-green-200 hover:bg-green-50"><ArrowLeft className="h-4 w-4" />Back to Area Reviews</Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

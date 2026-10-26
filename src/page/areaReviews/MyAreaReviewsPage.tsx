@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, Clock3, MapPin, MessageSquareText, Pencil, Star, XCircle } from "lucide-react";
+import { Building2, CheckCircle2, Clock3, MapPin, MessageCircle, MessageSquareText, Pencil, Star, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { areaReviewService } from "@/services/areaReviewService";
 import { useAreaReviewsAuthStore } from "@/stores/areaReviewsAuthStore";
 import type { MyAreaReview } from "@/types/areaReviews";
+import { getLandlordWhatsAppInviteUrl } from "@/utils/landlordInvite";
 
 const statusStyle = {
   pending: "border-amber-200 bg-amber-50 text-amber-700",
@@ -69,6 +70,19 @@ const MyAreaReviewsPage = () => {
           </div>
           <Link to="/area-reviews/write" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#129B36] px-5 py-3 text-sm font-bold text-white hover:bg-[#0e7d2b]"><MessageSquareText className="h-4 w-4" /> Share another review</Link>
         </div>
+
+        {reviews.length > 0 && (
+          <section className="mt-8 flex flex-col gap-5 rounded-3xl border border-green-100 bg-green-50 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7">
+            <div className="flex gap-4">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[#129B36] shadow-sm"><Building2 className="h-6 w-6" /></span>
+              <div>
+                <div className="flex flex-wrap items-center gap-2"><h2 className="text-lg font-bold text-[#103f2b]">Know a landlord, developer or caretaker?</h2><span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-[#0e7d2b]">Optional</span></div>
+                <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-600">Help us bring more verified homes to Lagos renters. If you know a landlord, property developer or caretaker you trust, please share this invitation with them. It remains separate from every review and contains no review, rating or reviewed location.</p>
+              </div>
+            </div>
+            <a href={getLandlordWhatsAppInviteUrl()} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#129B36] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#0e7d2b]"><MessageCircle className="h-4 w-4" />Invite through WhatsApp</a>
+          </section>
+        )}
 
         {reviews.length === 0 ? (
           <div className="mt-10 rounded-3xl border border-dashed border-green-200 bg-white px-6 py-16 text-center">

@@ -2,3 +2,7 @@
 # The function validates the bearer token with supabase.auth.getUser(). Keeping
 # gateway verification off also allows browser CORS preflight requests through.
 verify_jwt = false
+
+[functions.area-review-ai]
+# Authentication is validated inside the function after CORS preflight.
+verify_jwt = false

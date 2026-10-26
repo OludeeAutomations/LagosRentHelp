@@ -1,4 +1,4 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "@supabase/supabase-js";
 
 const allowedOrigins = new Set([
   "https://lagosrenthelp.ng",
@@ -10,7 +10,8 @@ const corsHeaders = (origin: string | null) => ({
   "Access-Control-Allow-Origin": origin && allowedOrigins.has(origin)
     ? origin
     : "https://lagosrenthelp.ng",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Vary": "Origin",
 });
@@ -19,10 +20,11 @@ const json = (
   body: Record<string, unknown>,
   status: number,
   origin: string | null,
-) => new Response(JSON.stringify(body), {
-  status,
-  headers: { ...corsHeaders(origin), "Content-Type": "application/json" },
-});
+) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders(origin), "Content-Type": "application/json" },
+  });
 
 Deno.serve(async (request) => {
   const origin = request.headers.get("Origin");
@@ -43,7 +45,10 @@ Deno.serve(async (request) => {
   const dojahPrivateKey = Deno.env.get("DOJAH_PRIVATE_KEY");
   const dojahBaseUrl = Deno.env.get("DOJAH_BASE_URL") || "https://api.dojah.io";
 
-  if (!supabaseUrl || !anonKey || !serviceRoleKey || !dojahAppId || !dojahPrivateKey) {
+  if (
+    !supabaseUrl || !anonKey || !serviceRoleKey || !dojahAppId ||
+    !dojahPrivateKey
+  ) {
     return json({ error: "NIN verification is not configured." }, 503, origin);
   }
 
@@ -58,7 +63,11 @@ Deno.serve(async (request) => {
   });
   const { data: authData, error: authError } = await authClient.auth.getUser();
   if (authError || !authData.user) {
-    return json({ error: "Your session is invalid or has expired." }, 401, origin);
+    return json(
+      { error: "Your session is invalid or has expired." },
+      401,
+      origin,
+    );
   }
 
   let nin = "";
@@ -83,10 +92,21 @@ Deno.serve(async (request) => {
     .gte("attempted_at", oneHourAgo);
 
   if (countError) {
-    return json({ error: "Run the latest landlord database migration before verifying a NIN." }, 503, origin);
+    return json(
+      {
+        error:
+          "Run the latest landlord database migration before verifying a NIN.",
+      },
+      503,
+      origin,
+    );
   }
   if ((count || 0) >= 5) {
-    return json({ error: "Too many verification attempts. Try again in one hour." }, 429, origin);
+    return json(
+      { error: "Too many verification attempts. Try again in one hour." },
+      429,
+      origin,
+    );
   }
 
   const controller = new AbortController();
@@ -104,28 +124,45 @@ Deno.serve(async (request) => {
       },
       signal: controller.signal,
     });
-    const providerBody = await providerResponse.json().catch(() => null) as Record<string, unknown> | null;
+    const providerBody = await providerResponse.json().catch(() => null) as
+      | Record<string, unknown>
+      | null;
     const entity = providerBody?.entity as Record<string, unknown> | undefined;
     const verified = providerResponse.ok && Boolean(entity);
-    const firstName = String(entity?.firstname || entity?.first_name || "").trim();
-    const middleName = String(entity?.middlename || entity?.middle_name || "").trim();
-    const lastName = String(entity?.surname || entity?.lastname || entity?.last_name || "").trim();
-    const fullName = [firstName, middleName, lastName].filter(Boolean).join(" ");
+    const firstName = String(entity?.firstname || entity?.first_name || "")
+      .trim();
+    const middleName = String(entity?.middlename || entity?.middle_name || "")
+      .trim();
+    const lastName = String(
+      entity?.surname || entity?.lastname || entity?.last_name || "",
+    ).trim();
+    const fullName = [firstName, middleName, lastName].filter(Boolean).join(
+      " ",
+    );
 
-    const { error: auditError } = await admin.from("nin_verification_attempts").insert({
-      auth_user_id: authData.user.id,
-      nin: verified ? nin : null,
-      nin_last_four: nin.slice(-4),
-      successful: verified,
-      provider_status: providerResponse.status,
-      verified_name: verified ? fullName : null,
-    });
+    const { error: auditError } = await admin.from("nin_verification_attempts")
+      .insert({
+        auth_user_id: authData.user.id,
+        nin: verified ? nin : null,
+        nin_last_four: nin.slice(-4),
+        successful: verified,
+        provider_status: providerResponse.status,
+        verified_name: verified ? fullName : null,
+      });
     if (auditError) {
-      return json({ error: "The verification result could not be saved. Please try again." }, 500, origin);
+      return json(
+        {
+          error:
+            "The verification result could not be saved. Please try again.",
+        },
+        500,
+        origin,
+      );
     }
 
     if (!verified) {
-      const configurationError = providerResponse.status === 401 || providerResponse.status === 403;
+      const configurationError = providerResponse.status === 401 ||
+        providerResponse.status === 403;
       return json(
         {
           error: configurationError
@@ -137,17 +174,26 @@ Deno.serve(async (request) => {
       );
     }
 
-    return json({
-      verified: true,
-      identity: { firstName, middleName, lastName, fullName },
-    }, 200, origin);
+    return json(
+      {
+        verified: true,
+        identity: { firstName, middleName, lastName, fullName },
+      },
+      200,
+      origin,
+    );
   } catch (error) {
-    const timedOut = error instanceof DOMException && error.name === "AbortError";
-    return json({
-      error: timedOut
-        ? "The verification service took too long to respond. Please try again."
-        : "The verification service is temporarily unavailable.",
-    }, 503, origin);
+    const timedOut = error instanceof DOMException &&
+      error.name === "AbortError";
+    return json(
+      {
+        error: timedOut
+          ? "The verification service took too long to respond. Please try again."
+          : "The verification service is temporarily unavailable.",
+      },
+      503,
+      origin,
+    );
   } finally {
     clearTimeout(timeout);
   }
