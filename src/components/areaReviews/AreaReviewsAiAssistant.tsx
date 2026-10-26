@@ -117,9 +117,9 @@ const AreaReviewsAiAssistant = ({ user, authLoading }: Props) => {
                     You can ask 3 questions daily without an account. <Link to="/area-reviews/login" state={{ from: `${location.pathname}${location.search}` }} className="inline-flex items-center gap-1 font-bold text-[#0e7d2b] hover:underline"><LogIn className="h-3.5 w-3.5" />Sign in</Link> for 10 daily questions.
                   </div>
                 )}
-                {messages.map((message) => (
+                {messages.map((message, index) => (
                   <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[88%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-6 ${message.role === "user" ? "rounded-br-md bg-[#129B36] text-white" : "rounded-bl-md border border-slate-200 bg-white text-slate-700 shadow-sm"}`}>
+                    <div className={`${message.role === "assistant" && index === 0 ? "w-full" : "max-w-[88%]"} whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-6 ${message.role === "user" ? "rounded-br-md bg-[#129B36] text-white" : "rounded-bl-md border border-slate-200 bg-white text-slate-700 shadow-sm"}`}>
                       {message.role === "assistant" ? formattedAnswer(message.content) : message.content}
                     </div>
                   </div>
