@@ -117,7 +117,7 @@ const AreaReviewsLandingPage = () => {
 
               <div className="mt-7 grid grid-cols-[0.85fr_1.15fr] gap-2 sm:flex sm:flex-wrap sm:gap-3">
                 <Link to="/area-reviews/reviews" className="inline-flex min-w-0 items-center justify-center gap-1 rounded-xl bg-[#18a83f] px-2 py-3 text-center text-xs font-semibold leading-tight text-white transition hover:bg-[#129B36] sm:gap-2 sm:px-6 sm:text-base">Explore reviews <ArrowRight className="h-4 w-4 shrink-0" /></Link>
-                <Link to="/area-reviews/write" className="inline-flex min-w-0 items-center justify-center whitespace-nowrap rounded-xl border border-[#103f2b] bg-white px-2 py-3 text-center text-xs font-semibold leading-tight text-[#173f2a] shadow-sm transition hover:border-[#129B36] hover:bg-green-50 sm:px-6 sm:text-base">Share your experience</Link>
+                <Link to="/area-reviews/write" className="inline-flex min-w-0 items-center justify-center whitespace-nowrap rounded-xl border border-[#18a83f] bg-white px-2 py-3 text-center text-xs font-semibold leading-tight text-[#173f2a] shadow-sm transition hover:border-[#129B36] hover:bg-green-50 sm:px-6 sm:text-base">Share your experience</Link>
               </div>
 
               <form onSubmit={submitSearch} className="relative mt-8 max-w-2xl rounded-2xl border border-slate-200 bg-[#fafafa] p-2 shadow-sm">
