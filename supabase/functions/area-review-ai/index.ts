@@ -106,6 +106,13 @@ const clientAddress = (request: Request) =>
   request.headers.get("x-real-ip")?.trim() ||
   "";
 
+const azureResponsesUrl = (endpoint: string) => {
+  const normalized = endpoint.trim().replace(/\/+$/, "");
+  if (normalized.endsWith("/openai/v1/responses")) return normalized;
+  if (normalized.endsWith("/openai/v1")) return `${normalized}/responses`;
+  return `${normalized}/openai/v1/responses`;
+};
+
 const getOutputText = (body: Record<string, unknown>) => {
   if (typeof body.output_text === "string") return body.output_text.trim();
   const output = Array.isArray(body.output) ? body.output : [];
@@ -141,8 +148,9 @@ Deno.serve(async (request) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const openAiKey = Deno.env.get("OPENAI_API_KEY");
-  const model = Deno.env.get("OPENAI_MODEL") || "gpt-4.1-mini";
+  const azureOpenAiEndpoint = Deno.env.get("AZURE_OPENAI_ENDPOINT");
+  const azureOpenAiKey = Deno.env.get("AZURE_OPENAI_API_KEY");
+  const azureOpenAiDeployment = Deno.env.get("AZURE_OPENAI_DEPLOYMENT");
   const configuredSignedInLimit = Number(
     Deno.env.get("AREA_AI_DAILY_LIMIT") || "10",
   );
@@ -165,9 +173,12 @@ Deno.serve(async (request) => {
     )
     : 30;
 
-  if (!supabaseUrl || !anonKey || !serviceRoleKey || !openAiKey) {
+  if (
+    !supabaseUrl || !anonKey || !serviceRoleKey || !azureOpenAiEndpoint ||
+    !azureOpenAiKey || !azureOpenAiDeployment
+  ) {
     return json(
-      { error: "The Area Reviews AI assistant is not configured yet." },
+      { error: "The Azure AI assistant is not configured yet." },
       503,
       origin,
     );
@@ -416,14 +427,14 @@ ${JSON.stringify(listingData)}`;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 25_000);
   try {
-    const response = await fetch("https://api.openai.com/v1/responses", {
+    const response = await fetch(azureResponsesUrl(azureOpenAiEndpoint), {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${openAiKey}`,
+        "api-key": azureOpenAiKey,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model,
+        model: azureOpenAiDeployment,
         instructions,
         input: messages,
         max_output_tokens: 600,
@@ -438,7 +449,7 @@ ${JSON.stringify(listingData)}`;
     if (!response.ok) {
       const apiError = responseBody.error as { message?: string } | undefined;
       console.error(
-        "OpenAI response error",
+        "Azure OpenAI response error",
         response.status,
         apiError?.message || "Unknown error",
       );

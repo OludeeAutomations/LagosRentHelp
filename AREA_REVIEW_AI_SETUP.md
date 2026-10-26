@@ -1,6 +1,6 @@
 # Area Reviews AI setup
 
-The browser never receives the OpenAI API key. The `area-review-ai` Supabase Edge Function validates the signed-in resident, reads approved Area Reviews data, applies the daily limit, and then calls the OpenAI Responses API.
+The browser never receives the Azure OpenAI API key. The `area-review-ai` Supabase Edge Function identifies the visitor, reads approved Area Reviews data, applies the daily limit, and then calls the Azure OpenAI Responses API.
 
 ## One-time production setup
 
@@ -8,18 +8,18 @@ The browser never receives the OpenAI API key. The `area-review-ai` Supabase Edg
 2. Add the server-only secrets:
 
    ```powershell
-   supabase secrets set OPENAI_API_KEY="your-key" OPENAI_MODEL="gpt-4.1-mini" AREA_AI_DAILY_LIMIT="10" AREA_AI_ANONYMOUS_DAILY_LIMIT="3"
+   npx supabase secrets set AZURE_OPENAI_ENDPOINT="https://YOUR-RESOURCE.openai.azure.com" AZURE_OPENAI_API_KEY="your-key" AZURE_OPENAI_DEPLOYMENT="your-deployment-name" AREA_AI_DAILY_LIMIT="10" AREA_AI_ANONYMOUS_DAILY_LIMIT="3"
    ```
 
 3. Deploy the Edge Function:
 
    ```powershell
-   supabase functions deploy area-review-ai
+   npx supabase functions deploy area-review-ai --no-verify-jwt
    ```
 
-`OPENAI_MODEL` and the usage-limit secrets are optional. The defaults are 3 daily questions for a visitor without an account, 10 for a signed-in account, and a 30-question daily network safeguard. Browsing Area Reviews remains account-free; submitting or editing a review still requires sign-in.
+Use the Azure **deployment name**, not merely the underlying model name, for `AZURE_OPENAI_DEPLOYMENT`. The three Azure secrets are required. Usage-limit secrets are optional; the defaults are 3 daily questions for a visitor without an account, 10 for a signed-in account, and a 30-question daily network safeguard. Browsing Area Reviews remains account-free; submitting or editing a review still requires sign-in.
 
-For stronger anonymous rate-limit privacy, you can also set a long random `AREA_AI_RATE_LIMIT_SALT` secret. Set a spending limit in your OpenAI project as the final cost safeguard.
+For stronger anonymous rate-limit privacy, you can also set a long random `AREA_AI_RATE_LIMIT_SALT` secret. Configure Azure quota and budget alerts as the final cost safeguard.
 
 VS Code uses Deno for `supabase/functions`. Install the recommended **Deno** workspace extension if prompted, then reload the editor; this removes incorrect `Deno` and `npm:` TypeScript errors from Edge Function files.
 
