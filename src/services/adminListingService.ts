@@ -71,6 +71,14 @@ const friendlyError = (error: { code?: string; message: string }) => {
       "Superadmin listing access is not installed yet. Run supabase_lagosrenthelp_listings_migration.sql in Supabase.",
     );
   }
+  if (
+    error.message.toLowerCase().includes("permission denied") ||
+    error.message.includes("get_super_admin_properties")
+  ) {
+    return new Error(
+      "Superadmin listing access needs the latest database fix. Run supabase_superadmin_listing_access_fix.sql in Supabase.",
+    );
+  }
   return new Error(error.message);
 };
 
@@ -78,7 +86,7 @@ export const adminListingService = {
   getAll: async (): Promise<AdminListing[]> => {
     await requireSuperAdminProfile();
     const { data, error } = await supabase
-      .from("properties")
+      .rpc("get_super_admin_properties", { p_property_id: null })
       .select(ADMIN_PROPERTY_COLUMNS)
       .order("created_at", { ascending: false });
     if (error) throw friendlyError(error);
@@ -88,9 +96,8 @@ export const adminListingService = {
   getById: async (id: string): Promise<AdminListing> => {
     await requireSuperAdminProfile();
     const { data, error } = await supabase
-      .from("properties")
+      .rpc("get_super_admin_properties", { p_property_id: id })
       .select(ADMIN_PROPERTY_COLUMNS)
-      .eq("id", id)
       .maybeSingle();
     if (error) throw friendlyError(error);
     if (!data) throw new Error("Listing not found.");
@@ -98,21 +105,14 @@ export const adminListingService = {
   },
 
   create: async (input: LandlordListingInput): Promise<AdminListing> => {
-    const profileId = await requireSuperAdminProfile();
+    await requireSuperAdminProfile();
     const imageUrls = await uploadPropertyImages(input.images);
-    const { data, error } = await supabase
-      .from("properties")
-      .insert({
+    const { data, error } = await supabase.rpc("create_lagosrenthelp_property", {
+      p_listing: {
         ...listingValues(input),
         images: imageUrls,
-        status: "available",
-        approval_status: "approved",
-        owner_id: profileId,
-        contact_user_id: profileId,
-        created_by: profileId,
-      })
-      .select(ADMIN_PROPERTY_COLUMNS)
-      .single();
+      },
+    });
     if (error) throw friendlyError(error);
     return mapAdminProperty(data as AdminPropertyRow);
   },
@@ -125,28 +125,31 @@ export const adminListingService = {
     const imageUrls = input.images.length
       ? await uploadPropertyImages(input.images)
       : null;
-    const { data, error } = await supabase
-      .from("properties")
-      .update({
+    const { data, error } = await supabase.rpc("update_super_admin_property", {
+      p_property_id: id,
+      p_listing: {
         ...listingValues(input),
         ...(imageUrls ? { images: imageUrls } : {}),
-      })
-      .eq("id", id)
-      .select(ADMIN_PROPERTY_COLUMNS)
-      .single();
+      },
+    });
     if (error) throw friendlyError(error);
     return mapAdminProperty(data as AdminPropertyRow);
   },
 
   updateStatus: async (id: string, status: Property["status"]): Promise<void> => {
     await requireSuperAdminProfile();
-    const { error } = await supabase.from("properties").update({ status }).eq("id", id);
+    const { error } = await supabase.rpc("set_super_admin_property_status", {
+      p_property_id: id,
+      p_status: status,
+    });
     if (error) throw friendlyError(error);
   },
 
   delete: async (id: string): Promise<void> => {
     await requireSuperAdminProfile();
-    const { error } = await supabase.from("properties").delete().eq("id", id);
+    const { error } = await supabase.rpc("delete_super_admin_property", {
+      p_property_id: id,
+    });
     if (error) throw friendlyError(error);
   },
 };
