@@ -87,7 +87,7 @@ export interface LandlordListing extends Property {
   tenantGenderPreference: string;
 }
 
-type LandlordPropertyRow = PublicPropertyRow & {
+export type LandlordPropertyRow = PublicPropertyRow & {
   tenant_max_occupants: number;
   tenant_employment_type: string;
   tenant_min_income_band: number;
@@ -100,7 +100,7 @@ type LandlordPropertyRow = PublicPropertyRow & {
   tenant_gender_preference: string;
 };
 
-const LANDLORD_PROPERTY_COLUMNS = `${PUBLIC_PROPERTY_COLUMNS},
+export const LANDLORD_PROPERTY_COLUMNS = `${PUBLIC_PROPERTY_COLUMNS},
   tenant_max_occupants,
   tenant_employment_type,
   tenant_min_income_band,
@@ -113,7 +113,7 @@ const LANDLORD_PROPERTY_COLUMNS = `${PUBLIC_PROPERTY_COLUMNS},
   tenant_gender_preference
 `;
 
-const mapLandlordProperty = (row: LandlordPropertyRow): LandlordListing => ({
+export const mapLandlordProperty = (row: LandlordPropertyRow): LandlordListing => ({
   ...mapPublicProperty(row),
   tenantMaxOccupants: row.tenant_max_occupants,
   tenantEmploymentType: row.tenant_employment_type,
@@ -193,7 +193,7 @@ const optimizePropertyImage = async (file: File): Promise<File> => {
   }
 };
 
-const uploadImages = async (files: File[]): Promise<string[]> => {
+export const uploadPropertyImages = async (files: File[]): Promise<string[]> => {
   const authUser = await requireSession();
   const uploadedPaths: string[] = [];
 
@@ -466,7 +466,7 @@ export const landlordService = {
       throw new Error("This property is already in your listings. Update the existing listing instead.");
     }
 
-    const imageUrls = await uploadImages(input.images);
+    const imageUrls = await uploadPropertyImages(input.images);
     const { data, error } = await supabase
       .from("properties")
       .insert({
@@ -532,7 +532,7 @@ export const landlordService = {
       throw new Error("Only landlords can update their listings.");
     }
 
-    const imageUrls = input.images.length ? await uploadImages(input.images) : null;
+    const imageUrls = input.images.length ? await uploadPropertyImages(input.images) : null;
     const { data, error } = await supabase
       .from("properties")
       .update({

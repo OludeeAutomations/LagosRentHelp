@@ -87,6 +87,7 @@ const PropertyDetails: React.FC = () => {
         verificationStatus: owner.verificationStatus,
         state: owner.state,
         city: owner.localGovernment,
+        avatar: owner.avatar,
       });
     } catch (error) {
       console.error("Failed to resolve listing contact:", error);

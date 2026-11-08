@@ -1,6 +1,7 @@
 import {
   Bell,
   Briefcase,
+  Building2,
   CheckCircle2,
   Clock3,
   ExternalLink,
@@ -67,6 +68,7 @@ const AdminDashboardLayout = () => {
   const navigation: AdminNavigationItem[] = user?.role === "super_admin"
     ? [
         { label: "Dashboard", href: "/admin", icon: LayoutDashboard, exact: true },
+        { label: "Listings", href: "/admin/properties", icon: Building2 },
         { label: "Landlords", href: "/admin/landlords", icon: Briefcase },
         ...baseNavigation,
         { label: "Administrators", href: "/admin/accounts", icon: UserCog },
@@ -75,6 +77,8 @@ const AdminDashboardLayout = () => {
 
   const pageHeader = location.pathname === "/admin"
     ? { title: "Dashboard", description: "Platform analytics and landlord activity" }
+    : location.pathname.startsWith("/admin/properties")
+      ? { title: "Listings", description: "Publish and manage LagosRentHelp properties" }
     : location.pathname === "/admin/landlords"
       ? { title: "Landlords", description: "View onboarded landlords and their portfolios" }
       : location.pathname === "/admin/accounts"

@@ -46,6 +46,7 @@ const LandlordVerificationPage = React.lazy(() => import("./page/admin/LandlordV
 const AdminDashboardLayout = React.lazy(() => import("./page/admin/AdminDashboardLayout"));
 const AdminLandlordsPage = React.lazy(() => import("./page/admin/AdminLandlordsPage"));
 const SuperAdminDashboardPage = React.lazy(() => import("./page/admin/SuperAdminDashboardPage"));
+const PropertyManagementPage = React.lazy(() => import("./page/admin/PropertyManagementPage"));
 const LandlordOnboarding = React.lazy(() => import("./page/landlord/LandlordOnboarding"));
 const LandlordDashboard = React.lazy(() => import("./page/landlord/LandlordDashboard"));
 const LandlordCreateListing = React.lazy(() => import("./page/landlord/LandlordCreateListing"));
@@ -291,6 +292,9 @@ const AppContent: React.FC = () => {
                   <Route path="/admin/area-reviews" element={<AdminAreaReviewsPage />} />
                   <Route element={<SuperAdminRoute />}>
                     <Route path="/admin" element={<SuperAdminDashboardPage />} />
+                    <Route path="/admin/properties" element={<PropertyManagementPage />} />
+                    <Route path="/admin/properties/new" element={<LandlordCreateListing />} />
+                    <Route path="/admin/properties/:listingId/edit" element={<LandlordCreateListing />} />
                     <Route path="/admin/landlords" element={<AdminLandlordsPage />} />
                     <Route path="/admin/accounts" element={<AdminAccountsPage />} />
                   </Route>

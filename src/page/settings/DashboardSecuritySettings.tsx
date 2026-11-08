@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   CheckCircle2,
+  ImagePlus,
   KeyRound,
   Loader2,
   LockKeyhole,
@@ -12,6 +13,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { accountSecurityService, type TotpEnrollment, type TotpFactor } from "@/services/accountSecurityService";
+import { adminProfileImageService } from "@/services/adminProfileImageService";
+import { getDisplayProfileImage } from "@/lib/profileImage";
 import { useAuthStore } from "@/stores/authStore";
 
 const GooglePlayMark = () => (
@@ -30,7 +33,7 @@ const AppleStoreMark = () => (
 );
 
 const DashboardSecuritySettings = () => {
-  const user = useAuthStore((state) => state.user);
+  const { user, updateProfile } = useAuthStore();
   const [factors, setFactors] = useState<TotpFactor[]>([]);
   const [enrollment, setEnrollment] = useState<TotpEnrollment | null>(null);
   const [verificationCode, setVerificationCode] = useState("");
@@ -39,6 +42,9 @@ const DashboardSecuritySettings = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loadingFactors, setLoadingFactors] = useState(true);
   const [securityAction, setSecurityAction] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profilePreview, setProfilePreview] = useState(() => getDisplayProfileImage(user) || "/icon.png");
+  const [savingProfileImage, setSavingProfileImage] = useState(false);
 
   const verifiedFactor = factors.find((factor) => factor.status === "verified");
 
@@ -56,6 +62,45 @@ const DashboardSecuritySettings = () => {
   useEffect(() => {
     void loadFactors();
   }, []);
+
+  useEffect(() => {
+    if (!profileImage) setProfilePreview(getDisplayProfileImage(user) || "/icon.png");
+  }, [profileImage, user]);
+
+  const chooseProfileImage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast.error("Choose a JPG, PNG, or WebP image.");
+      event.target.value = "";
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("The profile image must be smaller than 5 MB.");
+      event.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setProfilePreview(String(reader.result));
+    reader.readAsDataURL(file);
+    setProfileImage(file);
+  };
+
+  const saveProfileImage = async () => {
+    if (!profileImage) return;
+    setSavingProfileImage(true);
+    try {
+      const avatar = await adminProfileImageService.upload(profileImage);
+      await updateProfile({ avatar });
+      setProfileImage(null);
+      setProfilePreview(avatar);
+      toast.success("Profile image updated successfully.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not update the profile image.");
+    } finally {
+      setSavingProfileImage(false);
+    }
+  };
 
   const changePassword = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -146,6 +191,33 @@ const DashboardSecuritySettings = () => {
   return (
     <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
       <div className="grid gap-6 xl:grid-cols-2">
+        {user?.role === "super_admin" && (
+          <Card className="xl:col-span-2">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <span className="rounded-xl bg-green-50 p-3 text-[#129B36]"><ImagePlus className="h-6 w-6" /></span>
+                <div><CardTitle>Profile image</CardTitle><CardDescription>Change the image shown for your superadmin account and LagosRentHelp listing contact.</CardDescription></div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+                <img src={profilePreview} alt="Superadmin profile preview" className="h-28 w-28 rounded-full border-4 border-green-100 bg-white object-cover shadow-sm" />
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-3">
+                    <label htmlFor="superadminProfileImage" className="inline-flex h-10 cursor-pointer items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
+                      Choose image
+                      <input id="superadminProfileImage" type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={chooseProfileImage} />
+                    </label>
+                    <Button type="button" disabled={!profileImage || savingProfileImage} onClick={() => void saveProfileImage()} className="bg-[#129B36] hover:bg-[#0e7d2b]">
+                      {savingProfileImage && <Loader2 className="animate-spin" />}Save profile image
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500">JPG, PNG, or WebP. Maximum 5 MB. The image is resized automatically.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3"><span className="rounded-xl bg-green-50 p-3 text-[#129B36]"><LockKeyhole className="h-6 w-6" /></span><div><CardTitle>Password</CardTitle><CardDescription>Use a strong password you do not use elsewhere.</CardDescription></div></div>

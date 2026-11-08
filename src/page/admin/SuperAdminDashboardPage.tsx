@@ -7,8 +7,8 @@ import {
   Eye,
   Heart,
   ListChecks,
+  Plus,
   RefreshCw,
-  UserCog,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -20,7 +20,8 @@ import {
   adminDashboardService,
   type AdminLandlordSummary,
 } from "@/services/adminDashboardService";
-import { adminVerificationService } from "@/services/adminVerificationService";
+import { adminListingService, type AdminListing } from "@/services/adminListingService";
+import { useAuthStore } from "@/stores/authStore";
 
 const formatNumber = (value: number) => new Intl.NumberFormat("en-NG").format(value);
 const formatDate = (value: string) =>
@@ -33,19 +34,20 @@ const statusStyles = {
 };
 
 const SuperAdminDashboardPage = () => {
+  const user = useAuthStore((state) => state.user);
   const [landlords, setLandlords] = useState<AdminLandlordSummary[]>([]);
-  const [adminCount, setAdminCount] = useState(0);
+  const [listings, setListings] = useState<AdminListing[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
     try {
-      const [nextLandlords, admins] = await Promise.all([
+      const [nextLandlords, nextListings] = await Promise.all([
         adminDashboardService.getLandlords(),
-        adminVerificationService.getAdmins(),
+        adminListingService.getAll(),
       ]);
       setLandlords(nextLandlords);
-      setAdminCount(admins.length);
+      setListings(nextListings);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not load dashboard analytics.");
     } finally {
@@ -78,9 +80,10 @@ const SuperAdminDashboardPage = () => {
     const verified = landlords.filter((item) => item.verificationStatus === "verified").length;
     const pending = landlords.filter((item) => item.verificationStatus === "pending").length;
     const rejected = landlords.filter((item) => item.verificationStatus === "rejected").length;
-    const totalListings = landlords.reduce((sum, item) => sum + item.listingCount, 0);
-    const availableListings = landlords.reduce((sum, item) => sum + item.availableListings, 0);
-    const rentedListings = landlords.reduce((sum, item) => sum + item.rentedListings, 0);
+    const totalListings = listings.length;
+    const lagosRentHelpListings = listings.filter((item) => item.createdBy === user?._id).length;
+    const availableListings = listings.filter((item) => item.status === "available").length;
+    const rentedListings = listings.filter((item) => item.status === "rented").length;
     const totalViews = landlords.reduce((sum, item) => sum + item.totalViews, 0);
     const totalLikes = landlords.reduce((sum, item) => sum + item.totalLikes, 0);
     const maxMonthly = Math.max(...months.map((month) => month.count), 1);
@@ -100,6 +103,7 @@ const SuperAdminDashboardPage = () => {
       verifiedEnd,
       pendingEnd,
       totalListings,
+      lagosRentHelpListings,
       availableListings,
       rentedListings,
       totalViews,
@@ -107,24 +111,29 @@ const SuperAdminDashboardPage = () => {
       topLandlords,
       maxListings,
     };
-  }, [landlords]);
+  }, [landlords, listings, user?._id]);
 
   return (
     <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
       <DashboardSummaryBanner
         eyebrow="Platform overview"
         title="Super-admin dashboard"
-        description="Monitor landlord onboarding, verification health, listings, and marketplace engagement."
+        description="Publish LagosRentHelp properties and monitor landlord onboarding, listings, and marketplace engagement."
         items={[
-          { label: "Onboarded landlords", value: loading ? "—" : formatNumber(landlords.length), icon: Briefcase },
+          { label: "LagosRentHelp listings", value: loading ? "—" : formatNumber(analytics.lagosRentHelpListings), icon: Building2 },
           { label: "Total listings", value: loading ? "—" : formatNumber(analytics.totalListings), icon: Building2 },
+          { label: "Onboarded landlords", value: loading ? "—" : formatNumber(landlords.length), icon: Briefcase },
           { label: "Pending reviews", value: loading ? "—" : formatNumber(analytics.pending), icon: ListChecks },
-          { label: "Administrators", value: loading ? "—" : formatNumber(adminCount), icon: UserCog },
         ]}
         action={
-          <Button variant="outline" onClick={() => void loadDashboard()} disabled={loading} className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
-            <RefreshCw className={loading ? "animate-spin" : ""} /> Refresh data
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild className="bg-white text-[#0e7d2b] hover:bg-green-50">
+              <Link to="/admin/properties/new"><Plus /> Add listing</Link>
+            </Button>
+            <Button variant="outline" onClick={() => void loadDashboard()} disabled={loading} className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
+              <RefreshCw className={loading ? "animate-spin" : ""} /> Refresh data
+            </Button>
+          </div>
         }
       />
 

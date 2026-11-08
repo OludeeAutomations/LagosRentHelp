@@ -40,6 +40,7 @@ export interface PropertyContact {
   verificationStatus: "verified";
   state: string;
   localGovernment: string;
+  avatar?: string;
 }
 
 type LeadRow = {
@@ -100,6 +101,7 @@ export const landlordLeadService = {
       verification_status: "verified";
       state: string;
       local_government: string;
+      avatar?: string | null;
     };
     return {
       id: contact.id,
@@ -109,6 +111,7 @@ export const landlordLeadService = {
       verificationStatus: contact.verification_status,
       state: contact.state || "Lagos",
       localGovernment: contact.local_government || "",
+      avatar: contact.avatar || undefined,
     };
   },
 

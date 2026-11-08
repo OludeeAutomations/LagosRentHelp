@@ -9,8 +9,6 @@ import {
   Lock,
   Check,
   X,
-  Building2,
-  Search,
   Loader2,
 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -98,6 +96,10 @@ const Register: React.FC = () => {
   const confirmPasswordValue = form.watch("confirmPassword");
   const accountType = form.watch("accountType");
   const passwordChecks = checkPasswordRequirements(passwordValue);
+
+  React.useEffect(() => {
+    form.setValue("accountType", landlordInvite ? "landlord" : "user");
+  }, [form, landlordInvite]);
 
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true);
@@ -205,50 +207,12 @@ const Register: React.FC = () => {
           variants={containerVariants}
           initial="hidden"
           animate="visible">
-          <motion.div variants={itemVariants}>
-            <FormField
-              control={form.control}
-              name="accountType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black">I want to *</FormLabel>
-                  <FormControl>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <button
-                        type="button"
-                        disabled={isLoading}
-                        aria-pressed={field.value === "user"}
-                        onClick={() => field.onChange("user")}
-                        className={`rounded-lg border-2 p-4 text-left transition-colors ${
-                          field.value === "user"
-                            ? "border-[#129B36] bg-green-50"
-                            : "border-gray-200 hover:border-gray-300"
-                        }`}>
-                        <Search className="mb-2 h-5 w-5 text-[#129B36]" />
-                        <span className="block font-semibold">Find a home</span>
-                        <span className="text-sm text-gray-500">Tenant / renter</span>
-                      </button>
-                      <button
-                        type="button"
-                        disabled={isLoading}
-                        aria-pressed={field.value === "landlord"}
-                        onClick={() => field.onChange("landlord")}
-                        className={`rounded-lg border-2 p-4 text-left transition-colors ${
-                          field.value === "landlord"
-                            ? "border-[#129B36] bg-green-50"
-                            : "border-gray-200 hover:border-gray-300"
-                        }`}>
-                        <Building2 className="mb-2 h-5 w-5 text-[#129B36]" />
-                        <span className="block font-semibold">List a property</span>
-                        <span className="text-sm text-gray-500">Landlord / owner</span>
-                      </button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </motion.div>
+          <input type="hidden" {...form.register("accountType")} />
+          {landlordInvite && (
+            <motion.div variants={itemVariants} className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
+              You’re creating a landlord account. Identity and property ownership verification is required before you can publish a listing.
+            </motion.div>
+          )}
 
           {/* Name */}
           <motion.div variants={itemVariants}>
@@ -582,6 +546,17 @@ const Register: React.FC = () => {
                 Sign in
               </Link>
             </p>
+          </motion.div>
+
+          <motion.div variants={itemVariants} className="border-t pt-5 text-center">
+            <p className="mb-3 text-sm text-gray-500">
+              {landlordInvite ? "Looking for a home instead?" : "Are you a property owner?"}
+            </p>
+            <Button asChild type="button" variant="outline" className="w-full border-green-200 text-[#0e7d2b] hover:bg-green-50">
+              <Link to={landlordInvite ? "/register" : "/register?account=landlord"}>
+                {landlordInvite ? "Create a renter account" : "Sign up as a landlord"}
+              </Link>
+            </Button>
           </motion.div>
         </motion.form>
       </Form>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ImagePlus, Loader2, Plus, X } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { landlordService, type LandlordListingInput } from "@/services/landlordService";
+import { adminListingService } from "@/services/adminListingService";
+import { useAuthStore } from "@/stores/authStore";
 import {
   ACCOMMODATION_TYPES,
   EMPLOYMENT_TYPES,
@@ -57,15 +59,19 @@ const initialForm: FormState = {
 
 const LandlordCreateListing = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const user = useAuthStore((state) => state.user);
   const { listingId } = useParams<{ listingId: string }>();
   const isEditing = Boolean(listingId);
+  const isAdminEditor = location.pathname.startsWith("/admin/properties");
+  const listingDashboard = isAdminEditor ? "/admin/properties" : "/landlord/listings";
   const [form, setForm] = useState(initialForm);
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<Array<{ file: File; url: string }>>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [loadingListing, setLoadingListing] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [open, setOpen] = useState(isEditing);
+  const [open, setOpen] = useState(isEditing || isAdminEditor);
   useEffect(() => {
     let active = true;
     Promise.all(images.map((file) => new Promise<{ file: File; url: string }>((resolve, reject) => {
@@ -84,6 +90,10 @@ const LandlordCreateListing = () => {
 
   useEffect(() => {
     if (!listingId) {
+      if (isAdminEditor && user?.role === "super_admin") {
+        setLoadingListing(false);
+        return;
+      }
       void landlordService
         .getProfile()
         .then((profile) => {
@@ -100,8 +110,9 @@ const LandlordCreateListing = () => {
       return;
     }
 
-    void landlordService
-      .getMyListingById(listingId)
+    void (isAdminEditor
+      ? adminListingService.getById(listingId)
+      : landlordService.getMyListingById(listingId))
       .then((listing) => {
         setForm({
           title: listing.title,
@@ -132,10 +143,10 @@ const LandlordCreateListing = () => {
       })
       .catch((error) => {
         toast.error(error instanceof Error ? error.message : "Could not load this listing.");
-        navigate("/landlord/listings", { replace: true });
+        navigate(listingDashboard, { replace: true });
       })
       .finally(() => setLoadingListing(false));
-  }, [listingId, navigate]);
+  }, [isAdminEditor, listingDashboard, listingId, navigate, user?.role]);
 
   const update = (field: keyof FormState, value: string | number | boolean) =>
     setForm((current) => ({ ...current, [field]: value }));
@@ -184,14 +195,23 @@ const LandlordCreateListing = () => {
         images,
       };
       if (isEditing && listingId) {
-        await landlordService.updateListing(listingId, payload);
+        if (isAdminEditor) {
+          await adminListingService.update(listingId, payload);
+        } else {
+          await landlordService.updateListing(listingId, payload);
+        }
         toast.success("Listing updated successfully.");
       } else {
-        await landlordService.createListing(payload);
-        toast.success("Listing published successfully.");
+        if (isAdminEditor) {
+          await adminListingService.create(payload);
+          toast.success("LagosRentHelp listing published successfully.");
+        } else {
+          await landlordService.createListing(payload);
+          toast.success("Listing published successfully.");
+        }
       }
       setOpen(false);
-      navigate("/landlord/listings", { replace: true });
+      navigate(listingDashboard, { replace: true });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : `Could not ${isEditing ? "update" : "create"} listing.`);
     } finally {
@@ -205,23 +225,25 @@ const LandlordCreateListing = () => {
 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
-    if (!nextOpen && isEditing) navigate("/landlord/listings");
+    if (!nextOpen && (isEditing || isAdminEditor)) navigate(listingDashboard);
   };
 
   return (
     <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
       <Card className="w-full">
         <CardHeader className="justify-items-center px-6 pb-0 pt-12 text-center sm:px-12">
-          <CardTitle className="text-3xl">{isEditing ? "Edit your property" : "Add your property"}</CardTitle>
+          <CardTitle className="text-3xl">{isEditing ? "Edit property" : isAdminEditor ? "Add a LagosRentHelp property" : "Add your property"}</CardTitle>
           <p className="mx-auto w-full max-w-xl text-center text-gray-600">
             {isEditing
               ? "Update the property details, matching preferences or photos for this listing."
+              : isAdminEditor
+                ? "Publish a verified property under the LagosRentHelp listing account."
               : "Add accurate property details and photos. Because your landlord account is verified, the listing will publish immediately."}
           </p>
         </CardHeader>
         <CardContent className="flex justify-center px-6 pb-12 pt-2">
           <Dialog open={open} onOpenChange={handleOpenChange}>
-            {!isEditing && <DialogTrigger asChild>
+            {!isEditing && !isAdminEditor && <DialogTrigger asChild>
               <Button size="lg" className="bg-[#129B36] px-8 hover:bg-[#0e7d2b]">
                 <Plus className="mr-2 h-5 w-5" />
                 Create new listing

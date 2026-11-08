@@ -34,7 +34,7 @@ const PropertyContactCard: React.FC<PropertyContactCardProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Contact Owner</CardTitle>
+        <CardTitle>Listing contact</CardTitle>
       </CardHeader>
       <CardContent>
         <div
@@ -44,7 +44,7 @@ const PropertyContactCard: React.FC<PropertyContactCardProps> = ({
             {contactImage ? (
               <img
                 src={contactImage}
-                alt={isAuthenticated ? contact?.name : "Locked owner details"}
+                alt={isAuthenticated ? contact?.name : "Locked listing contact"}
                 className={`h-16 w-16 rounded-full border-2 border-green-500 object-cover ${isAuthenticated ? "" : "blur-sm"}`}
               />
             ) : (
@@ -78,7 +78,7 @@ const PropertyContactCard: React.FC<PropertyContactCardProps> = ({
               <>
                 <div className="h-5 w-36 rounded bg-gray-200 blur-[2px]" />
                 <p className="mt-2 flex items-center gap-1.5 text-sm text-gray-500">
-                  <LockKeyhole className="h-3.5 w-3.5" /> Owner details locked
+                  <LockKeyhole className="h-3.5 w-3.5" /> Contact details locked
                 </p>
               </>
             )}
@@ -97,7 +97,7 @@ const PropertyContactCard: React.FC<PropertyContactCardProps> = ({
             className="w-full border-green-600 text-green-600 hover:bg-green-50 text-lg py-3"
             onClick={onCall}
             disabled={!isAuthenticated || !callableNumber}>
-            <Phone className="mr-2 h-5 w-5" /> Call Owner
+            <Phone className="mr-2 h-5 w-5" /> Call listing contact
           </Button>
 
           {!isAuthenticated && (
