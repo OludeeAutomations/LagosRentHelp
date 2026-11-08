@@ -15,6 +15,7 @@ import {
   Phone,
   RefreshCw,
   Search,
+  Trash2,
   UserRound,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -53,6 +54,7 @@ const AdminLandlordsPage = () => {
   const [selectedLandlord, setSelectedLandlord] = useState<AdminLandlordSummary | null>(null);
   const [rentedListings, setRentedListings] = useState<AdminRentedListing[]>([]);
   const [rentedListingsLoading, setRentedListingsLoading] = useState(false);
+  const [deletingLandlordId, setDeletingLandlordId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<VerificationStatus | "all">("all");
   const [page, setPage] = useState(1);
@@ -117,6 +119,28 @@ const AdminLandlordsPage = () => {
     }
   };
 
+  const deleteLandlord = async (landlord: AdminLandlordSummary) => {
+    const confirmation = window.prompt(
+      `Permanently delete ${landlord.name}, their account, and all ${landlord.listingCount} listing(s)? Type ${landlord.email} to confirm.`,
+    );
+    if (confirmation?.trim().toLowerCase() !== landlord.email.trim().toLowerCase()) {
+      if (confirmation !== null) toast.error("The email did not match. Landlord deletion was cancelled.");
+      return;
+    }
+
+    setDeletingLandlordId(landlord.userId);
+    try {
+      await adminDashboardService.deleteLandlord(landlord.userId);
+      setLandlords((current) => current.filter((item) => item.userId !== landlord.userId));
+      if (selectedLandlord?.userId === landlord.userId) setSelectedLandlord(null);
+      toast.success(`${landlord.name}'s landlord account was deleted.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not delete the landlord account.");
+    } finally {
+      setDeletingLandlordId(null);
+    }
+  };
+
   return (
     <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
       <DashboardSummaryBanner
@@ -167,7 +191,7 @@ const AdminLandlordsPage = () => {
                         <td className="px-4 py-4"><Badge variant="outline" className={`capitalize ${statusStyles[landlord.verificationStatus]}`}>{landlord.verificationStatus}</Badge></td>
                         <td className="px-4 py-4 text-center"><span className="inline-flex min-w-9 justify-center rounded-full bg-gray-100 px-2.5 py-1 font-semibold">{landlord.listingCount}</span></td>
                         <td className="px-4 py-4 text-gray-500">{formatDate(landlord.joinedAt)}</td>
-                        <td className="px-5 py-4 text-right"><Button variant="outline" size="sm" onClick={() => void openLandlordDetails(landlord)}>View details</Button></td>
+                        <td className="px-5 py-4"><div className="flex justify-end gap-2"><Button variant="outline" size="sm" onClick={() => void openLandlordDetails(landlord)}>View details</Button><Button variant="outline" size="icon" aria-label={`Delete ${landlord.name}`} disabled={deletingLandlordId === landlord.userId} onClick={() => void deleteLandlord(landlord)}><Trash2 className="h-4 w-4 text-red-600" /></Button></div></td>
                       </tr>
                     );
                   })}

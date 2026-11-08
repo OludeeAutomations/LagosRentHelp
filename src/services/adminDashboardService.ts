@@ -102,6 +102,20 @@ type AdminRentedListingRow = {
 };
 
 export const adminDashboardService = {
+  deleteLandlord: async (userId: string): Promise<void> => {
+    const { error } = await supabase.rpc("delete_landlord_account", {
+      p_landlord_user_id: userId,
+    });
+    if (error) {
+      if (error.message.includes("delete_landlord_account")) {
+        throw new Error(
+          "Landlord deletion is not installed. Run supabase_superadmin_delete_landlord_migration.sql in Supabase.",
+        );
+      }
+      throw new Error(error.message);
+    }
+  },
+
   getLandlords: async (
     options: { includeAvatars?: boolean } = {},
   ): Promise<AdminLandlordSummary[]> => {
