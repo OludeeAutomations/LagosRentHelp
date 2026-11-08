@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ImagePlus, Loader2, Plus, X } from "lucide-react";
+import { ImagePlus, Loader2, Plus, Video, X } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ import {
 } from "@/lib/rentalMatching";
 import { notifyListingVerificationRequired } from "@/lib/listingAccess";
 
-type FormState = Omit<LandlordListingInput, "images" | "amenities"> & {
+type FormState = Omit<LandlordListingInput, "images" | "video" | "amenities"> & {
   amenities: string;
 };
 
@@ -69,6 +69,9 @@ const LandlordCreateListing = () => {
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<Array<{ file: File; url: string }>>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [video, setVideo] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState("");
+  const [existingVideo, setExistingVideo] = useState("");
   const [loadingListing, setLoadingListing] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [open, setOpen] = useState(isEditing || isAdminEditor);
@@ -87,6 +90,16 @@ const LandlordCreateListing = () => {
     if (images.length === 0) setImagePreviews([]);
     return () => { active = false; };
   }, [images]);
+
+  useEffect(() => {
+    if (!video) {
+      setVideoPreview("");
+      return;
+    }
+    const previewUrl = URL.createObjectURL(video);
+    setVideoPreview(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [video]);
 
   useEffect(() => {
     if (!listingId) {
@@ -139,6 +152,7 @@ const LandlordCreateListing = () => {
           tenantGenderPreference: listing.tenantGenderPreference,
         });
         setExistingImages(listing.images);
+        setExistingVideo(listing.videoUrl || "");
         setOpen(true);
       })
       .catch((error) => {
@@ -168,6 +182,19 @@ const LandlordCreateListing = () => {
     setImages((current) => current.filter((_, imageIndex) => imageIndex !== index));
   };
 
+  const chooseVideo = (file: File | undefined) => {
+    if (!file) return;
+    if (!["video/mp4", "video/webm", "video/quicktime"].includes(file.type)) {
+      toast.error("Choose an MP4, WebM or MOV video.");
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("The video must be smaller than 50 MB.");
+      return;
+    }
+    setVideo(file);
+  };
+
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!form.title || !form.description || !form.location || (!isEditing && images.length === 0)) {
@@ -193,6 +220,7 @@ const LandlordCreateListing = () => {
         ...form,
         amenities: form.amenities.split(",").map((item) => item.trim()).filter(Boolean),
         images,
+        video,
       };
       if (isEditing && listingId) {
         if (isAdminEditor) {
@@ -299,6 +327,26 @@ const LandlordCreateListing = () => {
                   </div>
                 </div>
               )}
+            </div>
+            <div className="space-y-3 sm:col-span-2">
+              <Label htmlFor="property-video">Property walkthrough video (optional)</Label>
+              <p className="text-sm text-gray-500">Upload one MP4, WebM or MOV video, up to 50 MB.</p>
+              {videoPreview ? (
+                <div className="space-y-3 rounded-xl border bg-gray-50 p-3">
+                  <video controls preload="metadata" src={videoPreview} className="max-h-80 w-full rounded-lg bg-black" />
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="truncate text-sm text-gray-600">{video?.name}</p>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setVideo(null)} className="text-red-600 hover:bg-red-50 hover:text-red-700">Remove</Button>
+                  </div>
+                </div>
+              ) : isEditing && existingVideo ? (
+                <video controls preload="metadata" src={existingVideo} className="max-h-80 w-full rounded-lg bg-black" />
+              ) : null}
+              <label htmlFor="property-video" className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-gray-600 hover:border-[#129B36]">
+                <Video className="h-6 w-6" />
+                {video ? "Choose a different video" : isEditing && existingVideo ? "Replace current video" : "Choose a video"}
+              </label>
+              <Input id="property-video" type="file" accept="video/mp4,video/webm,video/quicktime" className="hidden" onChange={(event) => { chooseVideo(event.target.files?.[0]); event.currentTarget.value = ""; }} />
             </div>
                 <div className="flex gap-3 sm:col-span-2"><Button type="button" variant="outline" className="flex-1" onClick={() => handleOpenChange(false)}>Cancel</Button><Button type="submit" disabled={submitting} className="flex-1 bg-[#129B36] hover:bg-[#0e7d2b]">{submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{isEditing ? "Save changes" : "Publish listing"}</Button></div>
               </form>

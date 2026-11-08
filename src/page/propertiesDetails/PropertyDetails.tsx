@@ -341,6 +341,23 @@ const PropertyDetails: React.FC = () => {
           property={property}
         />
 
+        {property.videoUrl && (
+          <section className="mb-8 overflow-hidden rounded-xl border bg-white shadow-sm">
+            <div className="border-b px-5 py-4">
+              <h2 className="text-xl font-semibold text-gray-900">Property video tour</h2>
+            </div>
+            <video
+              controls
+              preload="metadata"
+              poster={property.images[0]}
+              src={property.videoUrl}
+              className="max-h-[70vh] w-full bg-black"
+            >
+              Your browser does not support property videos.
+            </video>
+          </section>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <div className="mb-6">

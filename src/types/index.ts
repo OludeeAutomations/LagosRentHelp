@@ -66,6 +66,7 @@ export interface Property {
   area: number;
   amenities: string[];
   images: string[];
+  videoUrl?: string;
   agent?: Agent;
   agentId?: Agent | string;
   ownerId?: User | string;

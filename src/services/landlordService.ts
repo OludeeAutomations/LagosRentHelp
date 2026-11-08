@@ -62,6 +62,7 @@ export interface LandlordListingInput {
   area: number;
   amenities: string[];
   images: File[];
+  video: File | null;
   tenantMaxOccupants: number;
   tenantEmploymentType: string;
   tenantMinIncomeBand: number;
@@ -224,6 +225,44 @@ export const uploadPropertyImages = async (files: File[]): Promise<string[]> => 
     }
     throw error;
   }
+};
+
+export const uploadPropertyVideo = async (file: File): Promise<string> => {
+  const authUser = await requireSession();
+  const allowedTypes = ["video/mp4", "video/webm", "video/quicktime"];
+
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error("The walkthrough video must be an MP4, WebM or MOV file.");
+  }
+  if (file.size > 50 * 1024 * 1024) {
+    throw new Error("The walkthrough video must be smaller than 50 MB.");
+  }
+
+  const fallbackExtension = file.type === "video/quicktime"
+    ? "mov"
+    : file.type === "video/webm"
+      ? "webm"
+      : "mp4";
+  const extension = file.name.split(".").pop()?.toLowerCase() || fallbackExtension;
+  const path = `${authUser.id}/${crypto.randomUUID()}.${extension}`;
+  const { error } = await supabase.storage
+    .from("property-videos")
+    .upload(path, file, {
+      contentType: file.type,
+      cacheControl: "31536000",
+      upsert: false,
+    });
+
+  if (error) {
+    if (error.message.toLowerCase().includes("bucket")) {
+      throw new Error(
+        "Property video storage is not installed yet. Run supabase_property_video_migration.sql in Supabase.",
+      );
+    }
+    throw new Error(error.message);
+  }
+
+  return supabase.storage.from("property-videos").getPublicUrl(path).data.publicUrl;
 };
 
 const uploadVerificationFile = async (
@@ -467,6 +506,7 @@ export const landlordService = {
     }
 
     const imageUrls = await uploadPropertyImages(input.images);
+    const videoUrl = input.video ? await uploadPropertyVideo(input.video) : null;
     const { data, error } = await supabase
       .from("properties")
       .insert({
@@ -483,6 +523,7 @@ export const landlordService = {
         area: input.area,
         amenities: input.amenities,
         images: imageUrls,
+        video_url: videoUrl,
         status: "available",
         approval_status: "approved",
         owner_id: profile.id,
@@ -533,6 +574,7 @@ export const landlordService = {
     }
 
     const imageUrls = input.images.length ? await uploadPropertyImages(input.images) : null;
+    const videoUrl = input.video ? await uploadPropertyVideo(input.video) : null;
     const { data, error } = await supabase
       .from("properties")
       .update({
@@ -549,6 +591,7 @@ export const landlordService = {
         area: input.area,
         amenities: input.amenities,
         ...(imageUrls ? { images: imageUrls } : {}),
+        ...(videoUrl ? { video_url: videoUrl } : {}),
         tenant_max_occupants: input.tenantMaxOccupants,
         tenant_employment_type: input.tenantEmploymentType,
         tenant_min_income_band: input.tenantMinIncomeBand,

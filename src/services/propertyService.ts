@@ -30,6 +30,7 @@ export const PUBLIC_PROPERTY_COLUMNS = `
   area,
   amenities,
   images,
+  video_url,
   status,
   approval_status,
   views,
@@ -57,6 +58,7 @@ export type PublicPropertyRow = {
   area: number;
   amenities: string[] | null;
   images: string[] | null;
+  video_url: string | null;
   status: Property["status"];
   approval_status: Property["approvalStatus"];
   views: number | null;
@@ -84,6 +86,7 @@ export const mapPublicProperty = (row: PublicPropertyRow): Property => ({
   area: Number(row.area),
   amenities: row.amenities || [],
   images: row.images || [],
+  videoUrl: row.video_url || undefined,
   status: row.status,
   approvalStatus: row.approval_status,
   isFeatured: false,

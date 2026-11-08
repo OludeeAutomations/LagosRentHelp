@@ -4,6 +4,7 @@ import {
   LANDLORD_PROPERTY_COLUMNS,
   mapLandlordProperty,
   uploadPropertyImages,
+  uploadPropertyVideo,
   type LandlordListing,
   type LandlordListingInput,
   type LandlordPropertyRow,
@@ -107,10 +108,12 @@ export const adminListingService = {
   create: async (input: LandlordListingInput): Promise<AdminListing> => {
     await requireSuperAdminProfile();
     const imageUrls = await uploadPropertyImages(input.images);
+    const videoUrl = input.video ? await uploadPropertyVideo(input.video) : null;
     const { data, error } = await supabase.rpc("create_lagosrenthelp_property", {
       p_listing: {
         ...listingValues(input),
         images: imageUrls,
+        video_url: videoUrl,
       },
     });
     if (error) throw friendlyError(error);
@@ -125,11 +128,13 @@ export const adminListingService = {
     const imageUrls = input.images.length
       ? await uploadPropertyImages(input.images)
       : null;
+    const videoUrl = input.video ? await uploadPropertyVideo(input.video) : null;
     const { data, error } = await supabase.rpc("update_super_admin_property", {
       p_property_id: id,
       p_listing: {
         ...listingValues(input),
         ...(imageUrls ? { images: imageUrls } : {}),
+        ...(videoUrl ? { video_url: videoUrl } : {}),
       },
     });
     if (error) throw friendlyError(error);
