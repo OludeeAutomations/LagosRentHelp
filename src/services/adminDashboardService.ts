@@ -153,7 +153,14 @@ export const adminDashboardService = {
       })
       .select("id, title, location, price, total_package_price, images, created_at, updated_at")
       .order("updated_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (error.message.includes("get_super_admin_landlord_rented_listings")) {
+        throw new Error(
+          "The landlord portfolio database function is not installed. Run supabase_superadmin_listing_access_fix.sql in Supabase.",
+        );
+      }
+      throw new Error(error.message);
+    }
 
     return ((data || []) as AdminRentedListingRow[]).map((listing) => ({
       id: listing.id,

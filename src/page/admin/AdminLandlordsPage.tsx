@@ -103,6 +103,10 @@ const AdminLandlordsPage = () => {
   const openLandlordDetails = async (landlord: AdminLandlordSummary) => {
     setSelectedLandlord(landlord);
     setRentedListings([]);
+    if (landlord.rentedListings === 0) {
+      setRentedListingsLoading(false);
+      return;
+    }
     setRentedListingsLoading(true);
     try {
       setRentedListings(await adminDashboardService.getLandlordRentedListings(landlord.userId));
