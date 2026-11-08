@@ -35,6 +35,13 @@ const AdminAreaReviewsPage = () => {
     void loadReviews();
   }, [loadReviews]);
 
+  const reviewCounts = {
+    total: reviews.length,
+    pending: reviews.filter((review) => review.status === "pending").length,
+    approved: reviews.filter((review) => review.status === "approved").length,
+    rejected: reviews.filter((review) => review.status === "rejected").length,
+  };
+
   const moderate = async (review: ModerationAreaReview, status: "approved" | "rejected") => {
     const note = status === "rejected"
       ? window.prompt("Give the contributor a short reason for rejection:", "Contains private or unverifiable information")
@@ -70,8 +77,22 @@ const AdminAreaReviewsPage = () => {
   return (
     <main className="w-full px-4 py-8 sm:px-6 lg:px-10">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div><p className="text-sm text-gray-500">Approve useful, experience-based submissions that protect personal information.</p><p className="mt-1 text-xs font-semibold text-amber-700">{reviews.filter((review) => review.status === "pending").length} awaiting moderation</p></div>
+        <div><p className="text-sm text-gray-500">Approve useful, experience-based submissions that protect personal information.</p><p className="mt-1 text-xs font-semibold text-amber-700">{reviewCounts.pending} awaiting moderation</p></div>
         <Button variant="outline" onClick={() => void loadReviews()} disabled={loading}><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Refresh</Button>
+      </div>
+
+      <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[
+          { label: "Total reviews", value: reviewCounts.total, style: "border-gray-200 bg-white text-gray-950" },
+          { label: "Awaiting moderation", value: reviewCounts.pending, style: "border-amber-200 bg-amber-50 text-amber-800" },
+          { label: "Approved", value: reviewCounts.approved, style: "border-green-200 bg-green-50 text-green-800" },
+          { label: "Rejected", value: reviewCounts.rejected, style: "border-red-200 bg-red-50 text-red-800" },
+        ].map((item) => (
+          <div key={item.label} className={`rounded-2xl border p-4 shadow-sm ${item.style}`}>
+            <p className="text-xs font-semibold uppercase tracking-wide opacity-70">{item.label}</p>
+            <p className="mt-2 text-3xl font-bold">{loading ? "—" : item.value.toLocaleString("en-NG")}</p>
+          </div>
+        ))}
       </div>
 
       {loading ? (
