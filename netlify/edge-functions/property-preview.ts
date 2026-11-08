@@ -43,6 +43,7 @@ const getProperty = async (propertyId: string) => {
   query.searchParams.set("select", "title,description,images");
   query.searchParams.set("id", `eq.${propertyId}`);
   query.searchParams.set("approval_status", "eq.approved");
+  query.searchParams.set("status", "eq.available");
   query.searchParams.set("limit", "1");
 
   const response = await fetch(query, {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Building2, FileSearch2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Building2, FileSearch2, KeyRound, Pencil, Plus, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import DashboardSummaryBanner from "@/components/common/DashboardSummaryDecoration";
@@ -46,6 +46,12 @@ const PropertyManagementPage = () => {
 
   const changeStatus = async (listing: AdminListing) => {
     const status = listing.status === "rented" ? "available" : "rented";
+    if (
+      status === "rented" &&
+      !window.confirm(
+        `Mark “${listing.title}” as rented? It will immediately disappear from the public website.`,
+      )
+    ) return;
     setActionId(listing._id);
     try {
       await adminListingService.updateStatus(listing._id, status);
@@ -135,8 +141,14 @@ const PropertyManagementPage = () => {
                     <div className="flex flex-wrap gap-2">
                       <Button asChild size="sm" variant="outline"><Link to={`/properties/${listing._id}`}>View</Link></Button>
                       <Button asChild size="sm" variant="outline"><Link to={`/admin/properties/${listing._id}/edit`}><Pencil className="mr-1.5 h-4 w-4" />Edit</Link></Button>
-                      <Button size="sm" variant="outline" disabled={actionId === listing._id} onClick={() => void changeStatus(listing)}>
-                        Mark {listing.status === "rented" ? "available" : "rented"}
+                      <Button
+                        size="sm"
+                        variant={listing.status === "rented" ? "outline" : "default"}
+                        className={listing.status === "rented" ? "" : "bg-amber-600 text-white hover:bg-amber-700"}
+                        disabled={actionId === listing._id}
+                        onClick={() => void changeStatus(listing)}>
+                        {listing.status === "rented" ? <RotateCcw className="mr-1.5 h-4 w-4" /> : <KeyRound className="mr-1.5 h-4 w-4" />}
+                        {listing.status === "rented" ? "Make available again" : "Mark as rented"}
                       </Button>
                       <Button size="icon" variant="outline" aria-label={`Delete ${listing.title}`} disabled={actionId === listing._id} onClick={() => void remove(listing)}>
                         <Trash2 className="h-4 w-4 text-red-600" />
