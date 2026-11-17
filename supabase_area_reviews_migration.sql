@@ -199,7 +199,19 @@ as $$
     round(avg(review.noise_rating) filter (where review.status = 'approved'), 1) as noise_rating,
     round(avg(review.maintenance_rating) filter (where review.status = 'approved'), 1) as maintenance_rating
   from public.area_review_locations location
-  left join public.area_reviews review on review.location_id = location.id
+  left join public.area_review_locations reviewed_location on
+    reviewed_location.status = 'active'
+    and (
+      (
+        location.location_type = 'lga'
+        and lower(trim(reviewed_location.lga)) = lower(trim(location.lga))
+      )
+      or (
+        location.location_type <> 'lga'
+        and reviewed_location.id = location.id
+      )
+  )
+  left join public.area_reviews review on review.location_id = reviewed_location.id
   where location.status = 'active'
     and (
       nullif(trim(p_search), '') is null
@@ -261,8 +273,20 @@ begin
       review.evidence_verified,
       review.created_at
     from public.area_reviews review
+    join public.area_review_locations reviewed_location
+      on reviewed_location.id = review.location_id
     left join public.users app_user on app_user.id = review.user_id
-    where review.location_id = v_location.id
+    where (
+        (
+          v_location.location_type = 'lga'
+          and lower(trim(reviewed_location.lga)) = lower(trim(v_location.lga))
+        )
+        or (
+          v_location.location_type <> 'lga'
+          and reviewed_location.id = v_location.id
+        )
+      )
+      and reviewed_location.status = 'active'
       and review.status = 'approved'
   ) review_row;
 
